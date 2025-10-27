@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String                 @id @default(cuid())
+  name            String?
+  mobile          String                 @unique
+  password        String
+  role            Role                   @default(CUSTOMER)
+  customerType    CustomerType           @default(BUYER) // or SELLER
+  balanceAmount   Float                  @default(0)  // + means advance, - means pending
+  address         String?
+  note            String?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  milkEntries     MilkEntry[]
+  transactions    CustomerTransaction[]
+  sessions        Session[]
+}
+
+model MilkEntry {
+  id                 String   @id @default(cuid())
+  date               DateTime @default(now())
+  shift              Shift
+  remarks            String?
+  milkQuantity       Float
+  mawaWeightPerLitre Float
+  ratePerLitre       Float
+  totalAmount        Float
+  customerId         String
+
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  customer           User     @relation(fields: [customerId], references: [id])
+    @@index([customerId, date])
+}
+model CustomerTransaction {
+  id              String          @id @default(cuid())
+  date            DateTime        @default(now())
+  remarks         String?
+  milkQuantity    Float?
+  ratePerLitre    Float?
+  totalAmount     Float?          @default(0)
+  paidAmount      Float?          @default(0)
+  transactionType TransactionType @default(MILK_ENTRY)
+  balanceAfter    Float            // running balance after this transaction
+  customer        User             @relation(fields: [customerId], references: [id])
+  customerId      String
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+    @@index([customerId, date])
+}
+
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+enum Shift {
+  MORNING
+  EVENING
+}
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+enum CustomerType {
+  BUYER
+  SELLER
+}
+
+enum TransactionType {
+  MILK_ENTRY    // buying/selling milk
+  PAYMENT       // payment/advance entry
+}
