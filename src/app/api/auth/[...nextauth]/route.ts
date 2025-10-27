@@ -1,51 +1,78 @@
-import { prisma } from "@/app/lib/prisma";
+import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
-import { NextResponse } from "next/server";
 
-export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-    const { mobile, password, name, address, role } = body;
+const prisma = new PrismaClient();
 
-    if (!mobile || !password || !name || !address) {
-      return NextResponse.json(
-        { message: "All fields are required" },
-        { status: 400 }
-      );
-    }
-
-    const existingUser = await prisma.user.findUnique({
-      where: { mobile },
-    });
-
-    if (existingUser) {
-      return NextResponse.json(
-        { message: "User already exists" },
-        { status: 409 }
-      );
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const newUser = await prisma.user.create({
-      data: {
-        name,
-        mobile,
-        password: hashedPassword,
-        address,
-        role,
+export const authOptions = {
+  adapter: PrismaAdapter(prisma),
+  providers: [
+    Credentials({
+      name: "Credentials",
+      credentials: {
+        mobile: { label: "Mobile Number", type: "text" },
+        password: { label: "Password", type: "password" },
       },
-    });
+      async authorize(credentials) {
+        if (!credentials?.mobile || !credentials?.password) {
+          throw new Error("Please provide both mobile and password");
+        }
 
-    return NextResponse.json(
-      { message: "User registered successfully", userId: newUser.id },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error("Registration error:", error);
-    return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
-    );
-  }
-}
+        const user = await prisma.user.findUnique({
+          where: { mobile: credentials.mobile },
+        });
+
+        if (!user) throw new Error("No user found with this mobile number");
+
+        const isValid = await bcrypt.compare(credentials.password, user.password);
+        if (!isValid) throw new Error("Invalid password");
+
+        // Return only safe user data (never send password)
+        return {
+          id: user.id,
+          name: user.name,
+          mobile: user.mobile,
+          role: user.role,
+          customerType: user.customerType,
+        };
+      },
+    }),
+  ],
+  session: {
+    strategy: "jwt" as const,
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+  pages: {
+    signIn: "/auth/login",
+  },
+
+  callbacks: {
+    async jwt({ token, user }:any) {
+      // When user logs in, attach custom fields to token
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+        token.mobile = user.mobile;
+        token.customerType = user.customerType;
+      }
+      return token;
+    },
+    async session({ session, token }:any) {
+      // Add those fields into session.user
+      if (token) {
+        session.user.id = token.id;
+        session.user.role = token.role;
+        session.user.mobile = token.mobile;
+        session.user.customerType = token.customerType;
+      }
+      return session;
+    },
+  },
+};
+
+const handler = NextAuth(authOptions);
+
+export const GET = handler;
+export const POST = handler;
