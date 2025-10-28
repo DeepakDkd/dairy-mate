@@ -1,50 +1,51 @@
 import { prisma } from "@/app/lib/prisma";
-import { NextApiResponse, NextApiRequest } from "next";
 import bcrypt from "bcrypt";
+import { NextResponse } from "next/server";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method not allowed" });
-  }
-
+export async function POST(req: Request) {
   try {
-    const { mobile, password, name, role, address, customerType } = req.body;
+    const body = await req.json();
+    const { mobile, password, name, address, role } = body;
 
-    // Basic validation
     if (!mobile || !password || !name || !address) {
-      return res.status(400).json({ message: "All fields are required" });
+      return NextResponse.json(
+        { message: "All fields are required" },
+        { status: 400 }
+      );
     }
 
-    // Check if user already exists
     const existingUser = await prisma.user.findUnique({
       where: { mobile },
     });
 
     if (existingUser) {
-      return res.status(409).json({ message: "User already exists" });
+      return NextResponse.json(
+        { message: "User already exists" },
+        { status: 409 }
+      );
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user
     const newUser = await prisma.user.create({
       data: {
         name,
         mobile,
         password: hashedPassword,
-        role: role || "CUSTOMER", // default role
         address,
-        customerType: customerType || "BUYER", // default
+        role,
       },
     });
 
-    return res
-      .status(201)
-      .json({ message: "User registered successfully", userId: newUser.id });
-
-  } catch (error: any) {
-    console.error("Register Error:", error);
-    return res.status(500).json({ message: "Internal server error", error: error.message });
+    return NextResponse.json(
+      { message: "User registered successfully", userId: newUser.id },
+      { status: 201 }
+    );
+  } catch (error) {
+    console.error("Registration error:", error);
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

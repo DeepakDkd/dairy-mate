@@ -1,15 +1,13 @@
 import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcrypt";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import bcrypt from "bcryptjs";
+import { db } from "@/lib/db";
+import { NextAuthOptions } from "next-auth";
 
-const prisma = new PrismaClient();
-
-export const authOptions = {
-  adapter: PrismaAdapter(prisma),
+export const authOptions: NextAuthOptions = {
   providers: [
-    Credentials({
+    CredentialsProvider({
       name: "Credentials",
       credentials: {
         mobile: { label: "Mobile Number", type: "text" },
@@ -20,7 +18,7 @@ export const authOptions = {
           throw new Error("Please provide both mobile and password");
         }
 
-        const user = await prisma.user.findUnique({
+        const user = await db.user.findUnique({
           where: { mobile: credentials.mobile },
         });
 
@@ -54,6 +52,7 @@ export const authOptions = {
       if (user) {
         token.id = user.id;
         token.role = user.role;
+        token.name = user.name;
         token.mobile = user.mobile;
         token.customerType = user.customerType;
       }
@@ -65,6 +64,7 @@ export const authOptions = {
         session.user.id = token.id;
         session.user.role = token.role;
         session.user.mobile = token.mobile;
+        session.user.name = token.name;
         session.user.customerType = token.customerType;
       }
       return session;
