@@ -1,6 +1,6 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { db } from "@/lib/db";
 import bcrypt from "bcryptjs";
 
@@ -19,6 +19,7 @@ export const authOptions: NextAuthOptions = {
         mobile: { label: "Mobile", type: "text" },
         password: { label: "Password", type: "password" },
       },
+      // @ts-ignore
       async authorize(credentials) {
         if (!credentials?.mobile || !credentials?.password) {
           throw new Error("Invalid credentials");
@@ -45,9 +46,9 @@ export const authOptions: NextAuthOptions = {
 
         return {
           id: user.id,
-          mobile: user.mobile,
           name: user.name,
           role: user.role,
+          mobile: user.mobile,
           customerType: user.customerType,
         };
       },
@@ -60,7 +61,10 @@ export const authOptions: NextAuthOptions = {
           ...token,
           id: user.id,
           role: user.role,
+          name: user.name,
+          mobile: user.mobile,
           customerType: user.customerType,
+          balanceAmount: user.balanceAmount,
         };
       }
       return token;
@@ -72,6 +76,9 @@ export const authOptions: NextAuthOptions = {
           ...session.user,
           id: token.id,
           role: token.role,
+          name: token.name,
+          mobile: token.mobile,
+          balanceAmount: token.balanceAmount,
           customerType: token.customerType,
         },
       };

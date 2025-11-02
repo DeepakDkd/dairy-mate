@@ -5,9 +5,9 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { mobile, password, name, address, role } = body;
+    const { mobile, password, name, address, customerType } = body;
 
-    if (!mobile || !password || !name || !address) {
+    if (!mobile || !password || !name || !address || !customerType) {
       return NextResponse.json(
         { message: "All fields are required" },
         { status: 400 }
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
         mobile,
         password: hashedPassword,
         address,
-        role,
+        customerType,
       },
     });
 
