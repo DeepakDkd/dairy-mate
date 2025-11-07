@@ -21,7 +21,7 @@ export default function SellerDashboardPage() {
           <h1 className="text-3xl font-bold font-montserrat text-foreground">Seller Dashboard</h1>
           <p className="text-muted-foreground mt-1">Manage your milk entries and track earnings</p>
         </div>
-        <Button onClick={() => setShowMilkDialog(true)} className="bg-primary hover:bg-primary/90 text-white gap-2">
+        <Button onClick={() => setShowMilkDialog(true)} className="bg-primary hover:bg-primary/90 cursor-pointer text-white  gap-2 border border-black">
           <Plus className="w-4 h-4" />
           Add Milk Entry
         </Button>

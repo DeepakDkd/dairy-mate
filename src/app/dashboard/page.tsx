@@ -50,9 +50,9 @@ function AdminDashboard() {
   return (
      <div className="p-6 space-y-6">
       {/* Greeting Section */}
-      <div >
+      <div className="">
         <h1 className="text-3xl font-bold text-foreground">{greeting}</h1>
-        <p className="text-muted-foreground mt-1">Here&apos;s your dairy summary.</p>
+        <p className="text-muted-foreground mt-1 ">Here&apos;s your dairy summary.</p>
       </div>
 
       {/* Filter Section */}
