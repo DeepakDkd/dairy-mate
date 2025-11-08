@@ -14,14 +14,14 @@ export default function SellerDashboardPage() {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false)
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6  ">
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold font-montserrat text-foreground">Seller Dashboard</h1>
           <p className="text-muted-foreground mt-1">Manage your milk entries and track earnings</p>
         </div>
-        <Button onClick={() => setShowMilkDialog(true)} className="bg-primary hover:bg-primary/90 cursor-pointer text-white  gap-2 border border-black">
+        <Button onClick={() => setShowMilkDialog(true)} className="bg-primary hover:bg-primary/90 cursor-pointer text-white  gap-2">
           <Plus className="w-4 h-4" />
           Add Milk Entry
         </Button>
