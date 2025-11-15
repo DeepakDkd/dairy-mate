@@ -7,89 +7,307 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id              String                 @id @default(cuid())
-  name            String?
-  mobile          String                 @unique
-  password        String
-  role            Role                   @default(CUSTOMER)
-  customerType    CustomerType           @default(BUYER) // or SELLER
-  balanceAmount   Float                  @default(0)  // + means advance, - means pending
-  address         String?
-  note            String?
-  createdAt       DateTime               @default(now())
-  updatedAt       DateTime               @updatedAt
-  milkEntries     MilkEntry[]
-  transactions    CustomerTransaction[]
-  sessions        Session[]
-}
 
-model MilkEntry {
-  id                 String   @id @default(cuid())
-  date               DateTime @default(now())
-  shift              Shift
-  remarks            String?
-  milkQuantity       Float
-  mawaWeightPerLitre Float
-  ratePerLitre       Float
-  totalAmount        Float
-  customerId         String
-
-  createdAt       DateTime               @default(now())
-  updatedAt       DateTime               @updatedAt
-  customer           User     @relation(fields: [customerId], references: [id])
-    @@index([customerId, date])
-}
-model CustomerTransaction {
-  id              String          @id @default(cuid())
-  date            DateTime        @default(now())
-  remarks         String?
-  milkQuantity    Float?
-  ratePerLitre    Float?
-  totalAmount     Float?          @default(0)
-  paidAmount      Float?          @default(0)
-  transactionType TransactionType @default(MILK_ENTRY)
-  balanceAfter    Float            // running balance after this transaction
-  customer        User             @relation(fields: [customerId], references: [id])
-  customerId      String
-  createdAt       DateTime               @default(now())
-  updatedAt       DateTime               @updatedAt
-    @@index([customerId, date])
-}
+// 👉 After schema change:
+// npx prisma migrate dev --name <your_change>
+// npx prisma migrate dev --name add_profile_photo
 
 
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
-
-enum Shift {
-  MORNING
-  EVENING
-}
+// 👉 To inspect DB:
+// npx prisma studio
 
 enum Role {
-  ADMIN
-  CUSTOMER
-}
-
-enum CustomerType {
-  BUYER
+  OWNER
+  STAFF
   SELLER
+  BUYER
 }
 
-enum TransactionType {
-  MILK_ENTRY    // buying/selling milk
-  PAYMENT       // payment/advance entry
+enum PaymentType {
+  SELLER_PAYMENT
+  BUYER_PAYMENT
 }
+
+enum PaymentMethod {
+  CASH
+  UPI
+  BANK
+}
+
+// =========================
+// DAIRY
+// =========================
+model Dairy {
+  id        Int    @id @default(autoincrement())
+  ownerId   Int
+  name      String
+  address   String?
+  phone     String?
+
+  // Relations
+  owner     User   @relation("OwnerDairies", fields: [ownerId], references: [id])
+  users     User[] @relation("UserDairyRelation")
+  staff     StaffProfile[]
+  fatRates  FatRate[]
+  sellerEntries SellerEntry[]
+  buyerEntries  BuyerEntry[]
+  payments      Payment[]
+  subscriptions DairySubscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// =========================
+// USER (Universal Users)
+// =========================
+model User {
+  id          Int     @id @default(autoincrement())
+  dairyId     Int?
+  role        Role
+  status      String  @default("active")
+
+  fullName    String
+  email       String  @unique
+  phone       String? @unique
+  password String
+  address     String?
+
+  isActive    Boolean @default(true)
+
+  // Belongs to one Dairy
+  dairy Dairy? @relation("UserDairyRelation", fields: [dairyId], references: [id])
+
+  // Owner can own many dairies
+  ownedDairies Dairy[] @relation("OwnerDairies")
+
+  // Staff Profile (optional)
+  staffProfile StaffProfile? @relation("StaffProfileRelation")
+
+  // Entries
+  sellerEntries SellerEntry[] @relation("SellerEntryUser")
+  buyerEntries  BuyerEntry[]  @relation("BuyerEntryUser")
+
+  payments Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// =========================
+// STAFF PROFILE
+// =========================
+model StaffProfile {
+  id        Int @id @default(autoincrement())
+  userId    Int @unique
+  dairyId   Int
+
+  position  String?
+  salary    Float?
+  joinDate  DateTime?
+  shift     String?
+  emergencyContact String?
+  photoUrl  String?
+  notes     String?
+
+  user  User  @relation("StaffProfileRelation", fields: [userId], references: [id])
+  dairy Dairy @relation(fields: [dairyId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// =========================
+// FAT RATE CHART
+// =========================
+model FatRate {
+  id          Int @id @default(autoincrement())
+  dairyId     Int
+  fatValue    Float
+  pricePerLtr Float
+
+  dairy Dairy @relation(fields: [dairyId], references: [id])
+  updatedAt DateTime @default(now())
+}
+
+// =========================
+// SELLER ENTRIES
+// =========================
+model SellerEntry {
+  id           Int @id @default(autoincrement())
+  dairyId      Int
+  sellerId     Int
+
+  date         DateTime
+  morningLtrs  Float @default(0)
+  eveningLtrs  Float @default(0)
+  fat          Float
+  rate         Float
+  totalAmount  Float
+
+  dairy  Dairy @relation(fields: [dairyId], references: [id])
+  seller User  @relation("SellerEntryUser", fields: [sellerId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// =========================
+// BUYER ENTRIES
+// =========================
+model BuyerEntry {
+  id           Int @id @default(autoincrement())
+  dairyId      Int
+  buyerId      Int
+
+  date         DateTime
+  morningLtrs  Float @default(0)
+  eveningLtrs  Float @default(0)
+  rate         Float
+  totalAmount  Float
+
+  dairy Dairy @relation(fields: [dairyId], references: [id])
+  buyer User  @relation("BuyerEntryUser", fields: [buyerId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// =========================
+// PAYMENTS
+// =========================
+model Payment {
+  id        Int @id @default(autoincrement())
+  dairyId   Int
+  userId    Int
+
+  amount    Float
+  type      PaymentType
+  method    PaymentMethod @default(CASH)
+  notes     String?
+  date      DateTime
+
+  dairy Dairy @relation(fields: [dairyId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// =========================
+// SUBSCRIPTION PLANS
+// =========================
+model SubscriptionPlan {
+  id           Int @id @default(autoincrement())
+  name         String
+  price        Float
+
+  maxSellers   Int?
+  maxBuyers    Int?
+  maxStaff     Int?
+  maxEntries   Int?
+  durationDays Int @default(30)
+
+  subscriptions DairySubscription[]
+}
+
+// =========================
+// DAIRY SUBSCRIPTIONS
+// =========================
+model DairySubscription {
+  id        Int @id @default(autoincrement())
+  dairyId   Int
+  planId    Int
+
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean @default(true)
+
+  dairy Dairy @relation(fields: [dairyId], references: [id])
+  plan  SubscriptionPlan @relation(fields: [planId], references: [id])
+}
+
+// model User {
+//   id              String                 @id @default(cuid())
+//   name            String?
+//   mobile          String                 @unique
+//   password        String
+//   role            Role                   @default(CUSTOMER)
+//   customerType    CustomerType           @default(BUYER) // or SELLER
+//   balanceAmount   Float                  @default(0)  // + means advance, - means pending
+//   address         String?
+//   note            String?
+//   createdAt       DateTime               @default(now())
+//   updatedAt       DateTime               @updatedAt
+//   milkEntries     MilkEntry[]
+//   transactions    CustomerTransaction[]
+//   sessions        Session[]
+// }
+
+// model MilkEntry {
+//   id                 String   @id @default(cuid())
+//   date               DateTime @default(now())
+//   shift              Shift
+//   remarks            String?
+//   milkQuantity       Float
+//   mawaWeightPerLitre Float
+//   ratePerLitre       Float
+//   totalAmount        Float
+//   customerId         String
+
+//   createdAt       DateTime               @default(now())
+//   updatedAt       DateTime               @updatedAt
+//   customer           User     @relation(fields: [customerId], references: [id])
+//     @@index([customerId, date])
+// }
+// model CustomerTransaction {
+//   id              String          @id @default(cuid())
+//   date            DateTime        @default(now())
+//   remarks         String?
+//   milkQuantity    Float?
+//   ratePerLitre    Float?
+//   totalAmount     Float?          @default(0)
+//   paidAmount      Float?          @default(0)
+//   transactionType TransactionType @default(MILK_ENTRY)
+//   balanceAfter    Float            // running balance after this transaction
+//   customer        User             @relation(fields: [customerId], references: [id])
+//   customerId      String
+//   createdAt       DateTime               @default(now())
+//   updatedAt       DateTime               @updatedAt
+//     @@index([customerId, date])
+// }
+
+
+// model Session {
+//   id           String   @id @default(cuid())
+//   sessionToken String   @unique
+//   userId       String
+//   expires      DateTime
+//   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+// }
+
+// model VerificationToken {
+//   identifier String
+//   token      String   @unique
+//   expires    DateTime
+
+//   @@unique([identifier, token])
+// }
+
+// enum Shift {
+//   MORNING
+//   EVENING
+// }
+
+// enum Role {
+//   ADMIN
+//   CUSTOMER
+// }
+
+// enum CustomerType {
+//   BUYER
+//   SELLER
+// }
+
+// enum TransactionType {
+//   MILK_ENTRY    // buying/selling milk
+//   PAYMENT       // payment/advance entry
+// }
