@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
+import Image from "next/image";
 
 export default function LoginForm() {
   const [mobile, setMobile] = useState("");
@@ -51,8 +52,15 @@ export default function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 font-montserrat bg-gray-50">
-      <Card className="max-w-sm w-full">
+    <div className="min-h-screen flex items-center justify-center p-4 font-montserrat ">
+        <Image 
+        src="/login/bg1.jpg" // Path to your image in the public folder
+        alt="Background Cover" 
+        layout="fill" // Ensures the image fills the parent container
+        objectFit="cover" // Scales the image to cover the entire container
+        className="-z-10" // Pushes the image behind other content
+      />
+      <Card className="max-w-sm w-full bg-accent/50  shadow-lg">
         <CardHeader className="space-y-2">
           <CardTitle className="text-2xl font-semibold text-center">
             Welcome Back

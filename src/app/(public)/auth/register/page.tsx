@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import Link from "next/link";
 import axios from "axios";
+import Image from "next/image";
 
 export default function RegisterForm() {
   const [formData, setFormData] = useState({
@@ -68,13 +69,13 @@ export default function RegisterForm() {
     setLoading(true);
 
     try {
-        const res = await axios.post("/api/auth/register", {
-          name: formData.name,
-          mobile: formData.mobile,
-          password: formData.password,
-          customerType: formData.customerType,
-          address: formData.address,
-        });
+      const res = await axios.post("/api/auth/register", {
+        name: formData.name,
+        mobile: formData.mobile,
+        password: formData.password,
+        customerType: formData.customerType,
+        address: formData.address,
+      });
 
       const data = res.data;
 
@@ -93,8 +94,15 @@ export default function RegisterForm() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 font-montserrat bg-gray-50">
-      <Card className="max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center p-4 font-montserrat bg-gray-50--- overflow-y-scroll relative no-scrollbar">
+      <Image
+        src="/login/bg1.jpg" // Path to your image in the public folder
+        alt="Background Cover"
+        layout="fill" // Ensures the image fills the parent container
+        objectFit="cover" // Scales the image to cover the entire container
+        className="-z-10" // Pushes the image behind other content
+      />
+      <Card className="max-w-md w-full bg-accent/60  shadow-lg">
         <CardHeader className="space-y-2">
           <CardTitle className="text-2xl font-semibold text-center">
             Create Account
@@ -174,6 +182,7 @@ export default function RegisterForm() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
+                    <SelectItem value="ADMIN">Admin</SelectItem>
                     <SelectItem value="BUYER">Buyer</SelectItem>
                     <SelectItem value="SELLER">Seller</SelectItem>
                   </SelectGroup>

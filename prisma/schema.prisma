@@ -60,6 +60,7 @@ model Dairy {
   ownerId Int
   name    String
   address String?
+  email   String? @unique
   phone   String?
 
   pricingMode    PricingMode @default(FAT_LR)
