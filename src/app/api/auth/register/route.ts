@@ -5,9 +5,9 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { mobile, password, name, address, customerType } = body;
+    const { phone, password, firstName , lastName,role, address, customerType } = body;
 
-    if (!mobile || !password || !name || !address || !customerType) {
+    if (!phone || !password || !firstName || lastName || !address || !customerType) {
       return NextResponse.json(
         { message: "All fields are required" },
         { status: 400 }
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     }
 
     const existingUser = await prisma.user.findUnique({
-      where: { mobile },
+      where: { phone },
     });
 
     if (existingUser) {
@@ -29,8 +29,10 @@ export async function POST(req: Request) {
 
     const newUser = await prisma.user.create({
       data: {
-        name,
-        mobile,
+        firstName,
+        lastName,
+        phone,
+        role,
         password: hashedPassword,
         address,
         customerType,

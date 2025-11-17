@@ -22,11 +22,13 @@ import Image from "next/image";
 
 export default function RegisterForm() {
   const [formData, setFormData] = useState({
-    name: "",
-    mobile: "",
+    firstName: "",
+    lastName: "",
+    phone: "",
+    email: "",
     password: "",
     confirmPassword: "",
-    customerType: "BUYER", // BUYER or SELLER
+    role: "", // BUYER or SELLER
     address: "",
   });
   const [loading, setLoading] = useState(false);
@@ -40,16 +42,17 @@ export default function RegisterForm() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleCustomerTypeChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, customerType: value }));
+  const handleRoleChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, role: value }));
   };
+  
 
   const validateForm = () => {
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       return false;
     }
-    if (formData.mobile.length !== 10) {
+    if (formData.phone.length !== 10) {
       setError("Mobile number must be 10 digits");
       return false;
     }
@@ -70,10 +73,11 @@ export default function RegisterForm() {
 
     try {
       const res = await axios.post("/api/auth/register", {
-        name: formData.name,
-        mobile: formData.mobile,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
         password: formData.password,
-        customerType: formData.customerType,
+        role: formData.role,
         address: formData.address,
       });
 
@@ -102,7 +106,7 @@ export default function RegisterForm() {
         objectFit="cover" // Scales the image to cover the entire container
         className="-z-10" // Pushes the image behind other content
       />
-      <Card className="max-w-md w-full bg-accent/60  shadow-lg">
+      <Card className="max-w-md md:max-w-2xl w-full bg-accent/60  shadow-lg">
         <CardHeader className="space-y-2">
           <CardTitle className="text-2xl font-semibold text-center">
             Create Account
@@ -118,67 +122,98 @@ export default function RegisterForm() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
+            <div className="grid md:grid-cols-2 gap-5">
+              <div className="space-y-2">
+                <Label htmlFor="name">First Name*</Label>
+                <Input
+                  id="firstName"
+                  name="firstName"
+                  type="text"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  placeholder="Enter your first name"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="name">Last Name*</Label>
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  type="text"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  placeholder="Enter your last name"
+                  required
+                />
+              </div>
+            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Enter your full name"
-                required
-              />
+            <div className="grid md:grid-cols-2 gap-5">
+
+              <div className="space-y-2">
+                <Label htmlFor="mobile">Mobile Number*</Label>
+                <Input
+                  id="mobile"
+                  name="mobile"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="Enter your mobile number"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="tel"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-5">
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password*</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  placeholder="Create a password"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password*</Label>
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  placeholder="Confirm your password"
+                  required
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="mobile">Mobile Number</Label>
-              <Input
-                id="mobile"
-                name="mobile"
-                type="tel"
-                value={formData.mobile}
-                onChange={handleChange}
-                placeholder="Enter your mobile number"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="Create a password"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                placeholder="Confirm your password"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="customerType">Account Type</Label>
+              <Label htmlFor="customerType">Role</Label>
               <Select
-                value={formData.customerType}
-                onValueChange={handleCustomerTypeChange}
+                value={formData.role}
+                onValueChange={handleRoleChange}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select your account type" />
+                  <SelectValue placeholder="Select your role type" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>

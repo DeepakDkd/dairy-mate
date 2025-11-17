@@ -88,10 +88,10 @@ model User {
   dairyId Int?
   role    Role
   status  String @default("active")
-
-  fullName String
+  firstName String
+  lastName String
   email    String  @unique
-  phone    String?
+  phone    String? @unique
   password String
   address  String?
 
