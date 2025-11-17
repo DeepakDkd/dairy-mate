@@ -20,11 +20,11 @@ enum Role {
   SELLER
   BUYER
 }
+
 enum PricingMode {
   FAT_LR
   MAWA
 }
-
 
 enum PaymentType {
   SELLER_PAYMENT
@@ -40,6 +40,11 @@ enum PaymentMethod {
 enum Shift {
   MORNING
   EVENING
+}
+enum StaffShift {
+  MORNING
+  EVENING
+  FULL_DAY
 }
 
 enum MilkType {
@@ -57,8 +62,8 @@ model Dairy {
   address String?
   phone   String?
 
-  pricingMode   PricingMode @default(FAT_LR)
-  mawaPricePerKg Float?     // only used for MAWA-type dairies, optional
+  pricingMode    PricingMode @default(FAT_LR)
+  mawaPricePerKg Float? // only used for MAWA-type dairies, optional
 
   // Relations
   owner         User                @relation("OwnerDairies", fields: [ownerId], references: [id])
@@ -85,7 +90,7 @@ model User {
 
   fullName String
   email    String  @unique
-  phone    String? 
+  phone    String?
   password String
   address  String?
 
@@ -118,6 +123,7 @@ model StaffProfile {
   userId  Int @unique
   dairyId Int
 
+  shift            StaffShift @default(FULL_DAY)
   position         String?
   salary           Float?
   joinDate         DateTime?
@@ -138,12 +144,19 @@ model StaffProfile {
 model MilkRate {
   id       Int      @id @default(autoincrement())
   dairyId  Int
-  milkType MilkType 
+  milkType MilkType
   fat      Float
   lr       Float
   price    Float
 
   dairy Dairy @relation(fields: [dairyId], references: [id])
+
+  //   Why?
+  // Because 99% of queries will be:
+  // findFirst({ where: { dairyId, fat, lr, milkType } })
+
+  // This removes full table scans.
+  @@index([dairyId, milkType, fat, lr])
 }
 
 // =========================
@@ -154,24 +167,22 @@ model SellerEntry {
   dairyId  Int
   sellerId Int
 
-  date        DateTime
-  shift       Shift @default(MORNING)
-  litres      Float @default(0)
+  date   DateTime
+  shift  Shift    @default(MORNING)
+  litres Float    @default(0)
 
   // For FAT_LR dairies
-  fat         Float?
-  lr          Float?          // optional now
-  milkType    MilkType @default(COW)
+  fat      Float?
+  lr       Float? // optional now
+  milkType MilkType @default(COW)
 
-  
   // For MAWA dairies
-  mawaPerLitreGrams Float?    // e.g. 180g mawa from 1 liter milk
-  mawaTotalGrams    Float?    // litres * mawaPerLitreGrams (can be stored or computed)
+  mawaPerLitreGrams Float? // e.g. 180g mawa from 1 liter milk
+  mawaTotalGrams    Float? // litres * mawaPerLitreGrams (can be stored or computed)
 
   // Common result fields
-  rate        Float           // final Rs per litre (for FAT_LR) OR effective Rs/litre (for MAWA)
-  totalAmount Float           // total payment for this entry
-
+  rate        Float // final Rs per litre (for FAT_LR) OR effective Rs/litre (for MAWA)
+  totalAmount Float // total payment for this entry
 
   dairy  Dairy @relation(fields: [dairyId], references: [id])
   seller User  @relation("SellerEntryUser", fields: [sellerId], references: [id])
@@ -188,9 +199,9 @@ model BuyerEntry {
   buyerId Int
 
   date        DateTime
-  shift       Shift @default(MORNING)
+  shift       Shift    @default(MORNING)
   fat         Float?
-  litres      Float @default(0)
+  litres      Float    @default(0)
   rate        Float
   totalAmount Float
 
