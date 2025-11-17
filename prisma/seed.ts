@@ -58,7 +58,6 @@ async function main() {
         create: {
           position: "Cashier",
           salary: 12000,
-          shift: "Morning",
           joinDate: new Date("2023-06-15"),
           dairyId: dairy1.id,
         },
