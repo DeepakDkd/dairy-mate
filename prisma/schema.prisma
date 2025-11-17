@@ -7,12 +7,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 // 👉 After schema change:
 // npx prisma migrate dev --name <your_change>
 // npx prisma migrate dev --name add_profile_photo
-
-
 
 // 👉 To inspect DB:
 // npx prisma studio
@@ -23,6 +20,11 @@ enum Role {
   SELLER
   BUYER
 }
+enum PricingMode {
+  FAT_LR
+  MAWA
+}
+
 
 enum PaymentType {
   SELLER_PAYMENT
@@ -35,21 +37,34 @@ enum PaymentMethod {
   BANK
 }
 
+enum Shift {
+  MORNING
+  EVENING
+}
+
+enum MilkType {
+  COW
+  BUFFALO
+}
+
 // =========================
 // DAIRY
 // =========================
 model Dairy {
-  id        Int    @id @default(autoincrement())
-  ownerId   Int
-  name      String
-  address   String?
-  phone     String?
+  id      Int     @id @default(autoincrement())
+  ownerId Int
+  name    String
+  address String?
+  phone   String?
+
+  pricingMode   PricingMode @default(FAT_LR)
+  mawaPricePerKg Float?     // only used for MAWA-type dairies, optional
 
   // Relations
-  owner     User   @relation("OwnerDairies", fields: [ownerId], references: [id])
-  users     User[] @relation("UserDairyRelation")
-  staff     StaffProfile[]
-  fatRates  FatRate[]
+  owner         User                @relation("OwnerDairies", fields: [ownerId], references: [id])
+  users         User[]              @relation("UserDairyRelation")
+  staff         StaffProfile[]
+  milkRates     MilkRate[]
   sellerEntries SellerEntry[]
   buyerEntries  BuyerEntry[]
   payments      Payment[]
@@ -63,18 +78,18 @@ model Dairy {
 // USER (Universal Users)
 // =========================
 model User {
-  id          Int     @id @default(autoincrement())
-  dairyId     Int?
-  role        Role
-  status      String  @default("active")
+  id      Int    @id @default(autoincrement())
+  dairyId Int?
+  role    Role
+  status  String @default("active")
 
-  fullName    String
-  email       String  @unique
-  phone       String? @unique
+  fullName String
+  email    String  @unique
+  phone    String? 
   password String
-  address     String?
+  address  String?
 
-  isActive    Boolean @default(true)
+  isActive Boolean @default(true)
 
   // Belongs to one Dairy
   dairy Dairy? @relation("UserDairyRelation", fields: [dairyId], references: [id])
@@ -99,17 +114,16 @@ model User {
 // STAFF PROFILE
 // =========================
 model StaffProfile {
-  id        Int @id @default(autoincrement())
-  userId    Int @unique
-  dairyId   Int
+  id      Int @id @default(autoincrement())
+  userId  Int @unique
+  dairyId Int
 
-  position  String?
-  salary    Float?
-  joinDate  DateTime?
-  shift     String?
+  position         String?
+  salary           Float?
+  joinDate         DateTime?
   emergencyContact String?
-  photoUrl  String?
-  notes     String?
+  photoUrl         String?
+  notes            String?
 
   user  User  @relation("StaffProfileRelation", fields: [userId], references: [id])
   dairy Dairy @relation(fields: [dairyId], references: [id])
@@ -121,30 +135,43 @@ model StaffProfile {
 // =========================
 // FAT RATE CHART
 // =========================
-model FatRate {
-  id          Int @id @default(autoincrement())
-  dairyId     Int
-  fatValue    Float
-  pricePerLtr Float
+model MilkRate {
+  id       Int      @id @default(autoincrement())
+  dairyId  Int
+  milkType MilkType 
+  fat      Float
+  lr       Float
+  price    Float
 
   dairy Dairy @relation(fields: [dairyId], references: [id])
-  updatedAt DateTime @default(now())
 }
 
 // =========================
 // SELLER ENTRIES
 // =========================
 model SellerEntry {
-  id           Int @id @default(autoincrement())
-  dairyId      Int
-  sellerId     Int
+  id       Int @id @default(autoincrement())
+  dairyId  Int
+  sellerId Int
 
-  date         DateTime
-  morningLtrs  Float @default(0)
-  eveningLtrs  Float @default(0)
-  fat          Float
-  rate         Float
-  totalAmount  Float
+  date        DateTime
+  shift       Shift @default(MORNING)
+  litres      Float @default(0)
+
+  // For FAT_LR dairies
+  fat         Float?
+  lr          Float?          // optional now
+  milkType    MilkType @default(COW)
+
+  
+  // For MAWA dairies
+  mawaPerLitreGrams Float?    // e.g. 180g mawa from 1 liter milk
+  mawaTotalGrams    Float?    // litres * mawaPerLitreGrams (can be stored or computed)
+
+  // Common result fields
+  rate        Float           // final Rs per litre (for FAT_LR) OR effective Rs/litre (for MAWA)
+  totalAmount Float           // total payment for this entry
+
 
   dairy  Dairy @relation(fields: [dairyId], references: [id])
   seller User  @relation("SellerEntryUser", fields: [sellerId], references: [id])
@@ -156,15 +183,16 @@ model SellerEntry {
 // BUYER ENTRIES
 // =========================
 model BuyerEntry {
-  id           Int @id @default(autoincrement())
-  dairyId      Int
-  buyerId      Int
+  id      Int @id @default(autoincrement())
+  dairyId Int
+  buyerId Int
 
-  date         DateTime
-  morningLtrs  Float @default(0)
-  eveningLtrs  Float @default(0)
-  rate         Float
-  totalAmount  Float
+  date        DateTime
+  shift       Shift @default(MORNING)
+  fat         Float?
+  litres      Float @default(0)
+  rate        Float
+  totalAmount Float
 
   dairy Dairy @relation(fields: [dairyId], references: [id])
   buyer User  @relation("BuyerEntryUser", fields: [buyerId], references: [id])
@@ -176,15 +204,15 @@ model BuyerEntry {
 // PAYMENTS
 // =========================
 model Payment {
-  id        Int @id @default(autoincrement())
-  dairyId   Int
-  userId    Int
+  id      Int @id @default(autoincrement())
+  dairyId Int
+  userId  Int
 
-  amount    Float
-  type      PaymentType
-  method    PaymentMethod @default(CASH)
-  notes     String?
-  date      DateTime
+  amount Float
+  type   PaymentType
+  method PaymentMethod @default(CASH)
+  notes  String?
+  date   DateTime
 
   dairy Dairy @relation(fields: [dairyId], references: [id])
   user  User  @relation(fields: [userId], references: [id])
@@ -196,15 +224,15 @@ model Payment {
 // SUBSCRIPTION PLANS
 // =========================
 model SubscriptionPlan {
-  id           Int @id @default(autoincrement())
-  name         String
-  price        Float
+  id    Int    @id @default(autoincrement())
+  name  String
+  price Float
 
   maxSellers   Int?
   maxBuyers    Int?
   maxStaff     Int?
   maxEntries   Int?
-  durationDays Int @default(30)
+  durationDays Int  @default(30)
 
   subscriptions DairySubscription[]
 }
@@ -213,101 +241,14 @@ model SubscriptionPlan {
 // DAIRY SUBSCRIPTIONS
 // =========================
 model DairySubscription {
-  id        Int @id @default(autoincrement())
-  dairyId   Int
-  planId    Int
+  id      Int @id @default(autoincrement())
+  dairyId Int
+  planId  Int
 
   startDate DateTime
   endDate   DateTime
-  isActive  Boolean @default(true)
+  isActive  Boolean  @default(true)
 
-  dairy Dairy @relation(fields: [dairyId], references: [id])
+  dairy Dairy            @relation(fields: [dairyId], references: [id])
   plan  SubscriptionPlan @relation(fields: [planId], references: [id])
 }
-
-// model User {
-//   id              String                 @id @default(cuid())
-//   name            String?
-//   mobile          String                 @unique
-//   password        String
-//   role            Role                   @default(CUSTOMER)
-//   customerType    CustomerType           @default(BUYER) // or SELLER
-//   balanceAmount   Float                  @default(0)  // + means advance, - means pending
-//   address         String?
-//   note            String?
-//   createdAt       DateTime               @default(now())
-//   updatedAt       DateTime               @updatedAt
-//   milkEntries     MilkEntry[]
-//   transactions    CustomerTransaction[]
-//   sessions        Session[]
-// }
-
-// model MilkEntry {
-//   id                 String   @id @default(cuid())
-//   date               DateTime @default(now())
-//   shift              Shift
-//   remarks            String?
-//   milkQuantity       Float
-//   mawaWeightPerLitre Float
-//   ratePerLitre       Float
-//   totalAmount        Float
-//   customerId         String
-
-//   createdAt       DateTime               @default(now())
-//   updatedAt       DateTime               @updatedAt
-//   customer           User     @relation(fields: [customerId], references: [id])
-//     @@index([customerId, date])
-// }
-// model CustomerTransaction {
-//   id              String          @id @default(cuid())
-//   date            DateTime        @default(now())
-//   remarks         String?
-//   milkQuantity    Float?
-//   ratePerLitre    Float?
-//   totalAmount     Float?          @default(0)
-//   paidAmount      Float?          @default(0)
-//   transactionType TransactionType @default(MILK_ENTRY)
-//   balanceAfter    Float            // running balance after this transaction
-//   customer        User             @relation(fields: [customerId], references: [id])
-//   customerId      String
-//   createdAt       DateTime               @default(now())
-//   updatedAt       DateTime               @updatedAt
-//     @@index([customerId, date])
-// }
-
-
-// model Session {
-//   id           String   @id @default(cuid())
-//   sessionToken String   @unique
-//   userId       String
-//   expires      DateTime
-//   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-// }
-
-// model VerificationToken {
-//   identifier String
-//   token      String   @unique
-//   expires    DateTime
-
-//   @@unique([identifier, token])
-// }
-
-// enum Shift {
-//   MORNING
-//   EVENING
-// }
-
-// enum Role {
-//   ADMIN
-//   CUSTOMER
-// }
-
-// enum CustomerType {
-//   BUYER
-//   SELLER
-// }
-
-// enum TransactionType {
-//   MILK_ENTRY    // buying/selling milk
-//   PAYMENT       // payment/advance entry
-// }

@@ -125,12 +125,12 @@ async function main() {
   // ================================================
   // 6. CREATE FAT RATE CHART
   // ================================================
-  await prisma.fatRate.createMany({
+  await prisma.milkRate.createMany({
     data: [
-      { dairyId: dairy1.id, fatValue: 8.5, pricePerLtr: 48 },
-      { dairyId: dairy1.id, fatValue: 9.0, pricePerLtr: 52 },
-      { dairyId: dairy1.id, fatValue: 10.0, pricePerLtr: 60 },
-      { dairyId: dairy1.id, fatValue: 11.0, pricePerLtr: 72 },
+      { dairyId: dairy1.id,milkType:"BUFFALO", fat: 8.5,lr: 26, price: 48 },
+      { dairyId: dairy1.id,milkType:"BUFFALO", fat: 9.0,lr: 26, price: 52 },
+      { dairyId: dairy1.id,milkType:"BUFFALO", fat: 10.0,lr: 26, price: 60 },
+      { dairyId: dairy1.id,milkType:"BUFFALO", fat: 11.0,lr: 26, price: 72 },
     ],
   });
 
@@ -145,8 +145,7 @@ async function main() {
         dairyId: dairy1.id,
         sellerId: seller1.id,
         date: new Date(),
-        morningLtrs: 5,
-        eveningLtrs: 4,
+        litres: 4,
         fat: 10.0,
         rate: 60,
         totalAmount: 540,
@@ -155,8 +154,7 @@ async function main() {
         dairyId: dairy1.id,
         sellerId: seller2.id,
         date: new Date(),
-        morningLtrs: 6.5,
-        eveningLtrs: 3,
+        litres: 6.5,
         fat: 9.0,
         rate: 52,
         totalAmount: 494,
@@ -175,8 +173,8 @@ async function main() {
         dairyId: dairy1.id,
         buyerId: buyer1.id,
         date: new Date(),
-        morningLtrs: 1,
-        eveningLtrs: 1.5,
+
+        litres: 1.5,
         rate: 60,
         totalAmount: 150,
       },
@@ -184,8 +182,7 @@ async function main() {
         dairyId: dairy1.id,
         buyerId: buyer2.id,
         date: new Date(),
-        morningLtrs: 2,
-        eveningLtrs: 2,
+        litres: 2,
         rate: 60,
         totalAmount: 240,
       },
