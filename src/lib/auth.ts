@@ -5,13 +5,6 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma as db } from "@/app/lib/prisma";
 import bcrypt from "bcryptjs";
 
-interface User{
-  id: string;
-  role: string;
-  firstName: string;
-  lastName: string;
-  mobile: string;
-}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db),
@@ -60,6 +53,7 @@ export const authOptions: NextAuthOptions = {
           lastName: user.lastName,
           role: user.role,
           phone: user.phone,
+          email: user.email,
         };
       },
     }),
@@ -67,29 +61,24 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }:any) {
       if (user) {
-        return {
-          ...token,
-          id: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.role,
-          phone: user.phone,
-        };
+        token.id = user.id;
+        token.firstName = user.firstName;
+        token.lastName = user.lastName;
+        token.role = user.role;
+        token.phone = user.phone;
+        token.email = user.email;
+        return token;
       }
       return token;
     },
     async session({ session, token }) {
-      return {
-        ...session,
-        user: {
-          ...session.user,
-          id: token.id as string,
-          firstName: token.firstName as string,
-          lastName: token.lastName as string,
-          role: token.role as string,
-          phone: token.phone as string,
-        },
-      };
+      session.user.id = token.id ;
+      session.user.firstName = token.firstName;
+      session.user.lastName = token.lastName ;
+      session.user.role = token.role ;
+      session.user.phone = token.phone ;
+      session.user.email = token.email;
+      return session;
     },
   },
 };

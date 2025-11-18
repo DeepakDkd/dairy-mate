@@ -30,7 +30,7 @@ export function ChartsSection({ timeFilter }: ChartsSectionProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Milk Collection Trend */}
-      <Card className="bg-white shadow-md rounded-2xl border border-gray-100">
+      <Card className="bg-white--- shadow-md rounded-2xl border border-gray-100---">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Milk Collection Trend</CardTitle>
           <p className="text-sm text-muted-foreground mt-1">Daily litres collected this month</p>
@@ -55,7 +55,7 @@ export function ChartsSection({ timeFilter }: ChartsSectionProps) {
       </Card>
 
       {/* Revenue Overview */}
-      <Card className="bg-white shadow-md rounded-2xl border border-gray-100">
+      <Card className="bg-white--- shadow-md rounded-2xl border border-gray-100---">
         <CardHeader>
           <CardTitle className="text-lg font-semibold">Revenue Overview</CardTitle>
           <p className="text-sm text-muted-foreground mt-1">Compare paid vs pending per week</p>

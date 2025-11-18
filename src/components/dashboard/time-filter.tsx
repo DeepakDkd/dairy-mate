@@ -12,7 +12,7 @@ export function TimeFilter({ value, onChange }: TimeFilterProps) {
     <div className="flex gap-4 items-center">
       <label className="text-sm font-medium text-foreground">Filter by:</label>
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-40 bg-white">
+        <SelectTrigger className="w-40 bg-white---">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

@@ -1,5 +1,5 @@
 "use client"
-
+import { signOut } from "next-auth/react";
 import { Search, Bell, LogOut } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ModeToggle } from "../theme/modeToggle"
@@ -43,7 +43,7 @@ export function Header() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem>Profile</DropdownMenuItem>
               <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive flex items-center gap-2">
+              <DropdownMenuItem className="text-destructive flex items-center gap-2" onClick={() => signOut()}>
                 <LogOut size={16} />
                 Logout
               </DropdownMenuItem>

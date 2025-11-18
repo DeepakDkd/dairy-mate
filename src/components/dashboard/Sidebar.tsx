@@ -21,12 +21,12 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`bg-white--- border-r border-border transition-all duration-300 ${
+      className={`bg-white--- border-r border-border--- transition-all duration-300 ${
         isCollapsed ? "w-20" : "w-64"
       } flex flex-col h-screen sticky top-0`}
     >
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      <div className="flex items-center justify-between p-4 border-b border-border---">
         {!isCollapsed && (
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-[#008ED6] rounded-lg flex items-center justify-center">
@@ -37,7 +37,7 @@ export function Sidebar() {
         )}
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="p-1 hover:bg-gray-100 rounded-md transition-colors"
+          className="p-1 cursor-pointer dark:hover:bg-gray-700 rounded-md transition-colors"
         >
           {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
         </button>
@@ -53,7 +53,7 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                isActive ? "bg-[#008ED6] text-white" : "text-foreground hover:bg-gray-100"
+                isActive ? "bg-[#008ED6] text-white " : "text-foreground--- dark:hover:bg-gray-800--- hover:bg-gray-400---"
               }`}
               title={isCollapsed ? item.label : ""}
             >

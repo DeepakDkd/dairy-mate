@@ -66,7 +66,7 @@ export function RecentTransactionsTable({ timeFilter }: TransactionsTableProps) 
   ]
 
   return (
-    <Card className="bg-white shadow-md rounded-2xl border border-gray-100">
+    <Card className="bg-white--- shadow-md rounded-2xl border border-gray-100---">
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Recent Transactions</CardTitle>
       </CardHeader>
@@ -74,7 +74,7 @@ export function RecentTransactionsTable({ timeFilter }: TransactionsTableProps) 
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="border-b border-gray-200 hover:bg-transparent">
+              <TableRow className="border-b border-gray-200--- hover:bg-transparent---">
                 <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Customer Name</TableHead>
                 <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Type</TableHead>
                 <TableHead className="text-xs font-semibold text-muted-foreground uppercase text-right">
@@ -89,7 +89,7 @@ export function RecentTransactionsTable({ timeFilter }: TransactionsTableProps) 
             </TableHeader>
             <TableBody>
               {transactions.map((transaction) => (
-                <TableRow key={transaction.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                <TableRow key={transaction.id} className="border-b border-gray-100--- hover:bg-gray-50--- transition-colors">
                   <TableCell className="font-medium text-foreground">{transaction.customerName}</TableCell>
                   <TableCell>
                     <Badge

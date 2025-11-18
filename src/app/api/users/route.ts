@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { prisma as db  } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
@@ -11,20 +11,20 @@ export async function GET(request: Request) {
   }
 
   try {
-    if (session.user.role !== "ADMIN") {
+    if (session.user.role !== "OWNER") {
       return new NextResponse("Forbidden", { status: 403 });
     }
 
     const users = await db.user.findMany({
       select: {
         id: true,
-        name: true,
-        mobile: true,
-        role: true,
-        customerType: true,
-        balanceAmount: true,
-        address: true,
-        createdAt: true,
+        // name: true,
+        // mobile: true,
+        // role: true,
+        // customerType: true,
+        // balanceAmount: true,
+        // address: true,
+        // createdAt: true,
       },
     });
 
