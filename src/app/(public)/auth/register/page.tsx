@@ -77,6 +77,7 @@ export default function RegisterForm() {
         lastName: formData.lastName,
         phone: formData.phone,
         password: formData.password,
+        email:formData.email,
         role: formData.role,
         address: formData.address,
       });
@@ -152,10 +153,10 @@ export default function RegisterForm() {
             <div className="grid md:grid-cols-2 gap-5">
 
               <div className="space-y-2">
-                <Label htmlFor="mobile">Mobile Number*</Label>
+                <Label htmlFor="phone">Mobile Number*</Label>
                 <Input
-                  id="mobile"
-                  name="mobile"
+                  id="phone"
+                  name="phone"
                   type="tel"
                   value={formData.phone}
                   onChange={handleChange}
@@ -217,7 +218,7 @@ export default function RegisterForm() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    <SelectItem value="ADMIN">Admin</SelectItem>
+                    <SelectItem value="OWNER">Admin</SelectItem>
                     <SelectItem value="BUYER">Buyer</SelectItem>
                     <SelectItem value="SELLER">Seller</SelectItem>
                   </SelectGroup>

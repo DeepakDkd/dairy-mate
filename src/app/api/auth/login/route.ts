@@ -5,17 +5,18 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { mobile, password } = body;
+    const { phone, password } = body;
+    console.log("Received login data:", body);
 
-    if (!mobile || !password) {
+    if (!phone || !password) {
       return NextResponse.json(
-        { message: "Mobile and password are required" },
+        { message: "Mobile number and password are required" },
         { status: 400 }
       );
     }
 
     const user = await prisma.user.findUnique({
-      where: { mobile },
+      where: { phone },
     });
 
     if (!user) {

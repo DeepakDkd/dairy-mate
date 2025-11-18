@@ -3,8 +3,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
+import { useState } from "react"
+import { AddPaymentDialog } from "./add-payment-dialog"
 
 export function SellerTransactionsTable() {
+
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false)
   // Mock data
   const transactions = [
     {
@@ -46,46 +52,56 @@ export function SellerTransactionsTable() {
   ]
 
   return (
-    <Card className="shadow-sm border-0">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold">All Transactions</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent border-b">
-                <TableHead className="font-semibold">Date</TableHead>
-                <TableHead className="font-semibold">Type</TableHead>
-                <TableHead className="text-right font-semibold">Paid Amount</TableHead>
-                <TableHead className="text-right font-semibold">Total Amount</TableHead>
-                <TableHead className="text-right font-semibold">Balance After</TableHead>
-                <TableHead className="font-semibold">Note</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {transactions.map((transaction) => (
-                <TableRow key={transaction.id} className="hover:bg-secondary/50">
-                  <TableCell className="font-medium">{transaction.date}</TableCell>
-                  <TableCell>
-                    {transaction.type === "PAYMENT" ? (
-                      <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Payment</Badge>
-                    ) : (
-                      <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Milk Entry</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {transaction.paidAmount ? `₹${transaction.paidAmount}` : "-"}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">₹{transaction.totalAmount}</TableCell>
-                  <TableCell className="text-right font-semibold text-primary">₹{transaction.balanceAfter}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{transaction.note}</TableCell>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-bold font-montserrat text-foreground">Transactions</h2>
+        <Button onClick={() => setShowPaymentDialog(true)} variant="outline" className="gap-2">
+          <Plus className="w-4 h-4" />
+          Add Payment
+        </Button>
+      </div>
+      <Card className="shadow-sm border-0">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold">All Transactions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent border-b">
+                  <TableHead className="font-semibold">Date</TableHead>
+                  <TableHead className="font-semibold">Type</TableHead>
+                  <TableHead className="text-right font-semibold">Paid Amount</TableHead>
+                  <TableHead className="text-right font-semibold">Total Amount</TableHead>
+                  <TableHead className="text-right font-semibold">Balance After</TableHead>
+                  <TableHead className="font-semibold">Note</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+              </TableHeader>
+              <TableBody>
+                {transactions.map((transaction) => (
+                  <TableRow key={transaction.id} className="hover:bg-secondary/50">
+                    <TableCell className="font-medium">{transaction.date}</TableCell>
+                    <TableCell>
+                      {transaction.type === "PAYMENT" ? (
+                        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Payment</Badge>
+                      ) : (
+                        <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Milk Entry</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {transaction.paidAmount ? `₹${transaction.paidAmount}` : "-"}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">₹{transaction.totalAmount}</TableCell>
+                    <TableCell className="text-right font-semibold text-primary">₹{transaction.balanceAfter}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{transaction.note}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+      <AddPaymentDialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog} />
+    </div>
   )
 }

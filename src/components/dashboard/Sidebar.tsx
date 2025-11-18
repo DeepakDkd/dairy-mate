@@ -21,7 +21,7 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`bg-white border-r border-border transition-all duration-300 ${
+      className={`bg-white--- border-r border-border transition-all duration-300 ${
         isCollapsed ? "w-20" : "w-64"
       } flex flex-col h-screen sticky top-0`}
     >

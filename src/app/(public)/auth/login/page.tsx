@@ -12,7 +12,7 @@ import { Loader2 } from "lucide-react";
 import Image from "next/image";
 
 export default function LoginForm() {
-  const [mobile, setMobile] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -23,10 +23,12 @@ export default function LoginForm() {
     setError("");
     setLoading(true);
 
+    
+
     try {
       const res = await signIn("credentials", {
         redirect: false,
-        mobile,
+        phone,
         password,
       });
 
@@ -82,8 +84,8 @@ export default function LoginForm() {
               <Input
                 id="mobile"
                 type="text"
-                value={mobile}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMobile(e.target.value)}
+                value={phone}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
                 placeholder="Enter your mobile number"
                 required
               />

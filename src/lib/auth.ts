@@ -1,8 +1,17 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import { db } from "@/lib/db";
+// import { db } from "@/lib/db";
+import { prisma as db } from "@/app/lib/prisma";
 import bcrypt from "bcryptjs";
+
+interface User{
+  id: string;
+  role: string;
+  firstName: string;
+  lastName: string;
+  mobile: string;
+}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db),
@@ -16,20 +25,21 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "credentials",
       credentials: {
-        mobile: { label: "Mobile", type: "text" },
+        phone: { label: "Phone", type: "text" },
         password: { label: "Password", type: "password" },
       },
       // @ts-ignore
       async authorize(credentials) {
-        if (!credentials?.mobile || !credentials?.password) {
+        if (!credentials?.phone || !credentials?.password) {
           throw new Error("Invalid credentials");
         }
 
         const user = await db.user.findUnique({
           where: {
-            mobile: credentials.mobile,
+            phone: credentials.phone,
           },
         });
+        console.log("Auth user:", user);
 
         if (!user) {
           throw new Error("No user found");
@@ -46,25 +56,24 @@ export const authOptions: NextAuthOptions = {
 
         return {
           id: user.id,
-          name: user.name,
+          firstName: user.firstName,
+          lastName: user.lastName,
           role: user.role,
-          mobile: user.mobile,
-          customerType: user.customerType,
+          phone: user.phone,
         };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }:any) {
       if (user) {
         return {
           ...token,
           id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
           role: user.role,
-          name: user.name,
-          mobile: user.mobile,
-          customerType: user.customerType,
-          balanceAmount: user.balanceAmount,
+          phone: user.phone,
         };
       }
       return token;
@@ -74,12 +83,11 @@ export const authOptions: NextAuthOptions = {
         ...session,
         user: {
           ...session.user,
-          id: token.id,
-          role: token.role,
-          name: token.name,
-          mobile: token.mobile,
-          balanceAmount: token.balanceAmount,
-          customerType: token.customerType,
+          id: token.id as string,
+          firstName: token.firstName as string,
+          lastName: token.lastName as string,
+          role: token.role as string,
+          phone: token.phone as string,
         },
       };
     },

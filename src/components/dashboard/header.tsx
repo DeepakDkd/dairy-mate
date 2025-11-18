@@ -2,10 +2,11 @@
 
 import { Search, Bell, LogOut } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { ModeToggle } from "../theme/modeToggle"
 
 export function Header() {
   return (
-    <header className="bg-white border-b border-border px-6 py-4 sticky top-0 z-10">
+    <header className="bg-white--- border-b border-border px-6 py-4 sticky top-0 z-10">
       <div className="flex items-center justify-between">
         {/* Search Bar */}
         <div className="flex-1 max-w-md">
@@ -21,6 +22,8 @@ export function Header() {
 
         {/* Right Section */}
         <div className="flex items-center gap-4 ml-6">
+          {/* Theme */}
+          <ModeToggle />
           {/* Notification Bell */}
           <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <Bell size={20} />

@@ -1,19 +1,27 @@
 "use client"
 
 import type React from "react"
-
+import { z } from "zod";
 import { useState } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 
 interface AddMilkEntryDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
+
+const milkEntrySchema = z.object({
+  quantity: z.number().min(0, "Quantity must be a positive number"),
+  mawaWeight: z.number().min(0, "Mawa weight must be a positive number"),
+  ratePerLitre: z.number().min(0, "Rate per litre must be a positive number"),
+  shift: z.enum(["Morning", "Evening"]),
+  remarks: z.string().optional(),
+})
 
 export function AddMilkEntryDialog({ open, onOpenChange }: AddMilkEntryDialogProps) {
   const [formData, setFormData] = useState({
@@ -47,7 +55,6 @@ export function AddMilkEntryDialog({ open, onOpenChange }: AddMilkEntryDialogPro
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Milk Quantity */}
           <div className="space-y-2">
             <Label htmlFor="quantity" className="font-medium">
               Milk Quantity (Litres) *
@@ -60,9 +67,10 @@ export function AddMilkEntryDialog({ open, onOpenChange }: AddMilkEntryDialogPro
               onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
               required
             />
+            {formData.quantity && milkEntrySchema.shape.quantity.safeParse(Number(formData.quantity)).success === false && (
+              <p className="text-red-500 text-sm">Quantity must be a positive number</p>
+            )}
           </div>
-
-          {/* Mawa Weight */}
           <div className="space-y-2">
             <Label htmlFor="mawa" className="font-medium">
               Mawa Weight Per Litre *
@@ -78,7 +86,6 @@ export function AddMilkEntryDialog({ open, onOpenChange }: AddMilkEntryDialogPro
             />
           </div>
 
-          {/* Rate Per Litre */}
           <div className="space-y-2">
             <Label htmlFor="rate" className="font-medium">
               Rate Per Litre (₹) *
@@ -92,8 +99,6 @@ export function AddMilkEntryDialog({ open, onOpenChange }: AddMilkEntryDialogPro
               required
             />
           </div>
-
-          {/* Shift Selection */}
           <div className="space-y-2">
             <Label htmlFor="shift" className="font-medium">
               Shift *
@@ -109,7 +114,6 @@ export function AddMilkEntryDialog({ open, onOpenChange }: AddMilkEntryDialogPro
             </Select>
           </div>
 
-          {/* Remarks */}
           <div className="space-y-2">
             <Label htmlFor="remarks" className="font-medium">
               Remarks (Optional)
@@ -118,12 +122,11 @@ export function AddMilkEntryDialog({ open, onOpenChange }: AddMilkEntryDialogPro
               id="remarks"
               placeholder="Add any remarks or notes"
               value={formData.remarks}
-              onChange={(e:any) => setFormData({ ...formData, remarks: e.target.value })}
+              onChange={(e: any) => setFormData({ ...formData, remarks: e.target.value })}
               className="resize-none"
             />
           </div>
 
-          {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
               Cancel
