@@ -17,7 +17,7 @@ export function MonthlyConsumptionChart() {
   ]
 
   return (
-    <Card className="bg-white shadow-md rounded-2xl border border-gray-100">
+    <Card className="bg-white--- shadow-md rounded-2xl border border-gray-100---">
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Monthly Milk Consumption</CardTitle>
         <p className="text-sm text-muted-foreground mt-1">Daily litres consumed this month</p>

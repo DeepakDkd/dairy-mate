@@ -49,7 +49,7 @@ export function BuyerPaymentsTable() {
   ]
 
   return (
-    <Card className="bg-white shadow-md rounded-2xl border border-gray-100">
+    <Card className="bg-white--- shadow-md rounded-2xl border border-gray-100---">
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Payment History</CardTitle>
         <p className="text-sm text-muted-foreground mt-1">Recent payments</p>

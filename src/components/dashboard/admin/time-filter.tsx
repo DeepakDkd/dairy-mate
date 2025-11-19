@@ -8,6 +8,7 @@ interface TimeFilterProps {
 }
 
 export function TimeFilter({ value, onChange }: TimeFilterProps) {
+  
   return (
     <div className="flex gap-4 items-center">
       <label className="text-sm font-medium text-foreground">Filter by:</label>

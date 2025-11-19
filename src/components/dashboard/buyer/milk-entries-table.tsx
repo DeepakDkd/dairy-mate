@@ -108,7 +108,7 @@ export function BuyerMilkEntriesTable() {
   ]
 
   return (
-    <Card className="bg-white shadow-md rounded-2xl border border-gray-100">
+    <Card className="bg-white--- shadow-md rounded-2xl border border-gray-100---">
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Recent Milk Entries</CardTitle>
         <p className="text-sm text-muted-foreground mt-1">Last 10 entries (newest first)</p>
@@ -117,7 +117,7 @@ export function BuyerMilkEntriesTable() {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="border-b border-gray-200 hover:bg-transparent">
+              <TableRow className="border-b border-gray-200--- hover:bg-transparent">
                 <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Date</TableHead>
                 <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Shift</TableHead>
                 <TableHead className="text-xs font-semibold text-muted-foreground uppercase text-right">
@@ -134,7 +134,7 @@ export function BuyerMilkEntriesTable() {
             </TableHeader>
             <TableBody>
               {milkEntries.map((entry) => (
-                <TableRow key={entry.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                <TableRow key={entry.id} className="border-b border-gray-100--- hover:bg-gray-50--- transition-colors">
                   <TableCell className="text-sm text-foreground">
                     {new Date(entry.date).toLocaleDateString("en-IN")}
                   </TableCell>

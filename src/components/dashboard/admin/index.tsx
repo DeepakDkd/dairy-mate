@@ -5,23 +5,15 @@ import { TimeFilter } from "./time-filter";
 import { OverviewCards } from "./overview-cards";
 import { ChartsSection } from "./charts-section";
 import { RecentTransactionsTable } from "./transactions-table";
-
-
-// this page should be server component
-
+import { AdminDashboardProps } from "@/types/admin-dashboard";
 
 
 
 
-
-
-
-
-
-
-function AdminDashboard() {
+ function AdminDashboard({ user }: AdminDashboardProps) {
    const [timeFilter, setTimeFilter] = useState("This Month")
-  const greeting = useGreeting()
+  const greeting = useGreeting(user)
+  console.log("user in AdminDashboard:", user);
   return (
      <div className="p-6 space-y-6">
       {/* Greeting Section */}
