@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import Image from "next/image";
 
-// UI Components
 import {
   Card,
   CardContent,
