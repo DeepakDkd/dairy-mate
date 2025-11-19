@@ -3,13 +3,16 @@ import { SellerOverviewCards } from "@/components/dashboard/seller/overview-card
 import { SellerMilkTable } from "@/components/dashboard/seller/milk-table"
 import { SellerTransactionsTable } from "@/components/dashboard/seller/transactions-table"
 import Header from "@/components/dashboard/seller/header"
+import { getServerActionUser } from "@/fetchers/user/action";
 
-export default function SellerDashboardPage() {
+export default async function SellerDashboardPage() {
+
+  const sessionUser =  await getServerActionUser();
 
   return (
     <div className="p-6 space-y-6  ">
       {/* Header Section */}
-      <Header />
+      <Header userId={sessionUser?.id} />
 
       {/* Overview Cards */}
       <SellerOverviewCards />

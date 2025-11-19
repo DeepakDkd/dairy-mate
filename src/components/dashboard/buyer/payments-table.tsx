@@ -53,7 +53,7 @@ export function BuyerPaymentsTable() {
       <CardHeader>
         <CardTitle className="text-lg font-semibold">Payment History</CardTitle>
         <p className="text-sm text-muted-foreground mt-1">Recent payments</p>
-      </CardHeader>
+      </CardHeader> 
       <CardContent>
         <div className="overflow-x-auto">
           <Table>

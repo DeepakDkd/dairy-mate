@@ -9,10 +9,12 @@ import { useForm } from "react-hook-form"
 import toast from "react-hot-toast"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
+import axios from "axios"
 
 interface AddSellerDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  userId?: number | undefined
 }
 
 // Validation Schema
@@ -28,7 +30,7 @@ const SellerSchema = z.object({
 
 type SellerFormData = z.infer<typeof SellerSchema>
 
-export default function AddSellerDialog({ open, onOpenChange }: AddSellerDialogProps) {
+export default function AddSellerDialog({ open, onOpenChange,userId }: AddSellerDialogProps) {
   const {
     register,
     handleSubmit,
@@ -47,6 +49,11 @@ export default function AddSellerDialog({ open, onOpenChange }: AddSellerDialogP
         ...data,
         role: "SELLER", // auto
       }
+
+      const res = await axios.post("/api/sellers", {
+        ...finalData,
+        createdById: userId
+      });
 
       console.log("Submitting:", finalData)
 

@@ -1,265 +1,262 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import Link from "next/link";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import Image from "next/image";
 
-export default function RegisterForm() {
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    phone: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    role: "", // BUYER or SELLER
-    address: "",
+// UI Components
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
+import Link from "next/link";
+
+
+// -------------------------------------
+// ZOD SCHEMA
+// -------------------------------------
+const RegisterSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+
+  phone: z
+    .string()
+    .min(10, "Phone must be 10 digits")
+    .max(10, "Phone must be 10 digits"),
+
+  email: z.string().email("Invalid email"),
+
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string(),
+
+  role: z.enum(["OWNER", "SELLER", "BUYER"], {
+    message: "Select a valid role",
+  }),
+
+  address: z.string().min(1, "Address is required"),
+
+  // Dairy Details (only required for owner)
+  dairyName: z.string().optional(),
+  dairyAddress: z.string().optional(),
+  dairyEmail: z.string().optional(),
+  dairyPhone: z.string().optional(),
+  dairyMode: z.enum(["FAT_LR", "MAWA"]).optional(),
+})
+  .refine((data) => data.password === data.confirmPassword, {
+    path: ["confirmPassword"],
+    message: "Passwords do not match",
+  })
+  .refine((data) => {
+    if (data.role === "OWNER" && !data.dairyName) return false;
+    return true;
+  }, {
+    message: "Dairy name is required for owners",
+    path: ["dairyName"],
+  })
+  .refine((data) => {
+    if (data.role === "OWNER" && !data.dairyMode) return false;
+    return true;
+  }, {
+    message: "Select dairy pricing mode",
+    path: ["dairyMode"],
   });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+
+
+type RegisterFormType = z.infer<typeof RegisterSchema>;
+
+
+export default function RegisterForm() {
   const router = useRouter();
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterFormType>({
+    resolver: zodResolver(RegisterSchema),
+    defaultValues: {
+      role: undefined,
+    }, mode: "onBlur",
+    reValidateMode: "onBlur"
 
-  const handleRoleChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, role: value }));
-  };
-  
+  });
 
-  const validateForm = () => {
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      return false;
-    }
-    if (formData.phone.length !== 10) {
-      setError("Mobile number must be 10 digits");
-      return false;
-    }
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters");
-      return false;
-    }
-    return true;
-  };
-
-  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
-
-    if (!validateForm()) return;
-
-    setLoading(true);
-
+  const role = watch("role");
+  const onSubmit = async (data: RegisterFormType) => {
     try {
-      const res = await axios.post("/api/auth/register", {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: formData.phone,
-        password: formData.password,
-        email:formData.email,
-        role: formData.role,
-        address: formData.address,
-      });
+      const res = await axios.post("/api/auth/register", data);
 
-      const data = res.data;
-
-      if (res.status !== 201) {
-        throw new Error(data.message || "Registration failed");
+      if (res.status === 201) {
+        router.push("/auth/login?registered=true");
       }
-
-      // Redirect to login page after successful registration
-      router.push("/auth/login?registered=true");
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
+      alert(err?.response?.data?.message || "Something went wrong");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 font-montserrat bg-gray-50--- overflow-y-scroll relative no-scrollbar">
-      <Image
-        src="/login/bg1.jpg" // Path to your image in the public folder
-        alt="Background Cover"
-        layout="fill" // Ensures the image fills the parent container
-        objectFit="cover" // Scales the image to cover the entire container
-        className="-z-10" // Pushes the image behind other content
-      />
-      <Card className="max-w-md md:max-w-2xl w-full bg-accent/60  shadow-lg">
-        <CardHeader className="space-y-2">
-          <CardTitle className="text-2xl font-semibold text-center">
-            Create Account
-          </CardTitle>
+    <div className="min-h-screen flex items-center justify-center p-4 font-montserrat relative">
+      {/* <Image
+        src="/login/bg1.jpg"
+        alt="background"
+        fill
+        className="object-cover -z-10"
+      /> */}
+
+      <Card className="max-w-md md:max-w-2xl w-full bg-accent/20 shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-2xl text-center">Create Account</CardTitle>
           <CardDescription className="text-center">
             Register your Dairy Mate account
           </CardDescription>
         </CardHeader>
+
         <CardContent>
-          <form onSubmit={handleRegister} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" >
+
             <div className="grid md:grid-cols-2 gap-5">
-              <div className="space-y-2">
-                <Label htmlFor="name">First Name*</Label>
-                <Input
-                  id="firstName"
-                  name="firstName"
-                  type="text"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  placeholder="Enter your first name"
-                  required
-                />
+              <div>
+                <Label>First Name*</Label>
+                <Input  {...register("firstName")} />
+                {errors.firstName && <p className="text-red-500 text-xs">{errors.firstName.message}</p>}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="name">Last Name*</Label>
-                <Input
-                  id="lastName"
-                  name="lastName"
-                  type="text"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  placeholder="Enter your last name"
-                  required
-                />
+              <div>
+                <Label>Last Name*</Label>
+                <Input {...register("lastName")} />
+                {errors.lastName && <p className="text-red-500 text-xs">{errors.lastName.message}</p>}
               </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-5">
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">Mobile Number*</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  placeholder="Enter your mobile number"
-                  required
-                />
+              <div>
+                <Label>Phone*</Label>
+                <Input {...register("phone")} />
+                {errors.phone && <p className="text-red-500 text-xs">{errors.phone.message}</p>}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="tel"
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder="Enter your email"
-                  required
-                />
+
+              <div>
+                <Label>Email*</Label>
+                <Input type="email" {...register("email")} />
+                {errors.email && <p className="text-red-500 text-xs">{errors.email.message}</p>}
               </div>
             </div>
-
             <div className="grid md:grid-cols-2 gap-5">
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Password*</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder="Create a password"
-                  required
-                />
+              <div>
+                <Label>Password*</Label>
+                <Input type="password" {...register("password")} />
+                {errors.password && <p className="text-red-500 text-xs">{errors.password.message}</p>}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password*</Label>
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="Confirm your password"
-                  required
-                />
+              <div>
+                <Label>Confirm Password*</Label>
+                <Input type="password" {...register("confirmPassword")} />
+                {errors.confirmPassword && <p className="text-red-500 text-xs">{errors.confirmPassword.message}</p>}
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="customerType">Role</Label>
+            <div>
+              <Label>Role*</Label>
               <Select
-                value={formData.role}
-                onValueChange={handleRoleChange}
+                onValueChange={(v) => setValue("role", v as any)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select your role type" />
+                  <SelectValue placeholder="Select role" />
                 </SelectTrigger>
+
                 <SelectContent>
-                  <SelectGroup>
-                    <SelectItem value="OWNER">Admin</SelectItem>
-                    <SelectItem value="BUYER">Buyer</SelectItem>
-                    <SelectItem value="SELLER">Seller</SelectItem>
-                  </SelectGroup>
+                  <SelectItem value="OWNER">Owner / Admin</SelectItem>
+                  <SelectItem value="SELLER">Seller</SelectItem>
+                  <SelectItem value="BUYER">Buyer</SelectItem>
                 </SelectContent>
               </Select>
+              {errors.role && <p className="text-red-500 text-xs">{errors.role.message}</p>}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <Input
-                id="address"
-                name="address"
-                type="text"
-                value={formData.address}
-                onChange={handleChange}
-                placeholder="Enter your address"
-                required
-              />
+            <div>
+              <Label>Address*</Label>
+              <Input {...register("address")} />
+              {errors.address && <p className="text-red-500 text-xs">{errors.address.message}</p>}
             </div>
+
+            {role === "OWNER" && (
+              <div className="p-4--- rounded-md bg-white/40--- border--- space-y-4">
+                <h3 className="text-lg font-semibold">Dairy Details</h3>
+
+                <div>
+                  <Label>Dairy Name*</Label>
+                  <Input {...register("dairyName")} />
+                  {errors.dairyName && <p className="text-red-500 text-xs">{errors.dairyName.message}</p>}
+                </div>
+
+                <div>
+                  <Label>Dairy Address</Label>
+                  <Input {...register("dairyAddress")} />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-5">
+                  <div>
+                    <Label>Dairy Email</Label>
+                    <Input {...register("dairyEmail")} />
+                  </div>
+
+                  <div>
+                    <Label>Dairy Phone</Label>
+                    <Input {...register("dairyPhone")} />
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Pricing Mode*</Label>
+                  <Select
+                    onValueChange={(v) => setValue("dairyMode", v as any)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select pricing mode" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="FAT_LR">FAT + LR</SelectItem>
+                      <SelectItem value="MAWA">MAWA</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.dairyMode && <p className="text-red-500 text-xs">{errors.dairyMode.message}</p>}
+                </div>
+              </div>
+            )}
 
             <Button
               type="submit"
-              disabled={loading}
+              disabled={isSubmitting}
               className="w-full bg-[#008ED6] hover:bg-[#007ac0] text-white"
             >
-              {loading ? (
+              {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating account...
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating account...
                 </>
               ) : (
                 "Create Account"
               )}
             </Button>
 
-            <div className="text-center text-sm">
+            <p className="text-center text-sm">
               Already have an account?{" "}
-              <Link href="/auth/login" className="text-[#008ED6] hover:underline">
+              <Link href="/auth/login" className="text-blue-600 hover:underline">
                 Login here
               </Link>
-            </div>
+            </p>
           </form>
         </CardContent>
       </Card>

@@ -2,7 +2,7 @@ import { Role } from "@prisma/client";
 
 export interface AdminDashboardProps {
   user: {
-    id: string;
+    id: number;
     firstName: string;
     lastName: string;
     role: Role;

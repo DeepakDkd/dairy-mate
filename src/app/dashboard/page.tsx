@@ -1,6 +1,6 @@
 
 import AdminDashboard from "@/components/dashboard/admin";
-import { getServerActionUser } from "../fetchers/user/action";
+import { getServerActionUser } from "../../fetchers/user/action";
 
 
 

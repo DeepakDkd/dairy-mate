@@ -2,11 +2,10 @@
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import React, { useState } from 'react'
-import { AddMilkEntryDialog } from '../../../app/Dialog/Seller/add-milk-entry-dialog'
-import AddSellerDialog from '@/app/Dialog/Seller/add-seller'
+import { AddMilkEntryDialog } from '../../Dialog/Seller/add-milk-entry-dialog'
+import AddSellerDialog from '@/components/Dialog/Seller/add-seller'
 
-function Header() {
-
+function Header(userId: any) {
     const [showAddSeller, setShowAddSeller] = useState(false)
     const [showMilkDialog, setShowMilkDialog] = useState(false)
     return (
@@ -27,7 +26,7 @@ function Header() {
 
             </div>
 
-            <AddSellerDialog open={showAddSeller} onOpenChange={setShowAddSeller} />
+            <AddSellerDialog open={showAddSeller} onOpenChange={setShowAddSeller} userId={userId} />
             <AddMilkEntryDialog open={showMilkDialog} onOpenChange={setShowMilkDialog} />
         </div>
     )
