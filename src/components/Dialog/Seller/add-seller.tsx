@@ -10,6 +10,7 @@ import toast from "react-hot-toast"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import axios from "axios"
+import useSWR from "swr";
 
 interface AddSellerDialogProps {
   open: boolean
@@ -17,12 +18,17 @@ interface AddSellerDialogProps {
   userId?: number | undefined
 }
 
-// Validation Schema
+// const fetcher = (url: string) => axios.get(url).then(res => res.data);
+const fetcher = async (url: string) => {
+  const response = await axios.get(url);
+  return response.data;
+}
 const SellerSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
   email: z.string().email("Invalid email").optional().or(z.literal("")),
+  dairyId: z.number(),
   address: z.string().optional(),
   status: z.enum(["active", "inactive"]),
   password: z.string().min(6, "Password must be at least 6 characters")
@@ -30,7 +36,7 @@ const SellerSchema = z.object({
 
 type SellerFormData = z.infer<typeof SellerSchema>
 
-export default function AddSellerDialog({ open, onOpenChange,userId }: AddSellerDialogProps) {
+export default function AddSellerDialog({ open, onOpenChange, userId }: AddSellerDialogProps) {
   const {
     register,
     handleSubmit,
@@ -43,6 +49,18 @@ export default function AddSellerDialog({ open, onOpenChange,userId }: AddSeller
       status: "active",
     }
   })
+
+
+  const { data, error, isLoading, mutate } = useSWR(
+    userId ? `/api/owner/${userId}/dairies` : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+  if (isLoading) {
+    console.log("Loading owned dairies...");
+  }
+  console.log("ownedDairies:", data?.dairies);
+
   const onSubmit = async (data: SellerFormData) => {
     try {
       const finalData = {
@@ -50,15 +68,14 @@ export default function AddSellerDialog({ open, onOpenChange,userId }: AddSeller
         role: "SELLER", // auto
       }
 
-      const res = await axios.post("/api/sellers", {
-        ...finalData,
-        createdById: userId
+
+
+      const res = await axios.post("/api/seller/create", {
+        ...finalData
       });
 
       console.log("Submitting:", finalData)
-
-      // TODO: call your API
-      // await fetch("/api/sellers", { method: "POST", body: JSON.stringify(finalData) })
+      console.log("Response from server:", res.data);
 
       toast.success("Seller created successfully")
       reset()
@@ -91,8 +108,6 @@ export default function AddSellerDialog({ open, onOpenChange,userId }: AddSeller
               {errors.lastName && <p className="text-red-500 text-xs">{errors.lastName.message}</p>}
             </div>
           </div>
-   
-          {/* Phone / Email */}
           <div className="grid md:grid-cols-2 gap-5">
             <div className="space-y-2">
               <Label>Phone *</Label>
@@ -105,6 +120,23 @@ export default function AddSellerDialog({ open, onOpenChange,userId }: AddSeller
               <Input {...register("email")} />
               {errors.email && <p className="text-red-500 text-xs">{errors.email.message}</p>}
             </div>
+          </div>
+          <div className="space-y-2 w-full">
+            <Label>Select Dairy</Label>
+            <Select
+              onValueChange={(value) => setValue("dairyId", Number(value))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select dairy" />
+              </SelectTrigger>
+              <SelectContent>
+                {
+                  data?.dairies?.map((dairy: { id: number, name: string }) => (
+                    <SelectItem key={dairy.id} value={(String(dairy.id))}>{dairy.name}</SelectItem>
+                  ))
+                }
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Address */}

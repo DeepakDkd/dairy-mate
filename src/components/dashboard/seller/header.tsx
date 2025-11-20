@@ -5,7 +5,8 @@ import React, { useState } from 'react'
 import { AddMilkEntryDialog } from '../../Dialog/Seller/add-milk-entry-dialog'
 import AddSellerDialog from '@/components/Dialog/Seller/add-seller'
 
-function Header(userId: any) {
+function Header({userId}: {userId: any}) {
+    console.log("userId in Header component:", userId);
     const [showAddSeller, setShowAddSeller] = useState(false)
     const [showMilkDialog, setShowMilkDialog] = useState(false)
     return (

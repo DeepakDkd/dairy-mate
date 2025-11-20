@@ -54,7 +54,7 @@ export default function CreateDairyDialog({ open, onOpenChange, userId }: AddSel
     try {
       console.log("userId in CreateDairyDialog:", userId);
 
-      const res = await axios.post("/api/create-dairy", {
+      const res = await axios.post("/api/dairy/create-dairy", {
         ...data,
         createdById: userId
       });

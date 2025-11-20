@@ -1,4 +1,4 @@
-
+"use server"
 import { SellerOverviewCards } from "@/components/dashboard/seller/overview-cards"
 import { SellerMilkTable } from "@/components/dashboard/seller/milk-table"
 import { SellerTransactionsTable } from "@/components/dashboard/seller/transactions-table"
@@ -8,6 +8,7 @@ import { getServerActionUser } from "@/fetchers/user/action";
 export default async function SellerDashboardPage() {
 
   const sessionUser =  await getServerActionUser();
+  console.log("sessionUser in SellerDashboardPage:", sessionUser?.id);
 
   return (
     <div className="p-6 space-y-6  ">
