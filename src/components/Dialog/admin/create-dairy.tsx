@@ -17,17 +17,6 @@ interface AddSellerDialogProps {
   userId?: number | undefined
 }
 
-// Validation Schema
-// const SellerSchema = z.object({
-//   firstName: z.string().min(1, "First name is required"),
-//   lastName: z.string().min(1, "Last name is required"),
-//   phone: z.string().min(10, "Phone number must be at least 10 digits"),
-//   email: z.string().email("Invalid email").optional().or(z.literal("")),
-//   address: z.string().optional(),
-//   status: z.enum(["active", "inactive"]),
-//   password: z.string().min(6, "Password must be at least 6 characters")
-// })
-
 
 const DairySchema = z.object({
   dairyName: z.string().optional(),
@@ -54,7 +43,7 @@ export default function CreateDairyDialog({ open, onOpenChange, userId }: AddSel
     try {
       console.log("userId in CreateDairyDialog:", userId);
 
-      const res = await axios.post("/api/dairy/create-dairy", {
+      const res = await axios.post("/api/dairies/create", {
         ...data,
         createdById: userId
       });
@@ -79,7 +68,8 @@ export default function CreateDairyDialog({ open, onOpenChange, userId }: AddSel
           <DialogDescription>Enter dairy details below</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Name */}
+  
+
           <div className="grid md:grid-cols-2 gap-5">
             <div className="space-y-2">
               <Label>Dairy Name *</Label>
@@ -94,7 +84,7 @@ export default function CreateDairyDialog({ open, onOpenChange, userId }: AddSel
             </div>
           </div>
 
-          {/* Phone / Email */}
+        
           <div className="grid md:grid-cols-2 gap-5">
             <div className="space-y-2">
               <Label>Phone *</Label>

@@ -55,13 +55,13 @@ export default function LoginForm() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 font-montserrat ">
-        <Image 
+        {/* <Image 
         src="/login/bg1.jpg" // Path to your image in the public folder
         alt="Background Cover" 
         layout="fill" // Ensures the image fills the parent container
         objectFit="cover" // Scales the image to cover the entire container
         className="-z-10" // Pushes the image behind other content
-      />
+      /> */}
       <Card className="max-w-sm w-full bg-accent/50  shadow-lg">
         <CardHeader className="space-y-2">
           <CardTitle className="text-2xl font-semibold text-center">

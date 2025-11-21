@@ -2,11 +2,10 @@ import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function GET(
-  req: Request,
-  { params }: { params: { ownerId: string } }
+  req: Request,context:{params:Promise<{ownerId: string}>}
 ) {
   try {
-    const { ownerId } = params;
+    const { ownerId } = await context.params;
 
     if (!ownerId) {
       return NextResponse.json(
@@ -15,11 +14,19 @@ export async function GET(
       );
     }
 
-    console.log("Fetching dairies for ownerId:", ownerId);
+    // console.log("Fetching dairies for ownerId:", ownerId);
 
     const owner = await prisma.user.findUnique({
       where: { id: Number(ownerId) },
-      select: { ownedDairies: true },
+      select: {
+        ownedDairies: {
+          include: {
+            users: {
+              where: { role: "SELLER" }
+            }
+          }
+        }
+      },
     });
 
     if (!owner) {
@@ -29,7 +36,7 @@ export async function GET(
       );
     }
 
-    console.log("Fetched owner dairies:", owner.ownedDairies);
+    // console.log("Fetched owner dairies:", owner.ownedDairies);
 
     return NextResponse.json(
       { dairies: owner.ownedDairies },

@@ -11,6 +11,7 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import axios from "axios"
 import useSWR from "swr";
+import { useSWRConfig } from "swr"
 
 interface AddSellerDialogProps {
   open: boolean
@@ -37,6 +38,10 @@ const SellerSchema = z.object({
 type SellerFormData = z.infer<typeof SellerSchema>
 
 export default function AddSellerDialog({ open, onOpenChange, userId }: AddSellerDialogProps) {
+
+
+  const { mutate } = useSWRConfig()
+
   const {
     register,
     handleSubmit,
@@ -51,15 +56,16 @@ export default function AddSellerDialog({ open, onOpenChange, userId }: AddSelle
   })
 
 
-  const { data, error, isLoading, mutate } = useSWR(
+  const { data, error, isLoading } = useSWR(
     userId ? `/api/owner/${userId}/dairies` : null,
     fetcher,
     { revalidateOnFocus: false }
   );
   if (isLoading) {
     console.log("Loading owned dairies...");
+    return <div>Loading dairies...</div>;
   }
-  console.log("ownedDairies:", data?.dairies);
+  // console.log("ownedDairies:", data?.dairies);
 
   const onSubmit = async (data: SellerFormData) => {
     try {
@@ -74,9 +80,7 @@ export default function AddSellerDialog({ open, onOpenChange, userId }: AddSelle
         ...finalData
       });
 
-      console.log("Submitting:", finalData)
-      console.log("Response from server:", res.data);
-
+      // mutate(`/api/owner/${userId}/sellers`);
       toast.success("Seller created successfully")
       reset()
       onOpenChange(false)

@@ -5,7 +5,6 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        console.log("Received data to create seller:", body);
 
         const hashedPassword = bcrypt.hashSync(body.password, 10);
 
@@ -22,7 +21,6 @@ export async function POST(req: Request) {
                 role: body.role,
             }
         });
-        console.log("Created new seller:", newSeller);
         // send this seller credentials to the email
         return NextResponse.json(
             { message: "Seller created successfully", data: { ...newSeller, password: body.null } },

@@ -20,11 +20,11 @@ export default function ClientProtectedPage() {
   // Example of using session data
   return (
     <div>
-      <h1>Welcome {session?.user?.name}</h1>
+      {/* <h1>Welcome {session?.user?.name}</h1>
       {session?.user?.role === "ADMIN" && (
         <div>This content is only visible to admins</div>
       )}
-      <div>Your balance: ₹{session?.user?.balanceAmount}</div>
+      <div>Your balance: ₹{session?.user?.balanceAmount}</div> */}
     </div>
   );
 }
