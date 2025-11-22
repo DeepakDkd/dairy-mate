@@ -51,7 +51,6 @@ export async function GET(req: Request, context: { params: { dairyId: string } }
             skip: skip,
             take: parseInt(limit),
         });
-        console.log("Buyers fetched:", buyers);
         const totalBuyers = await prisma.user.count({
             where: {
                 role: "BUYER",
