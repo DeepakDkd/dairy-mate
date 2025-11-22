@@ -21,9 +21,11 @@ export async function GET(
       select: {
         ownedDairies: {
           include: {
-            users: {
-              where: { role: "SELLER" }
-            }
+            users:true 
+            // {
+            //   where: { role: "SELLER" },
+              
+            // }
           }
         }
       },

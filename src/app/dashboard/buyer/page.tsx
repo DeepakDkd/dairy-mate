@@ -6,18 +6,37 @@ import { MonthlyConsumptionChart } from "@/components/dashboard/buyer/monthly-co
 import { BuyerMilkEntriesTable } from "@/components/dashboard/buyer/milk-entries-table"
 import { BuyerPaymentsTable } from "@/components/dashboard/buyer/payments-table"
 import { AddPaymentDialog } from "@/components/dashboard/buyer/add-payment-dialog"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
+import AddBuyerDialog from "@/components/Dialog/buyer/add-buyer"
+import { useSession } from "next-auth/react"
+import { BuyerListTable } from "@/components/dashboard/buyer/buyer-list-table"
 
 export default function BuyerDashboardPage() {
+  const session = useSession();
+  const userId = session.data?.user?.id;
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
+  const [showAddBuyer, setShowAddBuyer] = useState(false)
 
   return (
     <div className="p-6 space-y-6">
       {/* Greeting Section */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Buyer Dashboard</h1>
-        <p className="text-muted-foreground mt-1">Here&apos;s your milk consumption and payment summary.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Buyer Dashboard</h1>
+          <p className="text-muted-foreground mt-1">Here&apos;s your milk consumption and payment summary.</p>
+        </div>
+        <Button onClick={() => setShowAddBuyer(true)} className="bg-primary hover:bg-primary/90 cursor-pointer text-white  gap-2">
+          <Plus className="w-4 h-4" />
+          Add Buyer
+        </Button>
       </div>
 
+      
+      <div className="space-y-4">
+        <h2 className="text-xl font-bold font-montserrat text-foreground">Buyer List</h2>
+        <BuyerListTable />
+      </div>
       {/* Overview Cards */}
       <BuyerOverviewCards />
 
@@ -42,6 +61,7 @@ export default function BuyerDashboardPage() {
 
       {/* Add Payment Dialog */}
       <AddPaymentDialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen} />
+      <AddBuyerDialog open={showAddBuyer} onOpenChange={setShowAddBuyer} userId={userId} />
     </div>
   )
 }

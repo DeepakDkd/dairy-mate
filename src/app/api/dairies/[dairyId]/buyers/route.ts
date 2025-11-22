@@ -2,10 +2,10 @@ import { getServerActionUser } from "@/fetchers/user/action";
 import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 
-export async function GET(req: Request, { params }: { params: { dairyId: string } }) {
+export async function GET(req: Request, context: { params: { dairyId: string } }) {
     try {
 
-        const { dairyId } = params;
+        const { dairyId } = context.params;
         const { searchParams } = new URL(req.url);
         const page = searchParams.get("page") || "1";
         const limit = searchParams.get("pageSize") || "10";
@@ -14,7 +14,7 @@ export async function GET(req: Request, { params }: { params: { dairyId: string 
 
         const skip = (parseInt(page) - 1) * parseInt(limit);
 
-        console.log("Fetching sellers for dairyId:", dairyId, { page, limit, sort, search });
+        console.log("Fetching buyers for dairyId:", dairyId, { page, limit, sort, search });
 
         let orderBy = {};
         if (sort === "name_asc") orderBy = { firstName: "asc" }
@@ -22,9 +22,9 @@ export async function GET(req: Request, { params }: { params: { dairyId: string 
         else if (sort === "createdAt_asc") orderBy = { createdAt: "asc" }
         else if (sort === "createdAt_desc") orderBy = { createdAt: "desc" }
 
-        const sellers = await prisma.user.findMany({
+        const buyers = await prisma.user.findMany({
             where: {
-                role: "SELLER",
+                role: "BUYER",
                 dairyId: parseInt(dairyId),
                 OR: [
                     {
@@ -51,21 +51,21 @@ export async function GET(req: Request, { params }: { params: { dairyId: string 
             skip: skip,
             take: parseInt(limit),
         });
-        // console.log("Sellers fetched:", sellers);
-        const totalSellers = await prisma.user.count({
+        console.log("Buyers fetched:", buyers);
+        const totalBuyers = await prisma.user.count({
             where: {
-                role: "SELLER",
+                role: "BUYER",
                 dairyId: parseInt(dairyId),
             }
         });
-        if (!sellers) {
-            return NextResponse.json({ message: "No sellers found for this dairy" }, {
+        if (!buyers) {
+            return NextResponse.json({ message: "No buyers found for this dairy" }, {
                 status: 404
             })
         }
 
-        // console.log("Sellers fetched for dairyId", dairyId, sellers,totalSellers);
-        return NextResponse.json({ sellers, totalSellers }, {
+        // console.log("Buyers fetched for dairyId", dairyId, buyers,totalBuyers);
+        return NextResponse.json({ buyers, totalBuyers }, {
             status: 200
         })
 

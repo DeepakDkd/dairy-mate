@@ -27,9 +27,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-export function SellerListTable() {
+export function BuyerListTable() {
   const { data: session } = useSession();
   const userId = session?.user?.id;
+
 
   const { mutate: globalMutate } = useSWRConfig();
 
@@ -40,14 +41,13 @@ export function SellerListTable() {
 
 
 
-  const { data: dairiesData } = useSWR(
+  const { data: dairiesData, error: dairiesError, isLoading: dairiesLoading } = useSWR(
     userId ? `/api/owner/${userId}/dairies` : null,
     fetcher,
     {
       revalidateOnFocus: false,
     }
   );
-
 
   useEffect(() => {
     if (dairiesData?.dairies?.length > 0 && !selectedDairyId) {
@@ -56,39 +56,38 @@ export function SellerListTable() {
   }, [dairiesData]);
 
 
-  const sellerKey =
+  const buyerKey =
     selectedDairyId &&
-    `/api/dairies/${selectedDairyId}/sellers?page=${page}&limit=${limit}&sort=${sort}`;
+    `/api/dairies/${selectedDairyId}/buyers?page=${page}&limit=${limit}&sort=${sort}`;
 
   const {
-    data: sellerData,
-    error: sellerError,
-    isLoading: sellerLoading,
-    mutate: sellerMutate,
-  } = useSWR(sellerKey ? sellerKey : null, fetcher, { revalidateOnFocus: false, dedupingInterval: 2000, });
+    data: buyerData,
+    error: buyerError,
+    isLoading: buyerLoading,
+    mutate: buyerMutate,
+  } = useSWR(buyerKey ? buyerKey : null, fetcher, { revalidateOnFocus: false, dedupingInterval: 2000, });
 
-  if (sellerError) return <p>Error loading sellers...</p>;
 
-  const sellers = sellerData?.sellers ?? [];
-  const pagination = sellerData?.totalpage;
 
-  const refreshSellers = () => {
-    if (sellerKey) {
-      sellerMutate();
-      globalMutate(sellerKey);
+  const buyers = buyerData?.buyers ?? [];
+  const pagination = buyerData?.totalpage;
+
+  const refreshBuyers = () => {
+    if (buyerKey) {
+      buyerMutate();
+      globalMutate(buyerKey);
     }
   };
 
   const handleSelectDairy = (id: number) => {
     setSelectedDairyId(id);
     setPage(1);
-    refreshSellers();
+    refreshBuyers();
   };
-
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Seller Management</h2>
+      <h2 className="text-xl font-semibold">Buyer Management</h2>
 
 
       <div className="flex gap-3 overflow-x-auto pb-2">
@@ -103,7 +102,10 @@ export function SellerListTable() {
             <h3 className="font-semibold">{d.name}</h3>
             <p className="text-xs text-gray-500---">{d.address || "No address"}</p>
             <p className="text-xs mt-1">
-              Sellers: {d.users?.filter((u: any) => u.role === "SELLER").length || 0}
+              Buyers: {d.users?.filter(
+                (u: any) => u.role === "BUYER"
+              ).length || 0
+              }
             </p>
           </div>
         ))}
@@ -112,13 +114,13 @@ export function SellerListTable() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Sellers of Dairy #{selectedDairyId}</CardTitle>
+          <CardTitle className="text-base">Buyers of Dairy #{selectedDairyId}</CardTitle>
         </CardHeader>
         <CardContent>
-          {sellerLoading ? (
-            <p>Loading sellers...</p>
-          ) : sellers.length === 0 ? (
-            <p>No sellers found for this dairy.</p>
+          {buyerLoading ? (
+            <p>Loading buyers...</p>
+          ) : buyers.length === 0 ? (
+            <p>No buyers found for this dairy.</p>
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -132,25 +134,25 @@ export function SellerListTable() {
                 </TableHeader>
 
                 <TableBody>
-                  {sellers.map((seller: any) => (
-                    <TableRow key={seller.id}>
+                  {buyers.map((buyer: any) => (
+                    <TableRow key={buyer.id}>
                       <TableCell>
-                        {seller.firstName} {seller.lastName}
+                        {buyer.firstName} {buyer.lastName}
                       </TableCell>
-                      <TableCell>{seller.phone}</TableCell>
+                      <TableCell>{buyer.phone}</TableCell>
                       <TableCell>
                         <Badge
                           variant={
-                            seller.status === "active"
+                            buyer.status === "active"
                               ? "default"
                               : "destructive"
                           }
                         >
-                          {seller.status}
+                          {buyer.status}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {new Date(seller.createdAt).toLocaleDateString()}
+                        {new Date(buyer.createdAt).toLocaleDateString()}
                       </TableCell>
                     </TableRow>
                   ))}
