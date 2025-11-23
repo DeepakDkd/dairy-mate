@@ -25,7 +25,7 @@ import { SWRConfig } from "swr"
 
 interface AddStaffDialogProps {
   onStaffAdded: (staff: any) => void
-  userId: string
+  userId: number | undefined
 }
 
 const fetcher = async (url: string) => {

@@ -8,8 +8,11 @@ import { StaffOverviewCards } from "@/components/dashboard/staff/overview-cards"
 import { StaffRosterTable } from "@/components/dashboard/staff/staff-roster-table"
 import { AttendanceChart } from "@/components/dashboard/staff/attendance-chart"
 import { PayrollTable } from "@/components/dashboard/staff/payroll-table"
+import { useSession } from "next-auth/react"
 
 export default function StaffDashboard() {
+
+  const session = useSession();
   const [staffData, setStaffData] = useState([
     {
       id: 1,
@@ -101,7 +104,7 @@ export default function StaffDashboard() {
           <h1 className="text-3xl font-bold text-foreground">Staff Management</h1>
           <p className="text-muted-foreground mt-1">Manage employees, track attendance, and handle payroll</p>
         </div>
-        <AddStaffDialog onStaffAdded={(newStaff) => setStaffData([...staffData, newStaff])} />
+        <AddStaffDialog onStaffAdded={(newStaff) => setStaffData([...staffData, newStaff])} userId={session?.data?.user?.id } />
       </div>
 
       {/* Overview Cards */}
