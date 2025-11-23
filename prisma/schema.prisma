@@ -41,10 +41,20 @@ enum Shift {
   MORNING
   EVENING
 }
+
 enum StaffShift {
   MORNING
   EVENING
   FULL_DAY
+}
+
+enum StaffRole {
+  MILK_COLLECTOR
+  SENIOR_MILK_COLLECTOR
+  MILK_TESTER
+  QUALITY_AUDITOR
+  MANAGER
+  HELPER
 }
 
 enum MilkType {
@@ -84,18 +94,19 @@ model Dairy {
 // USER (Universal Users)
 // =========================
 model User {
-  id      Int    @id @default(autoincrement())
-  dairyId Int?
-  role    Role
-  status  String @default("active")
-  firstName String
-  lastName String
-  email    String  @unique
-  phone    String? @unique
-  password String
-  address  String?
-
-  isActive Boolean @default(true)
+  id         Int     @id @default(autoincrement())
+  dairyId    Int?
+  role       Role
+  status     String  @default("active")
+  firstName  String
+  lastName   String
+  email      String  @unique
+  phone      String? @unique
+  password   String
+  address    String?
+  profileUrl String?
+  bio        String?
+  isActive   Boolean @default(true)
 
   // Belongs to one Dairy
   dairy Dairy? @relation("UserDairyRelation", fields: [dairyId], references: [id])
@@ -125,9 +136,11 @@ model StaffProfile {
   dairyId Int
 
   shift            StaffShift @default(FULL_DAY)
-  position         String?
+  // role             StaffRole @default(HELPER)
+  position         String?  //position and role are same [modify or use as need]
   salary           Float?
   joinDate         DateTime?
+  jobLeaveDate     DateTime?
   emergencyContact String?
   photoUrl         String?
   notes            String?

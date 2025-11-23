@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AddStaffDialog } from "@/components/dashboard/staff/add-staff-dialog"
+import { AddStaffDialog } from "@/components/Dialog/staff/add-staff-dialog"
 import { StaffOverviewCards } from "@/components/dashboard/staff/overview-cards"
 import { StaffRosterTable } from "@/components/dashboard/staff/staff-roster-table"
 import { AttendanceChart } from "@/components/dashboard/staff/attendance-chart"

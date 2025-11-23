@@ -13,13 +13,13 @@ import axios from "axios"
 import useSWR from "swr";
 import { useSWRConfig } from "swr"
 
+
 interface AddSellerDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   userId?: number | undefined
 }
 
-// const fetcher = (url: string) => axios.get(url).then(res => res.data);
 const fetcher = async (url: string) => {
   const response = await axios.get(url);
   return response.data;
@@ -40,7 +40,7 @@ type SellerFormData = z.infer<typeof SellerSchema>
 export default function AddSellerDialog({ open, onOpenChange, userId }: AddSellerDialogProps) {
 
 
-  const { mutate } = useSWRConfig()
+  // const { mutate } = useSWRConfig()
 
   const {
     register,

@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   getServerActionUser();
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${montserrat.variable} font-montserrat antialiased`}>
         <Providers>
           {children}
