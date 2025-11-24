@@ -9,12 +9,21 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import axios from "axios";
+import useSWR from "swr";
+import { useSession } from "next-auth/react";
+import { Loader } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface AddMilkEntryDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
+const fetcher = async (url: string) => {
+  const response = await axios.get(url);
+  return response.data;
+}
 const milkEntrySchema = z.object({
   quantity: z.number().min(0, "Quantity must be a positive number"),
   mawaWeight: z.number().min(0, "Mawa weight must be a positive number"),
@@ -24,27 +33,41 @@ const milkEntrySchema = z.object({
 })
 
 export function AddMilkEntryDialog({ open, onOpenChange }: AddMilkEntryDialogProps) {
-  const [formData, setFormData] = useState({
-    quantity: "",
-    mawaWeight: "",
-    ratePerLitre: "",
-    shift: "Morning",
-    remarks: "",
-  })
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Handle form submission
-    console.log("Milk Entry Submitted:", formData)
-    setFormData({
-      quantity: "",
-      mawaWeight: "",
-      ratePerLitre: "",
-      shift: "Morning",
-      remarks: "",
-    })
-    onOpenChange(false)
-  }
+  const router = useRouter();
+
+  const session = useSession();
+
+  const userId = session.data?.user?.id;
+  const { data, error, isLoading } = useSWR(
+    userId ? `/api/owner/${userId}/dairies` : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  const [dairyId,setDairyId]= useState();
+
+  // const [formData, setFormData] = useState({
+  //   quantity: "",
+  //   mawaWeight: "",
+  //   ratePerLitre: "",
+  //   shift: "Morning",
+  //   remarks: "",
+  // })
+
+  // const handleSubmit = (e: React.FormEvent) => {
+  //   e.preventDefault()
+  //   // Handle form submission
+  //   console.log("Milk Entry Submitted:", formData)
+  //   setFormData({
+  //     quantity: "",
+  //     mawaWeight: "",
+  //     ratePerLitre: "",
+  //     shift: "Morning",
+  //     remarks: "",
+  //   })
+  //   onOpenChange(false)
+  // }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -53,8 +76,30 @@ export function AddMilkEntryDialog({ open, onOpenChange }: AddMilkEntryDialogPro
           <DialogTitle className="font-montserrat">Add New Milk Entry</DialogTitle>
           <DialogDescription>Record a new milk collection entry</DialogDescription>
         </DialogHeader>
+          <div className="space-y-2 w-full">
+            <Label>Select Dairy</Label>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+            {isLoading ? (
+              <Loader />
+            ) : (
+              <Select
+                onValueChange={(value) => router.push(`/dashboard/seller/${value}/create-entry`)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select dairy" />
+                </SelectTrigger>
+                <SelectContent>
+                  {
+                    data?.dairies?.map((dairy: { id: number, name: string }) => (
+                      <SelectItem key={dairy.id} value={(String(dairy.id))}>{dairy.name}</SelectItem>
+                    ))
+                  }
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+        {/* <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="quantity" className="font-medium">
               Milk Quantity (Litres) *
@@ -135,7 +180,7 @@ export function AddMilkEntryDialog({ open, onOpenChange }: AddMilkEntryDialogPro
               Submit Entry
             </Button>
           </div>
-        </form>
+        </form> */}
       </DialogContent>
     </Dialog>
   )

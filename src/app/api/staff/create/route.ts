@@ -43,10 +43,11 @@ export async function POST(req: Request) {
         // send this seller credentials to the email
         const finalProfile = {
             ...newStaff,
+            password:null,
             ...profile
         }
         return NextResponse.json(
-            { message: "Seller created successfully", data: { ...finalProfile, password: body.null } },
+            { message: "Seller created successfully", finalProfile  },
             { status: 201 }
         )
 

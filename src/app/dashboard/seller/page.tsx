@@ -8,7 +8,7 @@ import { SellerListTable } from "@/components/dashboard/seller/seller-list-table
 
 export default async function SellerDashboardPage() {
 
-  const sessionUser =  await getServerActionUser();
+  const sessionUser = await getServerActionUser();
   // console.log("sessionUser in SellerDashboardPage:", sessionUser?.id);
 
   return (
@@ -18,17 +18,19 @@ export default async function SellerDashboardPage() {
 
       {/* Overview Cards */}
       <SellerOverviewCards />
-
+      <hr />
       {/* Seller list Section */}
       <div className="space-y-4">
-        <h2 className="text-xl font-bold font-montserrat text-foreground">Seller List</h2>
+        {/* <h2 className="text-xl font-bold font-montserrat text-foreground">Seller List</h2> */}
         <SellerListTable />
       </div>
+      <hr />
       {/* Milk Entries Section */}
       <div className="space-y-4">
         <h2 className="text-xl font-bold font-montserrat text-foreground">Milk Entries</h2>
         <SellerMilkTable />
       </div>
+      <hr />
 
       {/* Transactions Section */}
 

@@ -67,7 +67,7 @@ export function SellerListTable() {
     mutate: sellerMutate,
   } = useSWR(sellerKey ? sellerKey : null, fetcher, { revalidateOnFocus: false, dedupingInterval: 2000, });
 
-  if (sellerError) return <p>Error loading sellers...</p>;
+  // if (sellerError) return <p>Error loading sellers...</p>;
 
   const sellers = sellerData?.sellers ?? [];
   const pagination = sellerData?.totalpage;
@@ -88,7 +88,7 @@ export function SellerListTable() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Seller Management</h2>
+      <h2 className="text-xl font-semibold">Seller List</h2>
 
 
       <div className="flex gap-3 overflow-x-auto pb-2">

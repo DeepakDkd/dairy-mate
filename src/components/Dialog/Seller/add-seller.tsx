@@ -12,6 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import axios from "axios"
 import useSWR from "swr";
 import { useSWRConfig } from "swr"
+import { Loader } from "lucide-react"
 
 
 interface AddSellerDialogProps {
@@ -61,10 +62,10 @@ export default function AddSellerDialog({ open, onOpenChange, userId }: AddSelle
     fetcher,
     { revalidateOnFocus: false }
   );
-  if (isLoading) {
-    console.log("Loading owned dairies...");
-    return <div>Loading dairies...</div>;
-  }
+  // if (isLoading) {
+  //   console.log("Loading owned dairies...");
+  //   return <div>Loading dairies...</div>;
+  // }
   // console.log("ownedDairies:", data?.dairies);
 
   const onSubmit = async (data: SellerFormData) => {
@@ -127,20 +128,25 @@ export default function AddSellerDialog({ open, onOpenChange, userId }: AddSelle
           </div>
           <div className="space-y-2 w-full">
             <Label>Select Dairy</Label>
-            <Select
-              onValueChange={(value) => setValue("dairyId", Number(value))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select dairy" />
-              </SelectTrigger>
-              <SelectContent>
-                {
-                  data?.dairies?.map((dairy: { id: number, name: string }) => (
-                    <SelectItem key={dairy.id} value={(String(dairy.id))}>{dairy.name}</SelectItem>
-                  ))
-                }
-              </SelectContent>
-            </Select>
+
+            {isLoading ? (
+              <Loader />
+            ) : (
+              <Select
+                onValueChange={(value) => setValue("dairyId", Number(value))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select dairy" />
+                </SelectTrigger>
+                <SelectContent>
+                  {
+                    data?.dairies?.map((dairy: { id: number, name: string }) => (
+                      <SelectItem key={dairy.id} value={(String(dairy.id))}>{dairy.name}</SelectItem>
+                    ))
+                  }
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           {/* Address */}
