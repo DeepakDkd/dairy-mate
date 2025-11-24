@@ -1,8 +1,7 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,209 +9,331 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Plus } from "lucide-react"
-import { useForm } from "react-hook-form"
-import toast from "react-hot-toast"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import axios from "axios"
-import useSWR from "swr"
-import { SWRConfig } from "swr"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Loader, Plus } from "lucide-react";
+import { useForm, Controller } from "react-hook-form";
+import toast from "react-hot-toast";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
+import useSWR from "swr";
 
-interface AddStaffDialogProps {
-  onStaffAdded: (staff: any) => void
-  userId: number | undefined
-}
-
-const fetcher = async (url: string) => {
-  const response = await axios.post(url);
-  console.log("axios fetcher response", response)
-  return response.data;
-}
+// ------------------ ZOD SCHEMA ------------------
 
 const StaffSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  phone: z.string().min(10, "Phone number must be at least 10 digits"),
-  email: z.string().email("Invalid email").optional().or(z.literal("")),
-  dairyId: z.string(),
-  address: z.string().optional(),
-  status: z.enum(["active", "inactive"]),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  // role: z.enum(["MILK_COLLECTOR", "SENIOR_MILK_COLLECTOR", "MILK_TESTER", "QUALITY_AUDITOR", "MANAGER", "HELPER"]),
-  position: z.string().min(1, "Staff position/role is required"),
-  salary: z.int().min(1, "Salary is required"),
-  joinDate: z.date(),
-  // joinDate: z.coerce.date(),
+  phone: z.string().min(10, "Phone must be 10 digits"),
+  email: z.string().email().optional(),
+  dairyId: z.number("Dairy is required"),
+  address: z.string().min(1, "Address is required"),
+  status: z.enum(["active", "inactive"], { error: "Status is required" }),
+  password: z.string().min(6, "Password must be at least 6 chars"),
+  position: z.string().min(1, "Position is required"),
+  shift: z.enum(["MORNING", "EVENING", "FULL_DAY"], {
+    error: "Shift is required",
+  }),
+  salary: z.coerce.number().min(1, "Salary is required"),
+  joinDate: z.coerce.date(),
+  emergencyContact: z
+    .string()
+    .min(10, "Phone must be 10 digits")
+    .optional(),
+  notes: z.string().optional(),
+});
 
-  emergencyContact: z.string().min(10, "Phone number must be at least 10 digits"),
-  notes: z.string().optional()
+type StaffFormData = z.infer<typeof StaffSchema>;
 
-})
-type StaffFormData = z.infer<typeof StaffSchema>
+// ------------------ FETCHER ------------------
+const fetcher = async (url: string) => {
+  const response = await axios.get(url);
+  return response.data;
+};
 
+// ------------------ COMPONENT ------------------
+
+interface AddStaffDialogProps {
+  onStaffAdded: (staff: any) => void;
+  userId: number | undefined;
+}
 
 export function AddStaffDialog({ onStaffAdded, userId }: AddStaffDialogProps) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
-  const { data, error, isLoading } = useSWR(userId ? `/api/owner/${userId}/dairies` : null, fetcher, {
-    revalidateOnFocus: false
-  })
+  const { data, isLoading } = useSWR(
+    userId ? `/api/owner/${userId}/dairies` : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
 
-const { register, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = 
-  useForm<StaffFormData>({
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<StaffFormData>({
+    //@ts-ignore
     resolver: zodResolver(StaffSchema),
-    defaultValues: {
-      status: "active"
+  });
+
+  const onSubmit = async (formData: StaffFormData) => {
+    console.log("Final form data:", formData);
+
+    try {
+      const finalData = {
+        ...formData,
+        role: "STAFF",//auto
+      }
+      const res = await axios.post(`api/staff/create`, {
+        ...finalData
+      })
+      toast.success("Staff is created successfully.");
+
+      reset();
+      setOpen(false);
+    } catch (err) {
+      console.log("Submit error:", err);
+      toast.error("Failed to create staff.");
     }
-  })
-
-
-  const [formData, setFormData] = useState({
-    role: "",
-    position: "",
-    salary: "",
-    joinDate: "",
-    emergencyContact: "",
-    notes: "",
-  })
-
-  const handleSubmitF = (e: React.FormEvent) => {
-    e.preventDefault()
-
-    const newStaff = {
-      id: Math.random(),
-
-      // required by schema
-      role: formData.role,
-      position: formData.position || null,
-      salary: formData.salary ? Number(formData.salary) : null,
-      joinDate: formData.joinDate ? new Date(formData.joinDate) : null,
-      emergencyContact: formData.emergencyContact || null,
-      notes: formData.notes || null,
-
-      // fields added on backend after linking
-      shift: "FULL_DAY",
-    }
-
-    onStaffAdded(newStaff)
-
-    setFormData({
-      role: "",
-      position: "",
-      salary: "",
-      joinDate: "",
-      emergencyContact: "",
-      notes: "",
-    })
-
-    setOpen(false)
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
+        <Button className="gap-2 cursor-pointer">
           <Plus size={18} />
           Add Staff
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-w-md">
+      {/* RESPONSIVE DIALOG */}
+      <DialogContent className="w-[95%] max-w-lg md:max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl p-6">
         <DialogHeader>
           <DialogTitle>Add New Staff Member</DialogTitle>
-          <DialogDescription>Fill in the details according to the schema</DialogDescription>
+          <DialogDescription>
+            Fill in the staff details correctly.
+          </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmitF} className="space-y-4">
+        <form
+          // @ts-ignore
+          onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
-          {/* Position and role both are same use as need */}
-          {/* Role */}
-          {/* <div className="space-y-2">
-            <Label htmlFor="role">Role</Label>
-            <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="MILK_COLLECTOR">Milk Collector</SelectItem>
-                <SelectItem value="SENIOR_MILK_COLLECTOR">Senior Milk Collector</SelectItem>
-                <SelectItem value="MILK_TESTER">Milk Tester</SelectItem>
-                <SelectItem value="QUALITY_AUDITOR">Quality Auditor</SelectItem>
-                <SelectItem value="MANAGER">Manager</SelectItem>
-                <SelectItem value="HELPER">Helper</SelectItem>
-              </SelectContent>
-            </Select>
-          </div> */}
+          {/* ==== Names ==== */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>First Name*</Label>
+              <Input {...register("firstName")} />
+              {errors.firstName && (
+                <p className="text-red-500 text-xs">
+                  {errors.firstName.message}
+                </p>
+              )}
+            </div>
 
-          {/* Position */}
-          <div className="space-y-2">
-            <Label htmlFor="position">Position (optional)</Label>
-            <Input
-              id="position"
-              placeholder="e.g. Senior Operator"
-              value={formData.position}
-              onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-            />
+            <div className="space-y-2">
+              <Label>Last Name*</Label>
+              <Input {...register("lastName")} />
+              {errors.lastName && (
+                <p className="text-red-500 text-xs">{errors.lastName.message}</p>
+              )}
+            </div>
           </div>
 
-          {/* Salary */}
-          <div className="space-y-2">
-            <Label htmlFor="salary">Monthly Salary</Label>
-            <Input
-              id="salary"
-              type="number"
-              placeholder="Enter salary"
-              value={formData.salary}
-              onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
-              required
-            />
+          {/* ==== Contact + Password ==== */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            <div className="space-y-2">
+              <Label>Phone *</Label>
+              <Input {...register("phone")} />
+              {errors.phone && (
+                <p className="text-red-500 text-xs">{errors.phone.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Password *</Label>
+              <Input type="password" {...register("password")} />
+              {errors.password && (
+                <p className="text-red-500 text-xs">{errors.password.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input {...register("email")} />
+              {errors.email && (
+                <p className="text-red-500 text-xs">{errors.email.message}</p>
+              )}
+            </div>
+
+            {/* Dairy Select */}
+            <div className="space-y-2">
+              <Label>Select Dairy</Label>
+
+              {isLoading ? (
+                <Loader />
+              ) : (
+                <Controller
+                  control={control}
+                  name="dairyId"
+                  render={({ field }) => (
+                    <Select
+                      onValueChange={(v) => field.onChange(Number(v))}
+                      value={field.value ? String(field.value) : undefined}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select dairy" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {data?.dairies?.map(
+                          (dairy: { id: number; name: string }) => (
+                            <SelectItem key={dairy.id} value={String(dairy.id)}>
+                              {dairy.name}
+                            </SelectItem>
+                          )
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              )}
+
+              {errors.dairyId && (
+                <p className="text-red-500 text-xs">{errors.dairyId.message}</p>
+              )}
+            </div>
           </div>
 
-          {/* Join Date */}
+          {/* ==== Address ==== */}
           <div className="space-y-2">
-            <Label htmlFor="joinDate">Join Date</Label>
-            <Input
-              id="joinDate"
-              type="date"
-              value={formData.joinDate}
-              onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })}
-              required
-            />
+            <Label>Address</Label>
+            <Input {...register("address")} />
+            {errors.address && (
+              <p className="text-red-500 text-xs">{errors.address.message}</p>
+            )}
           </div>
 
-          {/* Emergency Contact */}
-          <div className="space-y-2">
-            <Label htmlFor="emergencyContact">Emergency Contact (optional)</Label>
-            <Input
-              id="emergencyContact"
-              placeholder="Enter phone number"
-              value={formData.emergencyContact}
-              onChange={(e) => setFormData({ ...formData, emergencyContact: e.target.value })}
-            />
+          {/* ==== Status + Shift ==== */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Controller
+                control={control}
+                name="status"
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.status && (
+                <p className="text-red-500 text-xs">{errors.status.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Shift</Label>
+              <Controller
+                control={control}
+                name="shift"
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select shift" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MORNING">Morning</SelectItem>
+                      <SelectItem value="EVENING">Evening</SelectItem>
+                      <SelectItem value="FULL_DAY">Full Day</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.shift && (
+                <p className="text-red-500 text-xs">{errors.shift.message}</p>
+              )}
+            </div>
           </div>
 
-
-          {/* Notes */}
+          {/* ==== Position ==== */}
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes (optional)</Label>
-            <Input
-              id="notes"
-              placeholder="Any notes about staff"
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            />
+            <Label>Position*</Label>
+            <Input {...register("position")} />
+            {errors.position && (
+              <p className="text-red-500 text-xs">{errors.position.message}</p>
+            )}
           </div>
 
-          <Button type="submit" className="w-full">
-            Add Staff Member
-          </Button>
+          {/* ==== Salary ==== */}
+          <div className="space-y-2">
+            <Label>Monthly Salary</Label>
+            <Input type="number" {...register("salary")} />
+            {errors.salary && (
+              <p className="text-red-500 text-xs">{errors.salary.message}</p>
+            )}
+          </div>
+
+          {/* ==== Join Date ==== */}
+          <div className="space-y-2">
+            <Label>Join Date</Label>
+            <Input type="date" {...register("joinDate")} />
+            {errors.joinDate && (
+              <p className="text-red-500 text-xs">{errors.joinDate.message}</p>
+            )}
+          </div>
+
+          {/* ==== Emergency Contact ==== */}
+          <div className="space-y-2">
+            <Label>Emergency Contact</Label>
+            <Input {...register("emergencyContact")} />
+            {errors.emergencyContact && (
+              <p className="text-red-500 text-xs">
+                {errors.emergencyContact.message}
+              </p>
+            )}
+          </div>
+
+          {/* ==== Notes ==== */}
+          <div className="space-y-2">
+            <Label>Notes</Label>
+            <Input {...register("notes")} />
+          </div>
+
+          {/* ==== Buttons ==== */}
+          <div className="grid md:grid-cols-2 gap-4 pt-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Creating..." : "Add Staff Member"}
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
+

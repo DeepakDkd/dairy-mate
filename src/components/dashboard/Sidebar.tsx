@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Milk, TrendingUp, Users, Settings, ChevronLeft, ChevronRight } from "lucide-react"
+import { LayoutDashboard, Milk, TrendingUp, Users, Settings, ChevronLeft, ChevronRight, UserStar, UsersRound } from "lucide-react"
 
 export function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -11,8 +11,9 @@ export function Sidebar() {
 
   const navItems = [
     { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-    { label: "Seller", icon: LayoutDashboard, href: "/dashboard/seller" },
-    { label: "Buyer", icon: LayoutDashboard, href: "/dashboard/buyer" },
+    { label: "Seller", icon: UsersRound, href: "/dashboard/seller" },
+    { label: "Buyer", icon: UsersRound, href: "/dashboard/buyer" },
+    { label: "Staff", icon: UserStar, href: "/dashboard/staff" },
     { label: "Milk Records", icon: Milk, href: "/dashboard/milk-records" },
     { label: "Transactions", icon: TrendingUp, href: "/dashboard/transactions" },
     { label: "Users", icon: Users, href: "/dashboard/users" },
@@ -21,9 +22,8 @@ export function Sidebar() {
 
   return (
     <aside
-      className={`bg-white--- border-r border-border--- transition-all duration-300 ${
-        isCollapsed ? "w-20" : "w-64"
-      } flex flex-col h-screen sticky top-0`}
+      className={`bg-white--- border-r border-border--- transition-all duration-300 ${isCollapsed ? "w-20" : "w-64"
+        } flex flex-col h-screen sticky top-0`}
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border---">
@@ -52,9 +52,8 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                isActive ? "bg-[#008ED6] text-white " : "text-foreground--- dark:hover:bg-gray-800--- hover:bg-gray-400---"
-              }`}
+              className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isActive ? "bg-[#008ED6] text-white " : "text-foreground--- dark:hover:bg-gray-800--- hover:bg-gray-400---"
+                }`}
               title={isCollapsed ? item.label : ""}
             >
               <Icon size={20} />
