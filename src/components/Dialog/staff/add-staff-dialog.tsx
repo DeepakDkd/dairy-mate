@@ -94,9 +94,10 @@ export function AddStaffDialog({ onStaffAdded, userId }: AddStaffDialogProps) {
         ...formData,
         role: "STAFF",//auto
       }
-      const res = await axios.post(`api/staff/create`, {
+      const res = await axios.post("/api/staff/create", {
         ...finalData
       })
+      console.log("staff created ", res)
       toast.success("Staff is created successfully.");
 
       reset();
