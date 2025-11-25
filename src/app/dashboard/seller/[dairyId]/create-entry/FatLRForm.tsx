@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { getMilkRate } from "@/app/lib/rateUtils";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface Data {
     type: "COW" | "BUFFALO";
@@ -29,8 +29,8 @@ interface Data {
 }
 
 export function FatLRForm({ user, dairyId }: any) {
-    const [rate, setRate] = useState(0);
-    const [total, setTotal] = useState(0);
+    const [rate, setRate] = useState<number | null>(null);
+    const [total, setTotal] = useState<number | null>(null);
 
     const [data, setData] = useState<Data>({
         type: "COW",
@@ -38,32 +38,17 @@ export function FatLRForm({ user, dairyId }: any) {
         fat: undefined,
         liter: undefined,
     });
+
     const calculate = () => {
-        console.log("Clicked",data.type, data.lr, data.fat)
-        
         if (data.lr == null || data.fat == null) return;
+
         const r = getMilkRate(data.type, data.fat, data.lr);
-        console.log(r)
         setRate(r);
-        
+
         if (data.liter == null) return;
-        setTotal(rate * data.liter);
-        console.log(rate,total)
-    }
 
-    // 👉 Calculate rate whenever type, lr or fat changes
-    // useEffect(() => {
-    //     if (data.lr == null || data.fat == null) return;
-
-    //     const r = getMilkRate(data.type, data.lr, data.fat);
-    //     setRate(r);
-    // }, [data.type, data.lr, data.fat]);
-
-    // // 👉 Calculate total whenever rate or liter changes
-    // useEffect(() => {
-    //     if (data.liter == null) return;
-    //     setTotal(rate * data.liter);
-    // }, [rate, data.liter]);
+        setTotal(r * data.liter);
+    };
 
     return (
         <Card>
@@ -112,7 +97,11 @@ export function FatLRForm({ user, dairyId }: any) {
                         }
                     />
                 </div>
-                <Button className="cursor-pointer" onClick={() => calculate()} >Calculate</Button>
+
+                <Button className="cursor-pointer" onClick={calculate}>
+                    Calculate
+                </Button>
+
                 {/* Milk Type */}
                 <div>
                     <Label>Milk Type</Label>
@@ -132,11 +121,15 @@ export function FatLRForm({ user, dairyId }: any) {
                     </Select>
                 </div>
 
-                {/* Auto Calculation */}
-                <Card className="p-3 bg-muted">
-                    <p className="text-sm">Rate: ₹ {rate}</p>
-                    <p className="text-sm">Total Amount: ₹ {total.toFixed(2)}</p>
-                </Card>
+                {/* Rate & Total - only show AFTER calculation */}
+                {rate !== null && total !== null && (
+                    <Card className="p-3 bg-muted">
+                        <p className="text-sm">Rate: ₹ {rate}</p>
+                        <p className="text-sm">
+                            Total Amount: ₹ {total.toFixed(2)}
+                        </p>
+                    </Card>
+                )}
 
                 {/* Submit */}
                 <Button className="w-full">Submit Entry</Button>
