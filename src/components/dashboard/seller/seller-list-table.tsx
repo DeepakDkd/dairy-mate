@@ -69,7 +69,9 @@ export function SellerListTable() {
 
   // if (sellerError) return <p>Error loading sellers...</p>;
 
-  const sellers = sellerData?.sellers ?? [];
+  const sellers = sellerData?.data ?? [];
+  console.log("SELLERS", sellers);
+  console.log("SELLER DATA", sellerData.data);
   const pagination = sellerData?.totalpage;
 
   const refreshSellers = () => {
