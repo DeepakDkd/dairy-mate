@@ -1,8 +1,8 @@
-// import { db } from "@/lib/db";
-// import { getServerSession } from "next-auth";
-// import { authOptions } from "@/lib/auth";
-// import { NextResponse } from "next/server";
-// import { z } from "zod";
+import { prisma } from "@/lib/db";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { NextResponse } from "next/server";
+import { z } from "zod";
 
 // const milkEntrySchema = z.object({
 //   date: z.string(),
@@ -14,60 +14,58 @@
 //   remarks: z.string().optional(),
 // });
 
-// export async function POST(request: Request) {
-//   const session = await getServerSession(authOptions);
+export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
 
-//   if (!session) {
-//     return new NextResponse("Unauthorized", { status: 401 });
-//   }
+  if (!session) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
 
-//   try {
-//     const json = await request.json();
-//     const body = milkEntrySchema.parse(json);
-
-//     const milkEntry = await db.milkEntry.create({
-//       data: {
-//         ...body,
-//         customerId: session.user.id,
-//         date: new Date(body.date),
-//       },
-//     });
-
-//     // Create a transaction record for this milk entry
-//     await db.customerTransaction.create({
-//       data: {
-//         date: milkEntry.date,
-//         remarks: `Milk entry for ${milkEntry.shift.toLowerCase()} shift`,
-//         milkQuantity: milkEntry.milkQuantity,
-//         ratePerLitre: milkEntry.ratePerLitre,
-//         totalAmount: milkEntry.totalAmount,
-//         transactionType: "MILK_ENTRY",
-//         customerId: session.user.id,
-//         balanceAfter: session.user.customerType === "SELLER" 
-//           ? session.user.balanceAmount + milkEntry.totalAmount
-//           : session.user.balanceAmount - milkEntry.totalAmount,
-//       },
-//     });
-
-//     // Update user's balance
-//     await db.user.update({
-//       where: { id: session.user.id },
-//       data: {
-//         balanceAmount: {
-//           [session.user.customerType === "SELLER" ? "increment" : "decrement"]: milkEntry.totalAmount,
-//         },
-//       },
-//     });
-
-//     return NextResponse.json(milkEntry);
-//   } catch (error) {
-//     if (error instanceof z.ZodError) {
-//       return new NextResponse("Invalid request data", { status: 422 });
-//     }
+  try {
+    const body = await request.json();
+    // const body = milkEntrySchema.parse(json);
     
-//     return new NextResponse("Internal error", { status: 500 });
-//   }
-// }
+    const milkEntry = await prisma.sellerEntry.create({
+      data: {
+        ...body
+      },
+    });
+
+    // Create a transaction record for this milk entry
+    // await prisma.customerTransaction.create({
+    //   data: {
+    //     date: milkEntry.date,
+    //     remarks: `Milk entry for ${milkEntry.shift.toLowerCase()} shift`,
+    //     milkQuantity: milkEntry.milkQuantity,
+    //     ratePerLitre: milkEntry.ratePerLitre,
+    //     totalAmount: milkEntry.totalAmount,
+    //     transactionType: "MILK_ENTRY",
+    //     customerId: session.user.id,
+    //     balanceAfter: session.user.customerType === "SELLER" 
+    //       ? session.user.balanceAmount + milkEntry.totalAmount
+    //       : session.user.balanceAmount - milkEntry.totalAmount,
+    //   },
+    // });
+
+    // Update user's balance
+    await prisma.AccountBalance.update({
+      where: { id: session.user.id },
+      data: {
+        currentBalance: {
+          [session.user.role === "SELLER" ? "increment" : "decrement"]: milkEntry.totalAmount,
+        },
+      },
+    });
+
+    return NextResponse.json(milkEntry);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return new NextResponse("Invalid request data", { status: 422 });
+    }
+    
+    return new NextResponse("Internal error", { status: 500 });
+  }
+}
 
 // export async function GET(request: Request) {
 //   const session = await getServerSession(authOptions);

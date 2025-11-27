@@ -11,7 +11,7 @@ export function Sidebar() {
 
   const navItems = [
     { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
-    { label: "Seller", icon: UsersRound, href: "/dashboard/seller" },
+    { label: "Seller", icon: Milk, href: "/dashboard/seller" },
     { label: "Buyer", icon: UsersRound, href: "/dashboard/buyer" },
     { label: "Staff", icon: UserStar, href: "/dashboard/staff" },
     { label: "Milk Records", icon: Milk, href: "/dashboard/milk-records" },

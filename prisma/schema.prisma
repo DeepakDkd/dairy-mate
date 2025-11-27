@@ -86,8 +86,9 @@ model Dairy {
   payments      Payment[]
   subscriptions DairySubscription[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  accountBalances AccountBalance[] @relation("AccountBalanceDairyRelation")
 }
 
 // =========================
@@ -121,6 +122,9 @@ model User {
   sellerEntries SellerEntry[] @relation("SellerEntryUser")
   buyerEntries  BuyerEntry[]  @relation("BuyerEntryUser")
 
+  // Account Balances
+  accountBalances AccountBalance[] @relation("AccountBalanceUserRelation")
+
   payments Payment[]
 
   createdAt DateTime @default(now())
@@ -137,7 +141,7 @@ model StaffProfile {
 
   shift            StaffShift @default(FULL_DAY)
   // role             StaffRole @default(HELPER)
-  position         String?  //position and role are same [modify or use as need]
+  position         String? //position and role are same [modify or use as need]
   salary           Float?
   joinDate         DateTime?
   jobLeaveDate     DateTime?
@@ -223,6 +227,23 @@ model BuyerEntry {
   buyer User  @relation("BuyerEntryUser", fields: [buyerId], references: [id])
 
   createdAt DateTime @default(now())
+}
+
+model AccountBalance {
+  id             Int   @id @default(autoincrement())
+  dairyId        Int
+  userId         Int
+  currentBalance Float @default(0)
+
+  lastEntryId   Int? // SellerEntry or BuyerEntry
+  lastPaymentId Int? // Payment record
+  updatedAt     DateTime @updatedAt
+  createdAt     DateTime @default(now())
+
+  user  User  @relation("AccountBalanceUserRelation", fields: [userId], references: [id])
+  dairy Dairy @relation("AccountBalanceDairyRelation", fields: [dairyId], references: [id])
+
+  @@unique([dairyId, userId]) // One balance record per seller per dairy
 }
 
 // =========================

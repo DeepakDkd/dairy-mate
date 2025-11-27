@@ -22,12 +22,14 @@ import { getMilkRate } from "@/app/lib/rateUtils";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { Dairy } from "@prisma/client";
+import axios from "axios";
 
 interface Data {
     type: "COW" | "BUFFALO";
     lr: number | undefined;
     fat: number | undefined;
     liter: number | undefined;
+    shift: "MORNING" | "EVENING";
 }
 
 export function FatLRForm({ user, dairy }: { user: any; dairy: Dairy }) {
@@ -39,6 +41,7 @@ export function FatLRForm({ user, dairy }: { user: any; dairy: Dairy }) {
         lr: undefined,
         fat: undefined,
         liter: undefined,
+        shift: "MORNING",
     });
 
     const calculate = () => {
@@ -77,7 +80,66 @@ export function FatLRForm({ user, dairy }: { user: any; dairy: Dairy }) {
         setTotal(r * data.liter);
     };
 
-    function submit() {
+    async function submit() {
+
+
+        try {
+            if (data.liter == null || data.fat == null || data.lr == null) {
+                toast.error("Please fill all the fields before submitting.");
+                return;
+            }
+            if (rate == null || total == null) {
+                toast.error("Please calculate the rate and total before submitting.");
+                return;
+            }
+            // const response = fetch("/api/milk-entries", {
+            //     method: "POST",
+            //     headers: {
+            //         "Content-Type": "application/json",
+            //     },
+            //     body: JSON.stringify({
+            //         dairyId: dairy.id,
+            //         userId: user.id,
+            //         fat: data.fat,
+            //         lr: data.lr,
+            //         liter: data.liter,
+            //         type: data.type,
+            //         rate,
+            //         total,
+            //     }),
+            // });
+            const response = await axios.post("/api/milk-entries", {
+                dairyId: dairy.id,
+                userId: user.id,
+                fat: data.fat,
+                lr: data.lr,
+                liters: data.liter,
+                milkType: data.type,
+                rate,
+                total,
+                shift: data.shift,
+                date: new Date(),
+            });
+            if (!response.status.toString().startsWith("2")) {
+                throw new Error("Failed to submit milk entry");
+            }
+            toast.success("Milk entry submitted successfully!");
+            setData({
+                type: "COW",
+                lr: undefined,
+                fat: undefined,
+                liter: undefined,
+                shift: "MORNING",
+            });
+            setRate(null);
+            setTotal(null);
+
+        } catch (error) {
+            console.error("Error submitting milk entry:", error);
+            toast.error("Failed to submit milk entry. Please try again.");
+            return;
+        }
+
         console.log("Submitting data:", {
             ...data,
             rate,
@@ -142,7 +204,8 @@ export function FatLRForm({ user, dairy }: { user: any; dairy: Dairy }) {
                 </div>
 
                 {/* Milk Type (auto updated) */}
-                <div>
+               <div className="grid md:grid-cols-2 gap-2 md:gap-4">
+                 <div>
                     <Label>Milk Type</Label>
                     <Select
                         value={data.type}
@@ -159,6 +222,24 @@ export function FatLRForm({ user, dairy }: { user: any; dairy: Dairy }) {
                         </SelectContent>
                     </Select>
                 </div>
+                <div>
+                    <Label>Shift</Label>
+                    <Select
+                        value={data.shift}
+                        onValueChange={(v: any) =>
+                            setData({ ...data, shift: v as "MORNING" | "EVENING" })
+                        }
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="MORNING">Morning</SelectItem>
+                            <SelectItem value="EVENING">Evening</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+               </div>
 
                 <Button onClick={calculate} className="cursor-pointer">
                     Calculate
@@ -187,7 +268,7 @@ export function FatLRForm({ user, dairy }: { user: any; dairy: Dairy }) {
 
                             <div className="flex justify-between">
                                 <span className="font-medium">Date & Time:</span>
-                                <span>{new Date().toLocaleString()}</span>
+                                <span>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                             </div>
 
                             <div className="flex justify-between">
