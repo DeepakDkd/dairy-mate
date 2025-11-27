@@ -20,6 +20,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { getMilkRate } from "@/app/lib/rateUtils";
 import { useState } from "react";
+import toast from "react-hot-toast";
+import { Dairy } from "@prisma/client";
 
 interface Data {
     type: "COW" | "BUFFALO";
@@ -28,7 +30,7 @@ interface Data {
     liter: number | undefined;
 }
 
-export function FatLRForm({ user, dairyId }: any) {
+export function FatLRForm({ user, dairy }: { user: any; dairy: Dairy }) {
     const [rate, setRate] = useState<number | null>(null);
     const [total, setTotal] = useState<number | null>(null);
 
@@ -42,7 +44,32 @@ export function FatLRForm({ user, dairyId }: any) {
     const calculate = () => {
         if (data.lr == null || data.fat == null) return;
 
-        const r = getMilkRate(data.type, data.fat, data.lr);
+        // Auto detect milk type based on fat
+        const milkType: "COW" | "BUFFALO" =
+            data.fat <= 5 ? "COW" : "BUFFALO";
+
+        if (data.fat <= 3 || data.fat > 10) {
+            toast.error("Please enter a valid fat percentage between 3 and 10.");
+            // alert("Please enter a valid fat percentage between 3 and 10.");
+            return;
+        }
+        const lrList = [25, 26, 27, 28, 29, 30];
+        if (!lrList.includes(data.lr)) {
+            toast.error("Please enter a valid LR value like 25 | 26 | 27 | 28 | 29 | 30.");
+            // alert("Please enter a valid LR value between 25 and 30.");
+            return;
+        }
+
+        // Update type in state
+        setData((prev) => ({
+            ...prev,
+            type: milkType,
+        }));
+
+        console.log("Calculating rate for:", { ...data, type: milkType });
+
+        // Calculate rate using updated type
+        const r = getMilkRate(milkType, data.fat, data.lr);
         setRate(r);
 
         if (data.liter == null) return;
@@ -50,15 +77,31 @@ export function FatLRForm({ user, dairyId }: any) {
         setTotal(r * data.liter);
     };
 
+    function submit() {
+        console.log("Submitting data:", {
+            ...data,
+            rate,
+            total,
+            dairyId: dairy.id,
+            userId: user.id,
+        });
+    }
+
     return (
         <Card>
             <CardHeader>
                 <CardTitle className="text-lg">
-                    Seller - {user?.firstName}
+                    Seller :
+                    <div className="flex flex-col mt-2 space-y-1 text-sm font-normal">
+                        <span>Name: {user?.firstName} {user?.lastName}</span>
+                        <span>Mobile no. : {user?.phone}</span>
+                        <span>Address: {user?.address}</span>
+                    </div>
                 </CardTitle>
             </CardHeader>
 
             <CardContent className="space-y-4">
+
                 {/* Litres */}
                 <div>
                     <Label>Litres</Label>
@@ -98,11 +141,7 @@ export function FatLRForm({ user, dairyId }: any) {
                     />
                 </div>
 
-                <Button className="cursor-pointer" onClick={calculate}>
-                    Calculate
-                </Button>
-
-                {/* Milk Type */}
+                {/* Milk Type (auto updated) */}
                 <div>
                     <Label>Milk Type</Label>
                     <Select
@@ -121,18 +160,86 @@ export function FatLRForm({ user, dairyId }: any) {
                     </Select>
                 </div>
 
-                {/* Rate & Total - only show AFTER calculation */}
+                <Button onClick={calculate} className="cursor-pointer">
+                    Calculate
+                </Button>
+
+                {/* Rate & Total */}
                 {rate !== null && total !== null && (
-                    <Card className="p-3 bg-muted">
-                        <p className="text-sm">Rate: ₹ {rate}</p>
-                        <p className="text-sm">
-                            Total Amount: ₹ {total.toFixed(2)}
-                        </p>
+                    <Card className="p-4 border border-gray-300--- rounded-lg bg-white--- shadow-sm">
+
+                        {/* Receipt Header */}
+                        <h3 className="text-md font-semibold text-center mb-3 border-b pb-2">
+                            Milk Collection Receipt
+                        </h3>
+
+                        {/* Top Info */}
+                        <div className="text-sm space-y-1 mb-3">
+                            {/* <div className="flex justify-between">
+                                <span className="font-medium">Receipt No:</span>
+                                <span>{Math.floor(100000 + Math.random() * 900000)}</span>
+                            </div> */}
+
+                            <div className="flex justify-between border-b pb-2">
+                                <span className="font-medium">Dairy Name:</span>
+                                <span>{dairy.name}</span>
+                            </div>
+
+                            <div className="flex justify-between">
+                                <span className="font-medium">Date & Time:</span>
+                                <span>{new Date().toLocaleString()}</span>
+                            </div>
+
+                            <div className="flex justify-between">
+                                <span className="font-medium">Seller:</span>
+                                <span>{user?.firstName} {user?.lastName}</span>
+                            </div>
+                        </div>
+
+                        {/* Milk Info */}
+                        <div className="space-y-1 text-sm">
+                            <div className="flex justify-between">
+                                <span className="font-medium">Milk Type:</span>
+                                <span>{data.type}</span>
+                            </div>
+
+                            <div className="flex justify-between">
+                                <span className="font-medium">Fat %:</span>
+                                <span>{data.fat}</span>
+                            </div>
+
+                            <div className="flex justify-between">
+                                <span className="font-medium">LR:</span>
+                                <span>{data.lr}</span>
+                            </div>
+
+                            <div className="flex justify-between">
+                                <span className="font-medium">Litres:</span>
+                                <span>{data.liter}</span>
+                            </div>
+
+                            <div className="flex justify-between pt-2 border-t mt-2">
+                                <span className="font-semibold">Rate:</span>
+                                <span className="font-semibold">₹ {rate}</span>
+                            </div>
+
+                            <div className="flex justify-between text-base font-bold pt-2 border-t mt-2">
+                                <span>Total Amount:</span>
+                                <span>₹ {total.toFixed(2)}</span>
+                            </div>
+                        </div>
+
                     </Card>
                 )}
 
-                {/* Submit */}
-                <Button className="w-full">Submit Entry</Button>
+
+                <Button
+                    onClick={submit}
+                    disabled={total === null}
+                    className="w-full"
+                >
+                    Submit Entry
+                </Button>
             </CardContent>
         </Card>
     );

@@ -115,7 +115,7 @@ export default function SellerEntryPage() {
       {user && (
         <>
           {pricingMode === "FAT_LR" ? (
-            <FatLRForm user={user}  />
+            <FatLRForm user={user} dairy={dairy} />
           ) : (
             <MawaForm user={user} dairy={dairy} dairyId={dairyId} />
           )}
