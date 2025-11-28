@@ -32,7 +32,7 @@ interface Data {
     shift: "MORNING" | "EVENING";
 }
 
-export function FatLRForm({ seller, dairy }: { seller: any; dairy: Dairy }) {
+export function FatLRForm({ seller, dairy ,setSelectedSeller}: { seller: any; dairy: Dairy,setSelectedSeller:any }) {
     const [rate, setRate] = useState<number | null>(null);
     const [total, setTotal] = useState<number | null>(null);
 
@@ -124,6 +124,7 @@ export function FatLRForm({ seller, dairy }: { seller: any; dairy: Dairy }) {
                 throw new Error("Failed to submit milk entry");
             }
             toast.success("Milk entry submitted successfully!");
+            setSelectedSeller(undefined)
             setData({
                 type: "COW",
                 lr: undefined,
