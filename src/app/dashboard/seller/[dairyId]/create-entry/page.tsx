@@ -29,7 +29,7 @@ const fetcher = (url: string) => axios.get(url).then((res) => res.data);
 
 export default function SellerEntryPage() {
   const { dairyId } = useParams();
-  const [user, setUser] = useState<User>();
+  const [seller, setSeller] = useState<User>();
 
   const { data, isLoading } = useSWR(`/api/dairies/${dairyId}`, fetcher, {
     revalidateOnFocus: false,
@@ -47,7 +47,7 @@ export default function SellerEntryPage() {
     const selectedUser = dairy?.users?.filter(
       (u: any) => u.id === id
     )[0] || {};
-    setUser(selectedUser)
+    setSeller(selectedUser)
   }
 
   return (
@@ -89,20 +89,20 @@ export default function SellerEntryPage() {
             <SearchUser sellers={sellers} handleUser={handleSelectUser} />
           </CardHeader>
           <CardContent>
-            {!user && (
+            {!seller && (
               <p className="text-xs text-muted-foreground mt-2">
                 Select a seller to continue
               </p>
             )}
             <Select
-              value={user?.id ? String(user.id) : ""} onValueChange={(v) => handleSelectUser(Number(v))}>
+              value={seller?.id ? String(seller.id) : ""} onValueChange={(v) => handleSelectUser(Number(v))}>
               <SelectTrigger>
                 <SelectValue placeholder="Choose a seller" />
               </SelectTrigger>
               <SelectContent>
-                {sellers.map((seller: any) => (
-                  <SelectItem className="" key={seller.id} value={String(seller.id)}>
-                    {seller?.firstName} {seller?.lastName}
+                {sellers.map((s: any) => (
+                  <SelectItem className="" key={s.id} value={String(s.id)}>
+                    {s?.firstName} {s?.lastName}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -112,12 +112,12 @@ export default function SellerEntryPage() {
       }
 
 
-      {user && (
+      {seller && (
         <>
           {pricingMode === "FAT_LR" ? (
-            <FatLRForm user={user} dairy={dairy} />
+            <FatLRForm seller={seller} dairy={dairy} />
           ) : (
-            <MawaForm user={user} dairy={dairy} dairyId={dairyId} />
+            <MawaForm seller={seller} dairy={dairy} dairyId={dairyId} />
           )}
         </>
       )}

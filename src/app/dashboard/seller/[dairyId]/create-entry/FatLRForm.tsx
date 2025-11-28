@@ -32,7 +32,7 @@ interface Data {
     shift: "MORNING" | "EVENING";
 }
 
-export function FatLRForm({ user, dairy }: { user: any; dairy: Dairy }) {
+export function FatLRForm({ seller, dairy }: { seller: any; dairy: Dairy }) {
     const [rate, setRate] = useState<number | null>(null);
     const [total, setTotal] = useState<number | null>(null);
 
@@ -108,15 +108,15 @@ export function FatLRForm({ user, dairy }: { user: any; dairy: Dairy }) {
             //         total,
             //     }),
             // });
-            const response = await axios.post("/api/milk-entries", {
+            const response = await axios.post(`/api/milk-entries/${seller.id}`, {
                 dairyId: dairy.id,
-                userId: user.id,
+                sellerId: seller.id,
                 fat: data.fat,
                 lr: data.lr,
-                liters: data.liter,
+                litres: data.liter,
                 milkType: data.type,
                 rate,
-                total,
+                totalAmount: total,
                 shift: data.shift,
                 date: new Date(),
             });
@@ -145,7 +145,7 @@ export function FatLRForm({ user, dairy }: { user: any; dairy: Dairy }) {
             rate,
             total,
             dairyId: dairy.id,
-            userId: user.id,
+            userId: seller.id,
         });
     }
 
@@ -155,9 +155,9 @@ export function FatLRForm({ user, dairy }: { user: any; dairy: Dairy }) {
                 <CardTitle className="text-lg">
                     Seller :
                     <div className="flex flex-col mt-2 space-y-1 text-sm font-normal">
-                        <span>Name: {user?.firstName} {user?.lastName}</span>
-                        <span>Mobile no. : {user?.phone}</span>
-                        <span>Address: {user?.address}</span>
+                        <span>Name: {seller?.firstName} {seller?.lastName}</span>
+                        <span>Mobile no. : {seller?.phone}</span>
+                        <span>Address: {seller?.address}</span>
                     </div>
                 </CardTitle>
             </CardHeader>
@@ -273,7 +273,7 @@ export function FatLRForm({ user, dairy }: { user: any; dairy: Dairy }) {
 
                             <div className="flex justify-between">
                                 <span className="font-medium">Seller:</span>
-                                <span>{user?.firstName} {user?.lastName}</span>
+                                <span>{seller?.firstName} {seller?.lastName}</span>
                             </div>
                         </div>
 

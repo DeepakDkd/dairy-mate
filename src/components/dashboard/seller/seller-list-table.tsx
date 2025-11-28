@@ -40,7 +40,7 @@ export function SellerListTable() {
 
 
 
-  const { data: dairiesData } = useSWR(
+  const { data: dairiesData ,isLoading: dairiesLoading } = useSWR(
     userId ? `/api/owner/${userId}/dairies` : null,
     fetcher,
     {
