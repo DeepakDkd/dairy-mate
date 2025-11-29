@@ -32,7 +32,7 @@ interface Data {
     shift: "MORNING" | "EVENING";
 }
 
-export function FatLRForm({ seller, dairy ,setSelectedSeller}: { seller: any; dairy: Dairy,setSelectedSeller:any }) {
+export function BuyerEntryForm({ buyers, dairy, setSelectedSeller }: { buyers: any; dairy: Dairy, setSelectedSeller: any }) {
     const [rate, setRate] = useState<number | null>(null);
     const [total, setTotal] = useState<number | null>(null);
 
@@ -108,13 +108,10 @@ export function FatLRForm({ seller, dairy ,setSelectedSeller}: { seller: any; da
             //         total,
             //     }),
             // });
-            const response = await axios.post(`/api/milk-entries/seller/${seller.id}`, {
+            const response = await axios.post(`/api/milk-entries/buyer/${buyers.id}`, {
                 dairyId: dairy.id,
-                sellerId: seller.id,
-                fat: data.fat,
-                lr: data.lr,
+                buyerId: buyers.id,
                 litres: data.liter,
-                milkType: data.type,
                 rate,
                 totalAmount: total,
                 shift: data.shift,
@@ -146,7 +143,7 @@ export function FatLRForm({ seller, dairy ,setSelectedSeller}: { seller: any; da
             rate,
             total,
             dairyId: dairy.id,
-            userId: seller.id,
+            userId: buyers.id,
         });
     }
 
@@ -156,9 +153,9 @@ export function FatLRForm({ seller, dairy ,setSelectedSeller}: { seller: any; da
                 <CardTitle className="text-lg">
                     Seller :
                     <div className="flex flex-col mt-2 space-y-1 text-sm font-normal">
-                        <span>Name: {seller?.firstName} {seller?.lastName}</span>
-                        <span>Mobile no. : {seller?.phone}</span>
-                        <span>Address: {seller?.address}</span>
+                        <span>Name: {buyers?.firstName} {buyers?.lastName}</span>
+                        <span>Mobile no. : {buyers?.phone}</span>
+                        <span>Address: {buyers?.address}</span>
                     </div>
                 </CardTitle>
             </CardHeader>
@@ -205,42 +202,42 @@ export function FatLRForm({ seller, dairy ,setSelectedSeller}: { seller: any; da
                 </div>
 
                 {/* Milk Type (auto updated) */}
-               <div className="grid md:grid-cols-2 gap-2 md:gap-4">
-                 <div>
-                    <Label>Milk Type</Label>
-                    <Select
-                        value={data.type}
-                        onValueChange={(v: any) =>
-                            setData({ ...data, type: v as "COW" | "BUFFALO" })
-                        }
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="COW">Cow Milk</SelectItem>
-                            <SelectItem value="BUFFALO">Buffalo Milk</SelectItem>
-                        </SelectContent>
-                    </Select>
+                <div className="grid md:grid-cols-2 gap-2 md:gap-4">
+                    <div>
+                        <Label>Milk Type</Label>
+                        <Select
+                            value={data.type}
+                            onValueChange={(v: any) =>
+                                setData({ ...data, type: v as "COW" | "BUFFALO" })
+                            }
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="COW">Cow Milk</SelectItem>
+                                <SelectItem value="BUFFALO">Buffalo Milk</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div>
+                        <Label>Shift</Label>
+                        <Select
+                            value={data.shift}
+                            onValueChange={(v: any) =>
+                                setData({ ...data, shift: v as "MORNING" | "EVENING" })
+                            }
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="MORNING">Morning</SelectItem>
+                                <SelectItem value="EVENING">Evening</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                 </div>
-                <div>
-                    <Label>Shift</Label>
-                    <Select
-                        value={data.shift}
-                        onValueChange={(v: any) =>
-                            setData({ ...data, shift: v as "MORNING" | "EVENING" })
-                        }
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="MORNING">Morning</SelectItem>
-                            <SelectItem value="EVENING">Evening</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-               </div>
 
                 <Button onClick={calculate} className="cursor-pointer">
                     Calculate
@@ -274,7 +271,7 @@ export function FatLRForm({ seller, dairy ,setSelectedSeller}: { seller: any; da
 
                             <div className="flex justify-between">
                                 <span className="font-medium">Seller:</span>
-                                <span>{seller?.firstName} {seller?.lastName}</span>
+                                <span>{buyers?.firstName} {buyers?.lastName}</span>
                             </div>
                         </div>
 

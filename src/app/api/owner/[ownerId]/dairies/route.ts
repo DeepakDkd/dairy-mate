@@ -22,10 +22,6 @@ export async function GET(
         ownedDairies: {
           include: {
             users:true 
-            // {
-            //   where: { role: "SELLER" },
-              
-            // }
           }
         }
       },

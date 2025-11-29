@@ -114,8 +114,6 @@ export async function POST(request: Request) {
         lastEntryId: milkEntry.id,
       },
     });
-    console.log("Milk entry:", milkEntry);
-    console.log("Account Balance Updated:", accountBalance);
 
     return NextResponse.json(
       { milkEntry, accountBalance },

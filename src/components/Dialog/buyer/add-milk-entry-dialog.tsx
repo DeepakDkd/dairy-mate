@@ -20,7 +20,7 @@ const fetcher = async (url: string) => {
   return response.data;
 }
 
-export function AddMilkEntryDialog({ open, onOpenChange }: AddMilkEntryDialogProps) {
+export function AddBuyerMilkEntryDialog({ open, onOpenChange }: AddMilkEntryDialogProps) {
 
   const router = useRouter();
 
@@ -47,7 +47,7 @@ export function AddMilkEntryDialog({ open, onOpenChange }: AddMilkEntryDialogPro
               <Loader />
             ) : (
               <Select
-                onValueChange={(value) => router.push(`/dashboard/seller/${value}/create-entry`)}
+                onValueChange={(value) => router.push(`/dashboard/buyer/${value}/create-entry`)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select dairy" />

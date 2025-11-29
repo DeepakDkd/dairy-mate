@@ -11,12 +11,14 @@ import { Plus } from "lucide-react"
 import AddBuyerDialog from "@/components/Dialog/buyer/add-buyer"
 import { useSession } from "next-auth/react"
 import { BuyerListTable } from "@/components/dashboard/buyer/buyer-list-table"
+import { AddBuyerMilkEntryDialog } from "@/components/Dialog/buyer/add-milk-entry-dialog"
 
 export default function BuyerDashboardPage() {
   const session = useSession();
   const userId = session.data?.user?.id;
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
   const [showAddBuyer, setShowAddBuyer] = useState(false)
+  const [showMilkDialog, setShowMilkDialog] = useState(false)
 
   return (
     <div className="p-6 space-y-6">
@@ -26,13 +28,19 @@ export default function BuyerDashboardPage() {
           <h1 className="text-3xl font-bold text-foreground">Buyer Dashboard</h1>
           <p className="text-muted-foreground mt-1">Here&apos;s your milk consumption and payment summary.</p>
         </div>
-        <Button onClick={() => setShowAddBuyer(true)} className="bg-primary hover:bg-primary/90 cursor-pointer text-white  gap-2">
+       <div className="grid md:grid-cols-2 gap-2 md:gap-5" >
+         <Button onClick={() => setShowAddBuyer(true)} className="bg-primary hover:bg-primary/90 cursor-pointer text-white  gap-2">
           <Plus className="w-4 h-4" />
           Add Buyer
         </Button>
+        <Button onClick={() => setShowMilkDialog(true)} className="bg-primary hover:bg-primary/90 cursor-pointer text-white  gap-2">
+          <Plus className="w-4 h-4" />
+          Add Milk Entry
+        </Button>
+       </div>
       </div>
 
-      
+
       <div className="space-y-4">
         <h2 className="text-xl font-bold font-montserrat text-foreground">Buyer List</h2>
         <BuyerListTable />
@@ -62,6 +70,7 @@ export default function BuyerDashboardPage() {
       {/* Add Payment Dialog */}
       <AddPaymentDialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen} />
       <AddBuyerDialog open={showAddBuyer} onOpenChange={setShowAddBuyer} userId={userId} />
+      <AddBuyerMilkEntryDialog open={showMilkDialog} onOpenChange={setShowMilkDialog} />
     </div>
   )
 }
