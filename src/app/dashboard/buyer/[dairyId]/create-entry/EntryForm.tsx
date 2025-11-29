@@ -151,7 +151,7 @@ export function BuyerEntryForm({ buyers, dairy, setSelectedSeller }: { buyers: a
         <Card>
             <CardHeader>
                 <CardTitle className="text-lg">
-                    Seller :
+                    Buyer :
                     <div className="flex flex-col mt-2 space-y-1 text-sm font-normal">
                         <span>Name: {buyers?.firstName} {buyers?.lastName}</span>
                         <span>Mobile no. : {buyers?.phone}</span>
@@ -162,63 +162,45 @@ export function BuyerEntryForm({ buyers, dairy, setSelectedSeller }: { buyers: a
 
             <CardContent className="space-y-4">
 
-                {/* Litres */}
-                <div>
-                    <Label>Litres</Label>
-                    <Input
-                        type="number"
-                        placeholder="Enter litres"
-                        value={data.liter ?? ""}
-                        onChange={(e) =>
-                            setData({ ...data, liter: Number(e.target.value) })
-                        }
-                    />
-                </div>
 
-                {/* Fat */}
-                <div>
-                    <Label>Fat %</Label>
-                    <Input
-                        type="number"
-                        placeholder="Enter fat (e.g. 4.2)"
-                        value={data.fat ?? ""}
-                        onChange={(e) =>
-                            setData({ ...data, fat: Number(e.target.value) })
-                        }
-                    />
-                </div>
+                <div className="grid gap-2 md:grid-cols-2 md:gap-5" >
 
-                {/* LR */}
-                <div>
-                    <Label>LR</Label>
-                    <Input
-                        type="number"
-                        placeholder="Enter LR (e.g. 28)"
-                        value={data.lr ?? ""}
-                        onChange={(e) =>
-                            setData({ ...data, lr: Number(e.target.value) })
-                        }
-                    />
-                </div>
 
-                {/* Milk Type (auto updated) */}
-                <div className="grid md:grid-cols-2 gap-2 md:gap-4">
+
+                    {/* Fat */}
                     <div>
-                        <Label>Milk Type</Label>
-                        <Select
-                            value={data.type}
-                            onValueChange={(v: any) =>
-                                setData({ ...data, type: v as "COW" | "BUFFALO" })
+                        <Label>Total Liters</Label>
+                        <Input
+                            type="number"
+                            placeholder="Enter total liters"
+                            value={data.fat ?? ""}
+                            onChange={(e) =>
+                                setData({ ...data, fat: Number(e.target.value) })
                             }
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="COW">Cow Milk</SelectItem>
-                                <SelectItem value="BUFFALO">Buffalo Milk</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        />
+                    </div>
+
+                    {/* LR */}
+                    <div>
+                        <Label>Rate</Label>
+                        <Input
+                            type="number"
+                            placeholder="Enter rate"
+                            value={data.lr ?? ""}
+                            onChange={(e) =>
+                                setData({ ...data, lr: Number(e.target.value) })
+                            }
+                        />
+                    </div>
+                    <div>
+                        <Label>Date</Label>
+                        <Input
+                            type="date"
+                            value={data.lr ?? ""}
+                            onChange={(e) =>
+                                setData({ ...data, lr: Number(e.target.value) })
+                            }
+                        />
                     </div>
                     <div>
                         <Label>Shift</Label>
@@ -238,6 +220,8 @@ export function BuyerEntryForm({ buyers, dairy, setSelectedSeller }: { buyers: a
                         </Select>
                     </div>
                 </div>
+
+
 
                 <Button onClick={calculate} className="cursor-pointer">
                     Calculate
