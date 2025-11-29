@@ -62,30 +62,67 @@ export async function POST(request: Request) {
   if (!session) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
+
   try {
     const body = await request.json();
-    // const body = milkEntrySchema.parse(json);
 
-    console.log("Body:", body);
+    const {
+      dairyId,
+      sellerId,
+      fat,
+      lr,
+      litres,
+      milkType,
+      rate,
+      totalAmount,
+      shift,
+      date,
+    } = body;
 
     // Create milk entry
     const milkEntry = await prisma.sellerEntry.create({
       data: {
-        ...body
+        dairyId,
+        sellerId,
+        fat,
+        lr,
+        litres,
+        milkType,
+        rate,
+        totalAmount,
+        shift,
+        date: new Date(date),
       },
     });
-    console.log("Created milk entry:", milkEntry);
 
-    return NextResponse.json(milkEntry);
-    // Update seller balance
-    // await prisma.accountBalance.update({
-    //   where: {
-    //     dairyId_userId: {
-    //       dairyId: body.dairyId,
-    //       userId: body.sellerId,
-    //     },  
+    // Update or Create accountBalance using UPSERT
+    const accountBalance = await prisma.accountBalance.upsert({
+      where: {
+        dairyId_userId: {
+          dairyId,
+          userId: sellerId,
+        },
+      },
+      update: {
+        currentBalance: { increment: totalAmount },
+        lastEntryId: milkEntry.id,
+      },
+      create: {
+        dairyId,
+        userId: sellerId,
+        currentBalance: totalAmount,
+        lastEntryId: milkEntry.id,
+      },
+    });
+    console.log("Milk entry:", milkEntry);
+    console.log("Account Balance Updated:", accountBalance);
+
+    return NextResponse.json(
+      { milkEntry, accountBalance },
+      { status: 201 }
+    );
   } catch (error) {
-    console.error(error);
+    console.error("POST Error:", error);
     return new NextResponse("Internal error", { status: 500 });
   }
 }
