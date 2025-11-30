@@ -108,7 +108,6 @@ export async function POST(request: Request) {
         lastEntryId: milkEntry.id,
       },
     });
-console.log("Created milk entry and updated account balance:", { milkEntry, accountBalance });
     return NextResponse.json(
       { milkEntry, accountBalance },
       { status: 201 }
