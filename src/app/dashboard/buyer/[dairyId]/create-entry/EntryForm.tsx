@@ -25,11 +25,10 @@ import { Dairy } from "@prisma/client";
 import axios from "axios";
 
 interface Data {
-    type: "COW" | "BUFFALO";
-    lr: number | undefined;
-    fat: number | undefined;
-    liter: number | undefined;
+    litres: number | undefined;
     shift: "MORNING" | "EVENING";
+    date: Date | undefined;
+    rate: number | undefined;
 }
 
 export function BuyerEntryForm({ buyers, dairy, setSelectedSeller }: { buyers: any; dairy: Dairy, setSelectedSeller: any }) {
@@ -37,85 +36,41 @@ export function BuyerEntryForm({ buyers, dairy, setSelectedSeller }: { buyers: a
     const [total, setTotal] = useState<number | null>(null);
 
     const [data, setData] = useState<Data>({
-        type: "COW",
-        lr: undefined,
-        fat: undefined,
-        liter: undefined,
+        litres: undefined,
+        date: undefined,
         shift: "MORNING",
+        rate: undefined,
     });
 
     const calculate = () => {
-        if (data.lr == null || data.fat == null) return;
-
-        // Auto detect milk type based on fat
-        const milkType: "COW" | "BUFFALO" =
-            data.fat <= 5 ? "COW" : "BUFFALO";
-
-        if (data.fat <= 3 || data.fat > 10) {
-            toast.error("Please enter a valid fat percentage between 3 and 10.");
-            // alert("Please enter a valid fat percentage between 3 and 10.");
-            return;
-        }
-        const lrList = [25, 26, 27, 28, 29, 30];
-        if (!lrList.includes(data.lr)) {
-            toast.error("Please enter a valid LR value like 25 | 26 | 27 | 28 | 29 | 30.");
-            // alert("Please enter a valid LR value between 25 and 30.");
+        if (data.litres == null || data.rate == null || data.date == null || data.shift == null) {
+            toast.error("Please fill all the fields before submitting.");
             return;
         }
 
-        // Update type in state
-        setData((prev) => ({
-            ...prev,
-            type: milkType,
-        }));
-
-        console.log("Calculating rate for:", { ...data, type: milkType });
-
-        // Calculate rate using updated type
-        const r = getMilkRate(milkType, data.fat, data.lr);
-        setRate(r);
-
-        if (data.liter == null) return;
-
-        setTotal(r * data.liter);
+        setTotal(data.rate * data.litres);
     };
 
     async function submit() {
 
 
         try {
-            if (data.liter == null || data.fat == null || data.lr == null) {
+            if (data.litres == null || data.rate == null || data.date == null || data.shift == null) {
                 toast.error("Please fill all the fields before submitting.");
                 return;
             }
-            if (rate == null || total == null) {
+            if (total == null) {
                 toast.error("Please calculate the rate and total before submitting.");
                 return;
             }
-            // const response = fetch("/api/milk-entries", {
-            //     method: "POST",
-            //     headers: {
-            //         "Content-Type": "application/json",
-            //     },
-            //     body: JSON.stringify({
-            //         dairyId: dairy.id,
-            //         userId: user.id,
-            //         fat: data.fat,
-            //         lr: data.lr,
-            //         liter: data.liter,
-            //         type: data.type,
-            //         rate,
-            //         total,
-            //     }),
-            // });
             const response = await axios.post(`/api/milk-entries/buyer/${buyers.id}`, {
                 dairyId: dairy.id,
                 buyerId: buyers.id,
-                litres: data.liter,
-                rate,
+                litres: data.litres,
+                rate: data.rate,
                 totalAmount: total,
                 shift: data.shift,
-                date: new Date(),
+                date: data.date,
             });
             if (!response.status.toString().startsWith("2")) {
                 throw new Error("Failed to submit milk entry");
@@ -123,11 +78,10 @@ export function BuyerEntryForm({ buyers, dairy, setSelectedSeller }: { buyers: a
             toast.success("Milk entry submitted successfully!");
             setSelectedSeller(undefined)
             setData({
-                type: "COW",
-                lr: undefined,
-                fat: undefined,
-                liter: undefined,
+                litres: undefined,
+                date: undefined,
                 shift: "MORNING",
+                rate: undefined,
             });
             setRate(null);
             setTotal(null);
@@ -173,9 +127,9 @@ export function BuyerEntryForm({ buyers, dairy, setSelectedSeller }: { buyers: a
                         <Input
                             type="number"
                             placeholder="Enter total liters"
-                            value={data.fat ?? ""}
+                            value={data.litres ?? ""}
                             onChange={(e) =>
-                                setData({ ...data, fat: Number(e.target.value) })
+                                setData({ ...data, litres: Number(e.target.value) })
                             }
                         />
                     </div>
@@ -186,9 +140,9 @@ export function BuyerEntryForm({ buyers, dairy, setSelectedSeller }: { buyers: a
                         <Input
                             type="number"
                             placeholder="Enter rate"
-                            value={data.lr ?? ""}
+                            value={data.rate ?? ""}
                             onChange={(e) =>
-                                setData({ ...data, lr: Number(e.target.value) })
+                                setData({ ...data, rate: Number(e.target.value) })
                             }
                         />
                     </div>
@@ -196,9 +150,9 @@ export function BuyerEntryForm({ buyers, dairy, setSelectedSeller }: { buyers: a
                         <Label>Date</Label>
                         <Input
                             type="date"
-                            value={data.lr ?? ""}
+                            value={data.date ? data.date.toISOString().split("T")[0] : ""}
                             onChange={(e) =>
-                                setData({ ...data, lr: Number(e.target.value) })
+                                setData({ ...data, date: new Date(e.target.value) })
                             }
                         />
                     </div>
@@ -228,7 +182,7 @@ export function BuyerEntryForm({ buyers, dairy, setSelectedSeller }: { buyers: a
                 </Button>
 
                 {/* Rate & Total */}
-                {rate !== null && total !== null && (
+                {data.rate !== null && total !== null && (
                     <Card className="p-4 border border-gray-300--- rounded-lg bg-white--- shadow-sm">
 
                         {/* Receipt Header */}
@@ -249,47 +203,44 @@ export function BuyerEntryForm({ buyers, dairy, setSelectedSeller }: { buyers: a
                             </div>
 
                             <div className="flex justify-between">
-                                <span className="font-medium">Date & Time:</span>
-                                <span>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                            </div>
-
-                            <div className="flex justify-between">
                                 <span className="font-medium">Seller:</span>
                                 <span>{buyers?.firstName} {buyers?.lastName}</span>
                             </div>
+
+                            <div className="flex justify-between">
+                                <span className="font-medium">Shift:</span>
+                                <span className="font-semibold">{data.shift}</span>
+                            </div>
+
+                            <div className="flex justify-between">
+                                <span className="font-medium">Date & Time:</span>
+                                <span>{data.date && data?.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                            </div>
+
                         </div>
 
                         {/* Milk Info */}
                         <div className="space-y-1 text-sm">
                             <div className="flex justify-between">
-                                <span className="font-medium">Milk Type:</span>
-                                <span>{data.type}</span>
+                                <span className="font-medium">Milk Rate:</span>
+                                <span>{data.rate}</span>
                             </div>
 
                             <div className="flex justify-between">
-                                <span className="font-medium">Fat %:</span>
-                                <span>{data.fat}</span>
+                                <span className="font-medium">Total Liters:</span>
+                                <span>{data.litres}</span>
                             </div>
 
-                            <div className="flex justify-between">
-                                <span className="font-medium">LR:</span>
-                                <span>{data.lr}</span>
-                            </div>
-
-                            <div className="flex justify-between">
-                                <span className="font-medium">Litres:</span>
-                                <span>{data.liter}</span>
-                            </div>
 
                             <div className="flex justify-between pt-2 border-t mt-2">
-                                <span className="font-semibold">Rate:</span>
-                                <span className="font-semibold">₹ {rate}</span>
-                            </div>
-
-                            <div className="flex justify-between text-base font-bold pt-2 border-t mt-2">
-                                <span>Total Amount:</span>
+                                <span className="font-semibold">Total Amount:</span>
                                 <span>₹ {total.toFixed(2)}</span>
                             </div>
+
+                            {/* <div className="flex justify-between text-base font-bold pt-2 border-t mt-2">
+                                <span>Total Amount:</span>
+                                <span>₹ {total.toFixed(2)}</span>
+                            </div> */}
                         </div>
 
                     </Card>
