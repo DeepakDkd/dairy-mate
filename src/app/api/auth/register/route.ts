@@ -1,68 +1,54 @@
 import { prisma } from "@/app/lib/prisma";
+import { RegisterOwnerSchema } from "@/app/lib/validators/registerOwner";
 import bcrypt from "bcrypt";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-     const {
-      phone,
-      password,
-      confirmPassword,
+    const json = await req.json();
+
+    const parsed = RegisterOwnerSchema.safeParse(json);
+
+    if (!parsed.success) {
+      return NextResponse.json(
+        { message: parsed.error.issues[0].message },
+        { status: 400 }
+      );
+    }
+
+    const {
       firstName,
       lastName,
-      role,
-      address,
+      phone,
       email,
-
-      // Dairy fields (only for OWNER)
+      password,
+      address,
       dairyName,
       dairyAddress,
       dairyEmail,
       dairyPhone,
       dairyMode,
-    } = body;
+    } = parsed.data;
 
-    if (!phone || !password || !firstName || !lastName || !address || !role || !email) {
-      return NextResponse.json(
-        { message: "All fields are required" },
-        { status: 400 }
-      );
-    }
 
-      if (password.length < 6) {
-      return NextResponse.json(
-        { message: "Password must be at least 6 characters" },
-        { status: 400 }
-      );
-    }
-
-    if (password !== confirmPassword) {
-      return NextResponse.json(
-        { message: "Passwords do not match" },
-        { status: 400 }
-      );
-    }
-
-    const existingUser = await prisma.user.findUnique({
-      where: { phone },
+    const existingOwnerPhone = await prisma.user.findFirst({
+      where: { phone, role: "OWNER" },
     });
 
-    if (existingUser) {
+    if (existingOwnerPhone) {
       return NextResponse.json(
-         { message: "Phone number already registered" },
+        { message: "Phone already used by another owner" },
         { status: 400 }
       );
     }
 
-
-     const existingEmail = await prisma.user.findUnique({
-      where: { email },
+    const existingOwnerEmail = await prisma.user.findFirst({
+      where: { email, role: "OWNER" },
     });
 
-    if (existingEmail) {
+    if (existingOwnerEmail) {
       return NextResponse.json(
-        { message: "Email already registered" },
+        { message: "Email already used by another owner" },
         { status: 400 }
       );
     }
@@ -75,42 +61,37 @@ export async function POST(req: Request) {
         lastName,
         phone,
         email,
-        role,
+        role: "OWNER",
         password: hashedPassword,
         address,
       },
     });
-    
-    console.log("User created:", newUser.id);
 
-      if (role === "OWNER") {
-      if (!dairyName || !dairyMode) {
-        return NextResponse.json(
-          { message: "Dairy name & pricing mode are required for owners" },
-          { status: 400 }
-        );
-      }
+    const dairy = await prisma.dairy.create({
+      data: {
+        ownerId: newUser.id,
+        name: dairyName,
+        address: dairyAddress,
+        email: dairyEmail,
+        phone: dairyPhone,
+        pricingMode: dairyMode,
+      },
+    });
 
-      const dairy = await prisma.dairy.create({
-        data: {
-          ownerId: newUser.id,
-          name: dairyName,
-          address: dairyAddress,
-          email: dairyEmail,
-          phone: dairyPhone,
-          pricingMode: dairyMode,
-        },
-      });
 
-      console.log("Dairy created:", dairy.id);
-    }
+
 
     return NextResponse.json(
-      { message: "User registration successfully", userId: newUser.id },
+      {
+        message: "Owner & Dairy created successfully",
+        userId: newUser.id,
+        dairyId: dairy.id,
+      },
       { status: 201 }
     );
+
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error("Owner registration error:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

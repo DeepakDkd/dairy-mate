@@ -101,8 +101,8 @@ model User {
   status     String  @default("active")
   firstName  String
   lastName   String
-  email      String  @unique
-  phone      String? @unique
+  email      String
+  phone      String
   password   String
   address    String?
   profileUrl String?
@@ -123,12 +123,15 @@ model User {
   buyerEntries  BuyerEntry[]  @relation("BuyerEntryUser")
 
   // Account Balances
-  accountBalances AccountBalance[] @relation("AccountBalanceUserRelation")
+  accountBalance AccountBalance? @relation("AccountBalanceUserRelation")
 
   payments Payment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([email, dairyId])
+  @@unique([phone, dairyId])
 }
 
 // =========================
@@ -232,7 +235,7 @@ model BuyerEntry {
 model AccountBalance {
   id             Int   @id @default(autoincrement())
   dairyId        Int
-  userId         Int
+  userId         Int @unique
   currentBalance Float @default(0)
 
   lastEntryId   Int? // SellerEntry or BuyerEntry
@@ -243,7 +246,7 @@ model AccountBalance {
   user  User  @relation("AccountBalanceUserRelation", fields: [userId], references: [id])
   dairy Dairy @relation("AccountBalanceDairyRelation", fields: [dairyId], references: [id])
 
-  @@unique([dairyId, userId],name: "dairyId_userId") // One balance record per seller per dairy
+  @@unique([dairyId, userId], name: "dairyId_userId") // One balance record per seller per dairy
 }
 
 // =========================

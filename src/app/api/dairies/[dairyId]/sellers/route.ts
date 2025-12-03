@@ -50,6 +50,8 @@ export async function GET(
           { lastName: { contains: search, mode: "insensitive" } },
           { email: { contains: search, mode: "insensitive" } },
         ],
+      }, include: {
+        accountBalances: true
       },
       orderBy,
       skip,

@@ -25,6 +25,7 @@ export async function GET(req: Request, context: { params: { dairyId: string } }
             where: {
                 role: "BUYER",
                 dairyId: parseInt(dairyId),
+
                 OR: [
                     {
                         firstName: {
@@ -45,6 +46,9 @@ export async function GET(req: Request, context: { params: { dairyId: string } }
                         }
                     },
                 ]
+            },
+            include: {
+                accountBalance: true
             },
             orderBy: orderBy,
             skip: skip,

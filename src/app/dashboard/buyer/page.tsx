@@ -1,17 +1,25 @@
 "use client"
 
-import { useState } from "react"
-import { BuyerOverviewCards } from "@/components/dashboard/buyer/overview-cards"
-import { MonthlyConsumptionChart } from "@/components/dashboard/buyer/monthly-consumption-chart"
-import { BuyerMilkEntriesTable } from "@/components/dashboard/buyer/milk-entries-table"
-import { BuyerPaymentsTable } from "@/components/dashboard/buyer/payments-table"
-import { AddPaymentDialog } from "@/components/dashboard/buyer/add-payment-dialog"
-import { Button } from "@/components/ui/button"
+import { useEffect, useState } from "react"
 import { Plus } from "lucide-react"
-import AddBuyerDialog from "@/components/Dialog/buyer/add-buyer"
 import { useSession } from "next-auth/react"
+import { Button } from "@/components/ui/button"
+import AddBuyerDialog from "@/components/Dialog/buyer/add-buyer"
 import { BuyerListTable } from "@/components/dashboard/buyer/buyer-list-table"
+import { BuyerPaymentsTable } from "@/components/dashboard/buyer/payments-table"
+import { BuyerOverviewCards } from "@/components/dashboard/buyer/overview-cards"
+import { AddPaymentDialog } from "@/components/dashboard/buyer/add-payment-dialog"
+import { BuyerRosterTable } from "@/components/dashboard/buyer/buyer-roster-table"
+import { BuyerMilkEntriesTable } from "@/components/dashboard/buyer/milk-entries-table"
 import { AddBuyerMilkEntryDialog } from "@/components/Dialog/buyer/add-milk-entry-dialog"
+import { MonthlyConsumptionChart } from "@/components/dashboard/buyer/monthly-consumption-chart"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import useSWR, { useSWRConfig } from "swr"
+
+
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
 
 export default function BuyerDashboardPage() {
   const session = useSession();
@@ -20,24 +28,89 @@ export default function BuyerDashboardPage() {
   const [showAddBuyer, setShowAddBuyer] = useState(false)
   const [showMilkDialog, setShowMilkDialog] = useState(false)
 
+
+
+  const { mutate: globalMutate } = useSWRConfig();
+
+  const [selectedDairyId, setSelectedDairyId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [sort, setSort] = useState("name_asc");
+
+  const { data: dairiesData, error: dairiesError, isLoading: dairiesLoading } = useSWR(
+    userId ? `/api/owner/${userId}/dairies` : null,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+    }
+  );
+  useEffect(() => {
+    if (dairiesData?.dairies?.length > 0 && !selectedDairyId) {
+      setSelectedDairyId(dairiesData.dairies[0].id);
+    }
+  }, [dairiesData, selectedDairyId]);
+
+  const buyerKey =
+    selectedDairyId &&
+    `/api/dairies/${selectedDairyId}/buyers?page=${page}&limit=${limit}&sort=${sort}`;
+
+
+  const { data: buyerData, isLoading, error, mutate: staffMutate } = useSWR(buyerKey ? buyerKey : null, fetcher, { revalidateOnFocus: false, dedupingInterval: 2000, });
+  console.log("Staff Data from SWR:", buyerData);
+
+  const refreshBuyers = () => {
+    if (buyerKey) {
+      staffMutate();
+      globalMutate(buyerKey);
+    }
+  };
+
+  const handleSelectDairy = (id: number) => {
+    setSelectedDairyId(id);
+    setPage(1);
+    refreshBuyers();
+  };
+
+
+
   return (
     <div className="p-6 space-y-6">
       {/* Greeting Section */}
+        <div className="flex gap-3 overflow-x-auto pb-2">
+        {dairiesData?.dairies?.map((d: any) => (
+          <div
+            key={d.id}
+            onClick={() => handleSelectDairy(d.id)}
+            className={`p-4 border rounded-lg cursor-pointer w-48
+                ${selectedDairyId === d.id ? "border-blue-500 bg-blue-50---" : "border-gray-300---"}
+            `}
+          >
+            <h3 className="font-semibold">{d.name}</h3>
+            <p className="text-xs text-gray-500---">{d.address || "No address"}</p>
+            <p className="text-xs mt-1">
+              Buyers: {d.users?.filter(
+                (u: any) => u.role === "BUYER"
+              ).length || 0
+              }
+            </p>
+          </div>
+        ))}
+      </div>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Buyer Dashboard</h1>
           <p className="text-muted-foreground mt-1">Here&apos;s your milk consumption and payment summary.</p>
         </div>
-       <div className="grid md:grid-cols-2 gap-2 md:gap-5" >
-         <Button onClick={() => setShowAddBuyer(true)} className="bg-primary hover:bg-primary/90 cursor-pointer text-white  gap-2">
-          <Plus className="w-4 h-4" />
-          Add Buyer
-        </Button>
-        <Button onClick={() => setShowMilkDialog(true)} className="bg-primary hover:bg-primary/90 cursor-pointer text-white  gap-2">
-          <Plus className="w-4 h-4" />
-          Add Milk Entry
-        </Button>
-       </div>
+        <div className="grid md:grid-cols-2 gap-2 md:gap-5" >
+          <Button onClick={() => setShowAddBuyer(true)} className="bg-primary hover:bg-primary/90 cursor-pointer text-white  gap-2">
+            <Plus className="w-4 h-4" />
+            Add Buyer
+          </Button>
+          <Button onClick={() => setShowMilkDialog(true)} className="bg-primary hover:bg-primary/90 cursor-pointer text-white  gap-2">
+            <Plus className="w-4 h-4" />
+            Add Milk Entry
+          </Button>
+        </div>
       </div>
 
 
@@ -47,6 +120,15 @@ export default function BuyerDashboardPage() {
         <h2 className="text-xl font-bold font-montserrat text-foreground">Buyer List</h2>
         <BuyerListTable />
       </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Staff Directory</CardTitle>
+          <CardDescription>Manage all staff members and their information</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <BuyerRosterTable buyer={buyerData?.buyers} />
+        </CardContent>
+      </Card>
 
       {/* Monthly Consumption Chart */}
       <MonthlyConsumptionChart />

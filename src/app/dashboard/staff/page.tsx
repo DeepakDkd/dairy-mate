@@ -14,88 +14,7 @@ import useSWR, { useSWRConfig } from "swr"
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function StaffDashboard() {
-  // const [staffData, setStaffData] = useState([
-  //   {
-  //     id: 1,
-  //     name: "Rajesh Kumar",
-  //     role: "Senior Milk Collector",
-  //     email: "rajesh@dairymate.com",
-  //     phone: "+91 9876543210",
-  //     status: "Active",
-  //     salary: 15000,
-  //     joinDate: "2023-01-15",
-  //     attendance: 92,
-  //   },
-  //   {
-  //     id: 2,
-  //     name: "Priya Singh",
-  //     role: "Milk Tester",
-  //     email: "priya@dairymate.com",
-  //     phone: "+91 9876543211",
-  //     status: "Active",
-  //     salary: 12000,
-  //     joinDate: "2023-03-20",
-  //     attendance: 88,
-  //   },
-  //   {
-  //     id: 3,
-  //     name: "Amit Patel",
-  //     role: "Milk Collector",
-  //     email: "amit@dairymate.com",
-  //     phone: "+91 9876543212",
-  //     status: "Active",
-  //     salary: 10000,
-  //     joinDate: "2023-06-10",
-  //     attendance: 95,
-  //   },
-  //   {
-  //     id: 4,
-  //     name: "Neha Sharma",
-  //     role: "Quality Auditor",
-  //     email: "neha@dairymate.com",
-  //     phone: "+91 9876543213",
-  //     status: "Inactive",
-  //     salary: 13000,
-  //     joinDate: "2023-02-05",
-  //     attendance: 0,
-  //   },
-  // ])
 
-  const [payrollData] = useState([
-    {
-      id: 1,
-      name: "Rajesh Kumar",
-      role: "Senior Milk Collector",
-      baseSalary: 15000,
-      bonus: 2000,
-      deductions: 1500,
-      netSalary: 15500,
-      paymentStatus: "Paid",
-      paymentDate: "2024-11-30",
-    },
-    {
-      id: 2,
-      name: "Priya Singh",
-      role: "Milk Tester",
-      baseSalary: 12000,
-      bonus: 1500,
-      deductions: 1000,
-      netSalary: 12500,
-      paymentStatus: "Pending",
-      paymentDate: "2024-12-05",
-    },
-    {
-      id: 3,
-      name: "Amit Patel",
-      role: "Milk Collector",
-      baseSalary: 10000,
-      bonus: 1000,
-      deductions: 800,
-      netSalary: 10200,
-      paymentStatus: "Paid",
-      paymentDate: "2024-11-30",
-    },
-  ])
 
 
   const { mutate: globalMutate } = useSWRConfig();
@@ -126,7 +45,6 @@ export default function StaffDashboard() {
 
 
   const { data: staffData, isLoading, error, mutate: staffMutate } = useSWR(staffKey ? staffKey : null, fetcher, { revalidateOnFocus: false, dedupingInterval: 2000, });
-  console.log("Staff Data from SWR:", staffData);
 
   const refreshBuyers = () => {
     if (staffKey) {
@@ -149,7 +67,7 @@ export default function StaffDashboard() {
           <p className="text-muted-foreground mt-1">Manage employees, track attendance, and handle payroll</p>
         </div>
 
-        {/* <AddStaffDialog onStaffAdded={(newStaff) => setStaffData([...staffData, newStaff])} userId={session?.data?.user?.id} /> */}
+        <AddStaffDialog userId={session?.data?.user?.id} />
 
 
 
@@ -195,6 +113,13 @@ export default function StaffDashboard() {
               <CardDescription>Manage all staff members and their information</CardDescription>
             </CardHeader>
             <CardContent>
+              {
+                isLoading ? (
+                  <p>Loading staff data...</p>
+                ) : (
+                  <StaffRosterTable staff={staffData} />
+                )
+              }
               <StaffRosterTable staff={staffData} />
             </CardContent>
           </Card>

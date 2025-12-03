@@ -62,11 +62,10 @@ const fetcher = async (url: string) => {
 // ------------------ COMPONENT ------------------
 
 interface AddStaffDialogProps {
-  onStaffAdded: (staff: any) => void;
   userId: number | undefined;
 }
 
-export function AddStaffDialog({ onStaffAdded, userId }: AddStaffDialogProps) {
+export function AddStaffDialog({ userId }: AddStaffDialogProps) {
   const [open, setOpen] = useState(false);
 
   const { data, isLoading } = useSWR(

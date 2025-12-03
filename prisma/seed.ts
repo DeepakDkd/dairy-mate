@@ -9,7 +9,8 @@ async function main() {
   // ================================================
   const owner = await prisma.user.create({
     data: {
-      fullName: "Super Owner",
+      firstName: "Super Owner",
+      lastName: "Owner",
       email: "owner@dairy.com",
       phone: "9999999999",
       password: "hashed_password",
@@ -47,7 +48,8 @@ async function main() {
   // ================================================
   const staff = await prisma.user.create({
     data: {
-      fullName: "Raju Staff",
+      firstName: "Raju",
+      lastName: "Staff",
       email: "staff@dairy.com",
       phone: "9898989898",
       password: "staff_password",
@@ -72,7 +74,8 @@ async function main() {
   // ================================================
   const seller1 = await prisma.user.create({
     data: {
-      fullName: "Farmer Kishan",
+      firstName: "Farmer Kishan",
+      lastName: "Seller",
       email: "seller1@dairy.com",
       phone: "7000000001",
       password: "password123",
@@ -83,7 +86,8 @@ async function main() {
 
   const seller2 = await prisma.user.create({
     data: {
-      fullName: "Farmer Ramesh",
+      firstName: "Farmer Ramesh",
+      lastName: "Seller",
       email: "seller2@dairy.com",
       phone: "7000000002",
       password: "password123",
@@ -99,7 +103,8 @@ async function main() {
   // ================================================
   const buyer1 = await prisma.user.create({
     data: {
-      fullName: "Buyer Mohan",
+      firstName: "Buyer Mohan",
+      lastName: "Buyer",
       email: "buyer1@dairy.com",
       phone: "6000000001",
       password: "password123",
@@ -110,7 +115,8 @@ async function main() {
 
   const buyer2 = await prisma.user.create({
     data: {
-      fullName: "Buyer Sita",
+      firstName: "Buyer Sita",
+      lastName: "Buyer",
       email: "buyer2@dairy.com",
       phone: "6000000002",
       password: "password123",
