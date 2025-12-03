@@ -6,32 +6,39 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Edit2, Trash2, MoreVertical } from "lucide-react"
+import { StaffProfile, User } from "@prisma/client"
 
-interface Staff {
-  id: number
-  name: string
-  role: string
-  email: string
-  phone: string
-  status: string
-  salary: number
-  joinDate: string
-  attendance: number
-}
+// interface Staff {
+//   id: number
+//   name: string
+//   role: string
+//   email: string
+//   phone: string
+//   status: string
+//   salary: number
+//   joinDate: string
+//   attendance: number
+// }
 
 interface StaffRosterTableProps {
-  staff: Staff[]
+  staff: {
+    User:{
+      staffProfile:StaffProfile
+    }
+  }
 }
 
 export function StaffRosterTable({ staff }: StaffRosterTableProps) {
   const [sortBy, setSortBy] = useState<"name" | "status" | "joinDate">("name")
 
-  const sortedStaff = [...staff].sort((a, b) => {
-    if (sortBy === "name") return a.name.localeCompare(b.name)
-    if (sortBy === "status") return a.status.localeCompare(b.status)
-    if (sortBy === "joinDate") return new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime()
-    return 0
-  })
+  console.log("Staff Roster Table Staff Prop:", staff);
+
+  // const sortedStaff = [...staff].sort((a, b) => {
+  //   if (sortBy === "name") return a.firstName.localeCompare(b.firstName)
+  //   if (sortBy === "status") return a.status.localeCompare(b.status)
+  //   // if (sortBy === "joinDate") return new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime()
+  //   return 0
+  // })
 
   return (
     <div className="space-y-4">
@@ -75,17 +82,17 @@ export function StaffRosterTable({ staff }: StaffRosterTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedStaff.map((member) => (
+            {/* {sortedStaff.map((member) => (
               <TableRow key={member.id} className="hover:bg-muted/50">
-                <TableCell className="font-medium">{member.name}</TableCell>
+                <TableCell className="font-medium">{member.firstName}</TableCell>
                 <TableCell className="text-sm">{member.role}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{member.email}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{member.phone}</TableCell>
                 <TableCell>
                   <Badge variant={member.status === "Active" ? "default" : "secondary"}>{member.status}</Badge>
                 </TableCell>
-                <TableCell className="font-medium">₹{member.salary.toLocaleString()}</TableCell>
-                <TableCell className="text-sm">{new Date(member.joinDate).toLocaleDateString("en-IN")}</TableCell>
+                <TableCell className="font-medium">₹{member.staffProfile.salary.toLocaleString()}</TableCell>
+                <TableCell className="text-sm">{new Date(member.staffProfile.joinDate).toLocaleDateString("en-IN")}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
                     <span className="font-medium">{member.attendance}%</span>
@@ -117,7 +124,7 @@ export function StaffRosterTable({ staff }: StaffRosterTableProps) {
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ))}
+            ))} */}
           </TableBody>
         </Table>
       </div>

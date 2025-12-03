@@ -87,9 +87,6 @@ export function BuyerListTable() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Buyer Management</h2>
-
-
       <div className="flex gap-3 overflow-x-auto pb-2">
         {dairiesData?.dairies?.map((d: any) => (
           <div
@@ -114,7 +111,7 @@ export function BuyerListTable() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Buyers of Dairy #{selectedDairyId}</CardTitle>
+          <CardTitle className="text-base">Buyers of  {dairiesData?.dairies?.find((d:any) => d.id === selectedDairyId)?.name}</CardTitle>
         </CardHeader>
         <CardContent>
           {buyerLoading ? (

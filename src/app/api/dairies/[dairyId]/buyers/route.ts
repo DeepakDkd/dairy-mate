@@ -4,7 +4,6 @@ import { NextResponse } from "next/server";
 
 export async function GET(req: Request, context: { params: { dairyId: string } }) {
     try {
-
         const { dairyId } = context.params;
         const { searchParams } = new URL(req.url);
         const page = searchParams.get("page") || "1";

@@ -35,7 +35,7 @@ export function SellerListTable() {
 
   const [selectedDairyId, setSelectedDairyId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit,setLimit] = useState(10);
   const [sort, setSort] = useState("name_asc");
 
 
@@ -112,7 +112,7 @@ export function SellerListTable() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Sellers of Dairy #{selectedDairyId}</CardTitle>
+          <CardTitle className="text-base">Sellers of  {dairiesData?.dairies?.find((d:any) => d.id === selectedDairyId)?.name}</CardTitle>
         </CardHeader>
         <CardContent>
           {sellerLoading ? (
