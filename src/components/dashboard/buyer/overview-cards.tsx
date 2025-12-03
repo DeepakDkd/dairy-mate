@@ -56,7 +56,7 @@ export function BuyerOverviewCards() {
       {cards.map((card, index) => {
         const Icon = card.icon
         return (
-          <Card key={index} className={`light:${card.color} border-0 shadow-sm rounded-lg`}>
+          <Card key={index} className={`${card.color} dark:bg-accent   border-0 shadow-sm rounded-lg`}>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>

@@ -41,7 +41,7 @@ export function OverviewCards({ timeFilter }: OverviewCardsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map((card, index) => (
-        <Card key={index} className="bg-white--- shadow-md rounded-2xl border border-gray-100---">
+        <Card key={index} className=" shadow-md rounded-2xl border ">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
           </CardHeader>

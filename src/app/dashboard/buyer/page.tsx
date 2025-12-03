@@ -41,12 +41,12 @@ export default function BuyerDashboardPage() {
       </div>
 
 
+      {/* Overview Cards */}
+      <BuyerOverviewCards />
       <div className="space-y-4">
         <h2 className="text-xl font-bold font-montserrat text-foreground">Buyer List</h2>
         <BuyerListTable />
       </div>
-      {/* Overview Cards */}
-      <BuyerOverviewCards />
 
       {/* Monthly Consumption Chart */}
       <MonthlyConsumptionChart />
