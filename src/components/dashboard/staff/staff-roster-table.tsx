@@ -20,25 +20,19 @@ import { StaffProfile, User } from "@prisma/client"
 //   attendance: number
 // }
 
-interface StaffRosterTableProps {
-  staff: {
-    User:{
-      staffProfile:StaffProfile
-    }
-  }
-}
 
-export function StaffRosterTable({ staff }: StaffRosterTableProps) {
+
+export function StaffRosterTable({ staff }: { staff: User[] }) {
   const [sortBy, setSortBy] = useState<"name" | "status" | "joinDate">("name")
 
   console.log("Staff Roster Table Staff Prop:", staff);
 
-  // const sortedStaff = [...staff].sort((a, b) => {
-  //   if (sortBy === "name") return a.firstName.localeCompare(b.firstName)
-  //   if (sortBy === "status") return a.status.localeCompare(b.status)
-  //   // if (sortBy === "joinDate") return new Date(b.joinDate).getTime() - new Date(a.joinDate).getTime()
-  //   return 0
-  // })
+  const sortedStaff = [...staff].sort((a:any, b:any) => {
+    if (sortBy === "name") return a.firstName.localeCompare(b.firstName)
+    if (sortBy === "status") return a.status.localeCompare(b.status)
+    if (sortBy === "joinDate") return new Date(b?.staffProfile?.joinDate).getTime() - new Date(a?.staffProfile?.joinDate).getTime()
+    return 0
+  })
 
   return (
     <div className="space-y-4">
@@ -82,24 +76,24 @@ export function StaffRosterTable({ staff }: StaffRosterTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {/* {sortedStaff.map((member) => (
+            {staff?.length > 0 && sortedStaff.map((member:any) => (
               <TableRow key={member.id} className="hover:bg-muted/50">
-                <TableCell className="font-medium">{member.firstName}</TableCell>
+                <TableCell className="font-medium">{member?.firstName} {member?.lastName}</TableCell>
                 <TableCell className="text-sm">{member.role}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{member.email}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{member.phone}</TableCell>
                 <TableCell>
                   <Badge variant={member.status === "Active" ? "default" : "secondary"}>{member.status}</Badge>
                 </TableCell>
-                <TableCell className="font-medium">₹{member.staffProfile.salary.toLocaleString()}</TableCell>
-                <TableCell className="text-sm">{new Date(member.staffProfile.joinDate).toLocaleDateString("en-IN")}</TableCell>
+                <TableCell className="font-medium">₹{member?.staffProfile?.salary.toLocaleString()}</TableCell>
+                <TableCell className="text-sm">{new Date(member?.staffProfile?.joinDate).toLocaleDateString("en-IN")}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1">
-                    <span className="font-medium">{member.attendance}%</span>
+                    {/* <span className="font-medium">{member.attendance}%</span> */}
                     <div className="w-12 h-2 bg-muted rounded-full overflow-hidden">
                       <div
-                        className={`h-full ${member.attendance >= 90 ? "bg-green-500" : member.attendance >= 75 ? "bg-yellow-500" : "bg-red-500"}`}
-                        style={{ width: `${member.attendance}%` }}
+                        // className={`h-full ${member.attendance >= 90 ? "bg-green-500" : member.attendance >= 75 ? "bg-yellow-500" : "bg-red-500"}`}
+                        // style={{ width: `${member.attendance}%` }}
                       />
                     </div>
                   </div>
@@ -107,7 +101,7 @@ export function StaffRosterTable({ staff }: StaffRosterTableProps) {
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" className="cursor-pointer" >
                         <MoreVertical size={16} />
                       </Button>
                     </DropdownMenuTrigger>
@@ -124,7 +118,7 @@ export function StaffRosterTable({ staff }: StaffRosterTableProps) {
                   </DropdownMenu>
                 </TableCell>
               </TableRow>
-            ))} */}
+            ))}
           </TableBody>
         </Table>
       </div>

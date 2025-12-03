@@ -114,7 +114,6 @@ export default function StaffDashboard() {
       revalidateOnFocus: false,
     }
   );
-  console.log("Dairies Data:", dairiesData);
   useEffect(() => {
     if (dairiesData?.dairies?.length > 0 && !selectedDairyId) {
       setSelectedDairyId(dairiesData.dairies[0].id);
