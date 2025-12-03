@@ -155,8 +155,6 @@ export default function StaffDashboard() {
 
       </div>
 
-      {/* Overview Cards */}
-      {/* <StaffOverviewCards staffData={staffData} /> */}
 
       <div className="flex gap-3 overflow-x-auto pb-2">
         {dairiesData?.dairies?.map((d: any) => (
@@ -169,15 +167,17 @@ export default function StaffDashboard() {
           >
             <h3 className="font-semibold">{d.name}</h3>
             <p className="text-xs text-gray-500---">{d.address || "No address"}</p>
-            <p className="text-xs mt-1">
+            {/* <p className="text-xs mt-1">
               Staff: {d.users?.filter(
                 (u: any) => u.role === "STAFF"
               ).length || 0
               }
-            </p>
+            </p> */}
           </div>
         ))}
       </div>
+      {/* Overview Cards */}
+      <StaffOverviewCards staffData={staffData} />
 
       {/* Main Content - Tabs */}
       <Tabs defaultValue="roster" className="w-full">
@@ -208,7 +208,7 @@ export default function StaffDashboard() {
               <CardDescription>Staff attendance rates and trends</CardDescription>
             </CardHeader>
             <CardContent>
-              <AttendanceChart staff={staffData} />
+              {/* <AttendanceChart staff={staffData} /> */}
             </CardContent>
           </Card>
         </TabsContent>
@@ -221,7 +221,7 @@ export default function StaffDashboard() {
               <CardDescription>Monthly salary and payment tracking</CardDescription>
             </CardHeader>
             <CardContent>
-              <PayrollTable payroll={payrollData} />
+              {/* <PayrollTable payroll={payrollData} /> */}
             </CardContent>
           </Card>
         </TabsContent>

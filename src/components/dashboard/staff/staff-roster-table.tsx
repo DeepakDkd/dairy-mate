@@ -1,24 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { User } from "@prisma/client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Edit2, Trash2, MoreVertical } from "lucide-react"
-import { StaffProfile, User } from "@prisma/client"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
-// interface Staff {
-//   id: number
-//   name: string
-//   role: string
-//   email: string
-//   phone: string
-//   status: string
-//   salary: number
-//   joinDate: string
-//   attendance: number
-// }
+
 
 
 
@@ -26,6 +16,10 @@ export function StaffRosterTable({ staff }: { staff: User[] }) {
   const [sortBy, setSortBy] = useState<"name" | "status" | "joinDate">("name")
 
   console.log("Staff Roster Table Staff Prop:", staff);
+
+  if(!staff || staff.length === 0){
+    return <div>No staff data available.</div>
+  }
 
   const sortedStaff = [...staff].sort((a:any, b:any) => {
     if (sortBy === "name") return a.firstName.localeCompare(b.firstName)

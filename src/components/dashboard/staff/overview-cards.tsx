@@ -1,7 +1,7 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { Users, UserCheck, UserX, DollarSign } from "lucide-react"
+import { Users, UserCheck, UserX, DollarSign, IndianRupee } from "lucide-react"
 
 interface StaffOverviewCardsProps {
   staffData: Array<{
@@ -15,10 +15,10 @@ interface StaffOverviewCardsProps {
 }
 
 export function StaffOverviewCards({ staffData }: StaffOverviewCardsProps) {
-  const totalStaff = staffData.length
-  const activeStaff = staffData.filter((s) => s.status === "Active").length
-  const inactiveStaff = staffData.filter((s) => s.status === "Inactive").length
-  const totalMonthlySalary = staffData.reduce((sum, s) => sum + s.salary, 0)
+  const totalStaff = staffData?.length
+  const activeStaff = staffData?.filter((s) => s.status === "active").length
+  const inactiveStaff = staffData?.filter((s) => s.status === "inactive").length
+  const totalMonthlySalary = staffData?.reduce((sum, s:any) => s?.staffProfile?.salary ? sum + Number(s?.staffProfile?.salary) : sum, 0)
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -72,11 +72,11 @@ export function StaffOverviewCards({ staffData }: StaffOverviewCardsProps) {
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground font-medium">Monthly Salary</p>
-              <p className="text-2xl font-bold text-foreground mt-2">₹{totalMonthlySalary.toLocaleString()}</p>
+              <p className="text-sm text-muted-foreground font-medium">Overall Monthly Salary</p>
+              <p className="text-2xl font-bold text-foreground mt-2">₹{totalMonthlySalary && totalMonthlySalary?.toLocaleString()}</p>
             </div>
             <div className="p-3 bg-[#F6BD26]/10 rounded-lg">
-              <DollarSign className="h-6 w-6 text-[#F6BD26]" />
+              <IndianRupee className="h-6 w-6 text-[#F6BD26]" />
             </div>
           </div>
         </CardContent>
