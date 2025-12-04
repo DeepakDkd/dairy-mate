@@ -301,3 +301,19 @@ model DairySubscription {
   dairy Dairy            @relation(fields: [dairyId], references: [id])
   plan  SubscriptionPlan @relation(fields: [planId], references: [id])
 }
+
+
+
+model OtpRequest {
+  id        Int      @id @default(autoincrement())
+  phone     String?
+  email     String?
+  otp       String
+  salt      String
+  userId    Int
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+  @@index([email])
+}

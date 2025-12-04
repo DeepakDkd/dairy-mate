@@ -178,8 +178,8 @@ export default function RegisterForm() {
 
                 <SelectContent>
                   <SelectItem value="OWNER">Owner / Admin</SelectItem>
-                  <SelectItem value="SELLER">Seller</SelectItem>
-                  <SelectItem value="BUYER">Buyer</SelectItem>
+                  {/* <SelectItem value="SELLER">Seller</SelectItem> */}
+                  {/* <SelectItem value="BUYER">Buyer</SelectItem> */}
                 </SelectContent>
               </Select>
               {errors.role && <p className="text-red-500 text-xs">{errors.role.message}</p>}
