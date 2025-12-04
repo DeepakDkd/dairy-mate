@@ -20,6 +20,7 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         phone: { label: "Phone", type: "text" },
         password: { label: "Password", type: "password" },
+        dairyId:{ label: "DairyId", type: "number" },
       },
       // @ts-ignore
       async authorize(credentials) {
