@@ -20,47 +20,59 @@ export const authOptions: NextAuthOptions = {
       credentials: {
         phone: { label: "Phone", type: "text" },
         password: { label: "Password", type: "password" },
-        dairyId:{ label: "DairyId", type: "number" },
+        dairyId: { label: "DairyId", type: "number" },
+        role: { label: "Role", type: "text" },
       },
       // @ts-ignore
       async authorize(credentials) {
-        if (!credentials?.phone || !credentials?.password) {
-          throw new Error("Invalid credentials");
+        if (!credentials?.phone) {
+          throw new Error("Invalid Phone Number");
         }
+        const phone = String(credentials.phone);
+        const dairyId = credentials.dairyId ? Number(credentials.dairyId) : undefined;
+        const role = String(credentials.role || '');
 
-        const user = await db.user.findUnique({
-          where: {
-            phone: credentials.phone,
-          },
-        });
-        console.log("Auth user:", user);
+        if (role === "OWNER" && phone) {
+          const user = await db.user.findFirst({
+            where: {
+              phone: phone,
+              role: "OWNER",
+            },
+          })
+          if (!user) {
+            throw new Error("No user found");
+          }
+          return user;
 
-        if (!user) {
-          throw new Error("No user found");
+        } else if (dairyId && phone) {
+          const user = await db.user.findUnique({
+            where: {
+              phone_dairyId: {
+                phone: phone,
+                dairyId: dairyId,
+              }
+            }
+          })
+          if (!user) {
+            throw new Error("No user found for the selected dairy");
+          }
+          return user;
+        } else {
+          throw new Error("No user found with the provided credentials.");
         }
-
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
-
-        if (!isPasswordValid) {
-          throw new Error("Invalid credentials");
-        }
-
-        return {
-          id: user.id,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.role,
-          phone: user.phone,
-          email: user.email,
-        };
+        //       return {
+        //   id: user.id,
+        //   firstName: user.firstName,
+        //   lastName: user.lastName,
+        //   role: user.role,
+        //   phone: user.phone,
+        //   email: user.email,
+        // };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }:any) {
+    async jwt({ token, user }: any) {
       if (user) {
         token.id = user.id;
         token.firstName = user.firstName;
@@ -73,11 +85,11 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      session.user.id = token.id ;
+      session.user.id = token.id;
       session.user.firstName = token.firstName;
-      session.user.lastName = token.lastName ;
-      session.user.role = token.role ;
-      session.user.phone = token.phone ;
+      session.user.lastName = token.lastName;
+      session.user.role = token.role;
+      session.user.phone = token.phone;
       session.user.email = token.email;
       return session;
     },

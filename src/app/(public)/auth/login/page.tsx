@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import axios from "axios";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import toast from "react-hot-toast";
 
 
 export default function LoginForm() {
@@ -22,47 +24,14 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-const [requestId, setRequestId] = useState("");
+  const [requestId, setRequestId] = useState("");
+  const [dairies, setDairies] = useState<any[]>([]);
+  const [selectedDairy, setSelectedDairy] = useState("");
 
   if (status === "authenticated") {
     router.replace("/dashboard");
     // router.push("/dashboard");
   }
-
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-
-
-    try {
-      const res = await signIn("credentials", {
-        redirect: false,
-        phone,
-        password,
-      });
-
-      if (res?.ok) {
-        // Get the user's role from the session and redirect accordingly
-        const response = await fetch("/api/auth/session");
-        const session = await response.json();
-
-        if (session?.user?.role === "ADMIN") {
-          router.push("/admin/dashboard");
-        } else {
-          router.push("/dashboard");
-        }
-      } else {
-        setError("Invalid mobile number or password.");
-      }
-    } catch (err) {
-      console.error(err);
-      setError("Something went wrong. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
 
 
@@ -76,16 +45,49 @@ const [requestId, setRequestId] = useState("");
     const res = await axios.post("/api/auth/login-password", { phone, password });
     if (res.data.success) {
       const res = await axios.post("/api/auth/send-otp", { phone });
-      setRequestId(res.data.requestId); 
+      setRequestId(res.data.requestId);
       setStage("otp");
     }
   }
 
   async function handleOtpStep() {
-    const res = await axios.post("/api/auth/verify-otp", { otp, requestId });
+    const res = await axios.post("/api/auth/verify-otp", { phone, otp, requestId });
     if (res.data.success) {
-      window.location.href = `/auth/select-dairy?phone=${phone}`;
+
+      // if user is owner
+      if (res.data.owner) {
+        const res = await signIn("credentials", {
+          redirect: false,
+          phone,
+          role: "OWNER",
+        });
+        router.replace("/dashboard");
+        return;
+      }
+
+      setStage("dairies");
+      const dairies = res.data.dairies;
+      if (dairies.length >= 1) {
+        setDairies(dairies);
+        // setSelectedDairy(dairies[0].id);
+      }
     }
+  }
+  async function handleLogin() {
+    if (!selectedDairy) {
+      toast.error("Please select a dairy to continue");
+      return;
+    }
+    setLoading(true);
+    const result = await signIn("credentials", {
+      redirect: false,
+      phone,
+      dairyId: selectedDairy,
+    });
+    setLoading(false);
+
+
+    return;
   }
 
   return (
@@ -205,7 +207,30 @@ const [requestId, setRequestId] = useState("");
                 </Button>
               </>
             )}
-
+            {
+              stage === "dairies" && (
+                <div className="space-y-4" >
+                  <div>
+                    <Label className="text-lg font-semibold mb-4 w-full">Select Your Dairy</Label>
+                    <Select onValueChange={(v) => setSelectedDairy(v)}  >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select dairy" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {dairies.map((dairy) => (
+                          <SelectItem value={dairy.id} key={dairy.id}  >
+                            {dairy.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button onClick={handleLogin} disabled={loading} className="w-full bg-primary" >
+                    Login
+                  </Button>
+                </div>
+              )
+            }
           </div>
         </CardContent>
       </Card>
