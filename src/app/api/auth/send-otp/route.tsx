@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import { generateOtpEmail } from "@/templates/email/otp";
 import { sendEmail } from "@/utils/email";
 import { generateOtp, generateSalt, hashOtp } from "@/utils/otp";
+import { request } from "http";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -28,29 +29,29 @@ export async function POST(req: Request) {
         const salt = generateSalt();
         const hashedOtp = hashOtp(otp, salt);
         const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
-        
-        await prisma.otpRequest.create({
-            data:{
+
+        const res = await prisma.otpRequest.create({
+            data: {
                 phone,
-                email:user.email,
+                email: user.email,
                 otp: hashedOtp,
                 salt,
                 userId: user.id,
                 expiresAt: expiry,
             }
         })
-        
-         const { html, text } = generateOtpEmail(otp, 5, "Dairy Mate");
 
-         await sendEmail({
+        const { html, text } = generateOtpEmail(otp, 5, "Dairy Mate");
+
+        await sendEmail({
             to: phone,
             subject: "Your OTP Code for Dairy Mate",
             html,
             text,
-         })
+        })
 
         return NextResponse.json(
-            { success: true, message: "OTP sent successfully" },
+            { success: true, message: "OTP sent successfully", requestId: res.id },
             { status: 200 }
         );
 

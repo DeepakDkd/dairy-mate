@@ -15,13 +15,14 @@ import axios from "axios";
 
 export default function LoginForm() {
 
+  const router = useRouter();
   const { status } = useSession();
 
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const router = useRouter();
+const [requestId, setRequestId] = useState("");
 
   if (status === "authenticated") {
     router.replace("/dashboard");
@@ -74,13 +75,14 @@ export default function LoginForm() {
   async function handlePasswordStep() {
     const res = await axios.post("/api/auth/login-password", { phone, password });
     if (res.data.success) {
-      await axios.post("/api/auth/send-otp", { phone });
+      const res = await axios.post("/api/auth/send-otp", { phone });
+      setRequestId(res.data.requestId); 
       setStage("otp");
     }
   }
 
   async function handleOtpStep() {
-    const res = await axios.post("/api/auth/verify-otp", { phone, otp });
+    const res = await axios.post("/api/auth/verify-otp", { otp, requestId });
     if (res.data.success) {
       window.location.href = `/auth/select-dairy?phone=${phone}`;
     }

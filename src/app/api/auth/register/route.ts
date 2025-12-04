@@ -1,5 +1,5 @@
-import { prisma } from "@/app/lib/prisma";
-import { RegisterOwnerSchema } from "@/app/lib/validators/registerOwner";
+import { prisma } from "@/lib/prisma";
+import { RegisterOwnerSchema } from "@/lib/validators/registerOwner";
 import bcrypt from "bcrypt";
 import { NextResponse } from "next/server";
 
