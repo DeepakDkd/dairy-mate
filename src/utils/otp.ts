@@ -11,3 +11,7 @@ export function generateOtp() {
 export function generateSalt(length = 16) {
   return crypto.lib.WordArray.random(length).toString();
 }
+export async function verifyOtp(providedOtp: string, hashedOtp: string, salt: string) {
+  const hashedProvidedOtp = hashOtp(providedOtp, salt);
+  return hashedProvidedOtp === hashedOtp;
+}

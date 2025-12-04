@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { verifyOtp } from "@/utils/otp";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
