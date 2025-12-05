@@ -73,6 +73,31 @@ export default function LoginForm() {
       }
     }
   }
+
+
+
+
+
+
+
+
+
+// fix otp mail
+// clean this page code and optimise it 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   async function handleLogin() {
     if (!selectedDairy) {
       toast.error("Please select a dairy to continue");

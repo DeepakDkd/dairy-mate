@@ -44,7 +44,7 @@ export async function POST(req: Request) {
         const { html, text } = generateOtpEmail(otp, 5, "Dairy Mate");
 
         await sendEmail({
-            to: phone,
+            to: user.email,
             subject: "Your OTP Code for Dairy Mate",
             html,
             text,

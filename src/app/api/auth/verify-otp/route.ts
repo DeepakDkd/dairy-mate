@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 export async function POST(req: Request) {
     try {
         const { phone, otp, requestId } = await req.json();
+        console.log("Verifying OTP:", otp);
         if (!otp || !requestId) {
             return NextResponse.json({ message: "OTP and Request ID are required" }, { status: 400 });
         }
@@ -36,11 +37,11 @@ export async function POST(req: Request) {
             })
 
             if (owner) {
-                await signIn("credentials", {
-                    redirect: false,
-                    phone,
-                    role: "OWNER",
-                });
+                // await signIn("credentials", {
+                //     redirect: false,
+                //     phone,
+                //     role: "OWNER",
+                // });
                 return NextResponse.json({ success: true, message: "OTP verified successfully", owner }, { status: 200 });
             }
 
