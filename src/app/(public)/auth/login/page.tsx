@@ -54,9 +54,6 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
 
 
-  // ==========================================
-  // STEP 1: PHONE + (PASSWORD for OWNER)
-  // ==========================================
   async function handlePasswordSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -85,10 +82,6 @@ export default function LoginForm() {
     setLoading(false);
   }
 
-
-  // ==========================================
-  // STEP 2: OTP VERIFICATION
-  // ==========================================
   async function handleOtpSubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -108,7 +101,6 @@ export default function LoginForm() {
         return toast.error("Invalid OTP");
       }
 
-      // OWNER login — direct to dashboard
       if (res.data.owner) {
         await signIn("credentials", {
           redirect: false,
@@ -131,9 +123,6 @@ export default function LoginForm() {
   }
 
 
-  // ==========================================
-  // STEP 3: SELECT DAIRY
-  // ==========================================
   async function handleDairySubmit(e: React.FormEvent) {
     e.preventDefault();
 
@@ -152,10 +141,6 @@ export default function LoginForm() {
     router.replace("/dashboard");
   }
 
-
-  // ==========================================
-  // BACK BUTTON (safe navigation)
-  // ==========================================
   function goBack() {
     if (stage === "otp") setStage("password");
     else if (stage === "dairies") setStage("otp");
@@ -191,9 +176,6 @@ export default function LoginForm() {
 
           <CardContent className="space-y-6">
 
-            {/* ----------------------------------------
-                STEP 1: MOBILE + PASSWORD
-            ---------------------------------------- */}
             {stage === "password" && (
               <form onSubmit={handlePasswordSubmit} className="space-y-4">
 
@@ -233,9 +215,6 @@ export default function LoginForm() {
               </form>
             )}
 
-            {/* ----------------------------------------
-                STEP 2: OTP
-            ---------------------------------------- */}
             {stage === "otp" && (
               <form onSubmit={handleOtpSubmit} className="space-y-4">
 
@@ -267,10 +246,7 @@ export default function LoginForm() {
 
               </form>
             )}
-
-            {/* ----------------------------------------
-                STEP 3: SELECT DAIRY
-            ---------------------------------------- */}
+            
             {stage === "dairies" && (
               <form onSubmit={handleDairySubmit} className="space-y-4">
 
