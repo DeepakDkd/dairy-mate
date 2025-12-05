@@ -5,7 +5,6 @@ import { Plus } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import AddBuyerDialog from "@/components/Dialog/buyer/add-buyer"
-import { BuyerListTable } from "@/components/dashboard/buyer/buyer-list-table"
 import { BuyerPaymentsTable } from "@/components/dashboard/buyer/payments-table"
 import { BuyerOverviewCards } from "@/components/dashboard/buyer/overview-cards"
 import { AddPaymentDialog } from "@/components/dashboard/buyer/add-payment-dialog"
@@ -76,7 +75,7 @@ export default function BuyerDashboardPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Greeting Section */}
-        <div className="flex gap-3 overflow-x-auto pb-2">
+      <div className="flex gap-3 overflow-x-auto pb-2">
         {dairiesData?.dairies?.map((d: any) => (
           <div
             key={d.id}
@@ -116,14 +115,11 @@ export default function BuyerDashboardPage() {
 
       {/* Overview Cards */}
       <BuyerOverviewCards />
-      <div className="space-y-4">
-        <h2 className="text-xl font-bold font-montserrat text-foreground">Buyer List</h2>
-        <BuyerListTable />
-      </div>
+ 
       <Card>
         <CardHeader>
-          <CardTitle>Staff Directory</CardTitle>
-          <CardDescription>Manage all staff members and their information</CardDescription>
+          <CardTitle>Buyer List</CardTitle>
+          <CardDescription>Manage all buyers  entries</CardDescription>
         </CardHeader>
         <CardContent>
           <BuyerRosterTable buyer={buyerData?.buyers} />

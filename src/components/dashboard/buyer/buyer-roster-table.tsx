@@ -17,11 +17,11 @@ export function BuyerRosterTable({ buyer }: { buyer: User[] }) {
 
   console.log("Staff Roster buyersss:", buyer);
 
-  if(!buyer || buyer.length === 0){
+  if (!buyer || buyer.length === 0) {
     return <div>No staff data available.</div>
   }
 
-  const sortedBuyer = [...buyer]?.sort((a:any, b:any) => {
+  const sortedBuyer = [...buyer]?.sort((a: any, b: any) => {
     if (sortBy === "name") return a.firstName.localeCompare(b.firstName)
     if (sortBy === "status") return a.status.localeCompare(b.status)
     // if (sortBy === "joinDate") return new Date(b?.staffProfile?.joinDate).getTime() - new Date(a?.staffProfile?.joinDate).getTime()
@@ -45,13 +45,13 @@ export function BuyerRosterTable({ buyer }: { buyer: User[] }) {
         >
           Sort by Status
         </Button>
-        {/* <Button
+        <Button
           variant={sortBy === "joinDate" ? "default" : "outline"}
           onClick={() => setSortBy("joinDate")}
           className="text-xs"
         >
           Sort by Join Date
-        </Button> */}
+        </Button>
       </div>
 
       <div className="border rounded-lg overflow-hidden">
@@ -64,28 +64,35 @@ export function BuyerRosterTable({ buyer }: { buyer: User[] }) {
               <TableHead>Phone</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Balance</TableHead>
-              {/* <TableHead>Join Date</TableHead> */}
+              <TableHead>Join Date</TableHead>
+
               {/* <TableHead>Attendance</TableHead> */}
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedBuyer?.length > 0 && sortedBuyer.map((member:any) => (
+            {sortedBuyer?.length > 0 && sortedBuyer.map((member: any) => (
               <TableRow key={member.id} className="hover:bg-muted/50">
                 <TableCell className="font-medium">{member?.firstName} {member?.lastName}</TableCell>
                 <TableCell className="text-sm">{member.role}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{member.email}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{member.phone}</TableCell>
                 <TableCell>
-                  <Badge variant={member.status === "Active" ? "default" : "secondary"}>{member.status}</Badge>
+                  <Badge
+                    variant={
+                      member.status === "active"
+                        ? "default"
+                        : "destructive"
+                    }
+                  >{member.status}</Badge>
                 </TableCell>
                 {/* <TableCell className="font-medium">₹{member?.buyerProfile?.balance.toLocaleString()}</TableCell> */}
-                <TableCell className="font-medium">₹100</TableCell>
-                {/* <TableCell className="text-sm">{new Date(member?.buyerProfile?.joinDate).toLocaleDateString("en-IN")}</TableCell> */}
+                <TableCell className="font-medium">{member?.accountBalance?.currentBalance}</TableCell>
+                <TableCell className="text-sm">{new Date(member?.createdAt).toLocaleDateString("en-IN")}</TableCell>
                 {/* <TableCell>
                   <div className="flex items-center gap-1">
                     {/* <span className="font-medium">{member.attendance}%</span> */}
-                    {/* <div className="w-12 h-2 bg-muted rounded-full overflow-hidden">
+                {/* <div className="w-12 h-2 bg-muted rounded-full overflow-hidden">
                       <div
                         // className={`h-full ${member.attendance >= 90 ? "bg-green-500" : member.attendance >= 75 ? "bg-yellow-500" : "bg-red-500"}`}
                         // style={{ width: `${member.attendance}%` }}
