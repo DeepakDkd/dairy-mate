@@ -24,7 +24,7 @@ import { useForm, Controller } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import useSWR from "swr";
 
 // ------------------ ZOD SCHEMA ------------------
@@ -101,9 +101,9 @@ export function AddStaffDialog({ userId }: AddStaffDialogProps) {
 
       reset();
       setOpen(false);
-    } catch (err: AxiosError | any) {
+    } catch (err) {
       console.log("Submit error:", err);
-      toast.error(err.response?.data?.message || "Failed to create staff.");
+      toast.error("Failed to create staff.");
     }
   };
 
