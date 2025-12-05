@@ -36,6 +36,7 @@ export async function POST(req: Request) {
                 ],
             },
         });
+        
 
         if (isBuyerExist) {
             return NextResponse.json(
@@ -57,8 +58,7 @@ export async function POST(req: Request) {
                 role: body.role,
             }
         });
-        console.log("New buyer created:", newBuyer);
-        // send this buyer credentials to the email
+        
         return NextResponse.json(
             { message: "Buyer created successfully", data: { ...newBuyer, password: body.null } },
             { status: 201 }

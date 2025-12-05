@@ -120,7 +120,6 @@ export default function StaffDashboard() {
                   <StaffRosterTable staff={staffData} />
                 )
               }
-              <StaffRosterTable staff={staffData} />
             </CardContent>
           </Card>
         </TabsContent>

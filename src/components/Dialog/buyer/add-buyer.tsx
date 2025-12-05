@@ -85,9 +85,9 @@ export default function AddBuyerDialog({ open, onOpenChange, userId }: AddBuyerD
       toast.success("Buyer created successfully")
       reset()
       onOpenChange(false)
-    } catch (error) {
+    } catch (error: any) {
       console.error(error)
-      toast.error("Failed to create buyer")
+      toast.error(error.response.data.message || "Failed to create buyer")
     }
   }
 

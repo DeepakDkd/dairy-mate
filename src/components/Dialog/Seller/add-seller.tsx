@@ -85,9 +85,9 @@ export default function AddSellerDialog({ open, onOpenChange, userId }: AddSelle
       toast.success("Seller created successfully")
       reset()
       onOpenChange(false)
-    } catch (error) {
+    } catch (error:any) {
       console.error(error)
-      toast.error("Failed to create seller")
+      toast.error(error.response.data.message ||"Failed to create seller")
     }
   }
 

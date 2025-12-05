@@ -101,9 +101,9 @@ export function AddStaffDialog({ userId }: AddStaffDialogProps) {
 
       reset();
       setOpen(false);
-    } catch (err) {
+    } catch (err: any) {
       console.log("Submit error:", err);
-      toast.error("Failed to create staff.");
+      toast.error(err.response.data.message || "Failed to create staff.");
     }
   };
 
