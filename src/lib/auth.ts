@@ -1,10 +1,7 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-// import { db } from "@/lib/db";
 import { prisma as db } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
-
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db),
@@ -23,7 +20,6 @@ export const authOptions: NextAuthOptions = {
         dairyId: { label: "DairyId", type: "number" },
         role: { label: "Role", type: "text" },
       },
-      // @ts-ignore
       async authorize(credentials) {
         if (!credentials?.phone) {
           throw new Error("Invalid Phone Number");
@@ -31,6 +27,7 @@ export const authOptions: NextAuthOptions = {
         const phone = String(credentials.phone);
         const dairyId = credentials.dairyId ? Number(credentials.dairyId) : undefined;
         const role = String(credentials.role || '');
+        console.log("Authorizing user with phone:", phone, "dairyId:", dairyId, "role:", role);
 
         if (role === "OWNER" && phone) {
           const user = await db.user.findFirst({
@@ -39,6 +36,7 @@ export const authOptions: NextAuthOptions = {
               role: "OWNER",
             },
           })
+          console.log("Authorized User is ownerrr:", user);
           if (!user) {
             throw new Error("No user found");
           }
@@ -50,9 +48,11 @@ export const authOptions: NextAuthOptions = {
               phone_dairyId: {
                 phone: phone,
                 dairyId: dairyId,
-              }
+              },
+              role: { in: ["BUYER", "SELLER", "STAFF"] },
             }
           })
+          console.log("Authorized User is buyer/seller/staff:", user);
           if (!user) {
             throw new Error("No user found for the selected dairy");
           }

@@ -26,6 +26,7 @@ export async function POST(req: Request) {
             );
         }
         const otp = generateOtp();
+        console.log("Generated OTP:", otp);
         const salt = generateSalt();
         const hashedOtp = hashOtp(otp, salt);
         const expiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now

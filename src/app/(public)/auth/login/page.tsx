@@ -1,62 +1,78 @@
 "use client";
 
-import { use, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import axios from "axios";
+import toast from "react-hot-toast";
+
+import {
+  Card, CardContent, CardDescription, CardHeader, CardTitle
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
-import { useSession } from "next-auth/react";
-import axios from "axios";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import toast from "react-hot-toast";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 
 export default function LoginForm() {
 
   const router = useRouter();
-  const { status } = useSession();
 
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [requestId, setRequestId] = useState("");
+  const [otp, setOtp] = useState("");
+  const [role, setRole] = useState<"OWNER" | "BUYER">("OWNER");
+
+  const [stage, setStage] = useState<"password" | "otp" | "dairies">("password");
+
   const [dairies, setDairies] = useState<any[]>([]);
   const [selectedDairy, setSelectedDairy] = useState("");
 
-  if (status === "authenticated") {
-    router.replace("/dashboard");
-    // router.push("/dashboard");
-  }
+  const [requestId, setRequestId] = useState("");
+  const [loading, setLoading] = useState(false);
 
+  async function handlePasswordSubmit(e: React.FormEvent) {
+    e.preventDefault();
 
+    if (!phone) return toast.error("Enter phone number");
+    if (role === "OWNER" && !password) return toast.error("Enter password");
 
+    try {
+      const res = await axios.post("/api/auth/login-password", {
+        phone,
+        password: role === "OWNER" ? password : undefined,
+        role
+      });
+      console.log("Login response:", res.data);
+      if (res.data.success) {
+        const otpRes = await axios.post("/api/auth/send-otp", { phone });
+        setRequestId(otpRes.data.requestId);
+        setStage("otp");
+      }
 
-
-  const [stage, setStage] = useState("password"); // password → otp
-
-  const [otp, setOtp] = useState("");
-
-  async function handlePasswordStep() {
-    const res = await axios.post("/api/auth/login-password", { phone, password });
-    if (res.data.success) {
-      const res = await axios.post("/api/auth/send-otp", { phone });
-      setRequestId(res.data.requestId);
-      setStage("otp");
+    } catch {
+      toast.error("Invalid credentials");
     }
   }
 
-  async function handleOtpStep() {
-    const res = await axios.post("/api/auth/verify-otp", { phone, otp, requestId });
-    if (res.data.success) {
 
-      // if user is owner
+  async function handleOtpSubmit(e: React.FormEvent) {
+    e.preventDefault();
+
+    try {
+      const res = await axios.post("/api/auth/verify-otp", {
+        phone,
+        otp,
+        requestId,
+      });
+
+      if (!res.data.success) return toast.error("Invalid OTP");
+
       if (res.data.owner) {
-        const res = await signIn("credentials", {
+        await signIn("credentials", {
           redirect: false,
           phone,
           role: "OWNER",
@@ -65,200 +81,138 @@ export default function LoginForm() {
         return;
       }
 
+      setDairies(res.data.dairies || []);
       setStage("dairies");
-      const dairies = res.data.dairies;
-      if (dairies.length >= 1) {
-        setDairies(dairies);
-        // setSelectedDairy(dairies[0].id);
-      }
+
+    } catch (error) {
+      toast.error("OTP verification failed");
     }
   }
 
 
+  async function handleDairySubmit(e: React.FormEvent) {
+    e.preventDefault();
 
+    if (!selectedDairy) return toast.error("Select a dairy");
 
-
-
-
-
-
-// fix otp mail
-// clean this page code and optimise it 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  async function handleLogin() {
-    if (!selectedDairy) {
-      toast.error("Please select a dairy to continue");
-      return;
-    }
     setLoading(true);
-    const result = await signIn("credentials", {
+    await signIn("credentials", {
       redirect: false,
       phone,
       dairyId: selectedDairy,
+      role: "BUYER",
     });
+
     setLoading(false);
-
-
-    return;
+    router.replace("/dashboard");
   }
 
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 font-montserrat ">
-      {/* <Image 
-        src="/login/bg1.jpg" // Path to your image in the public folder
-        alt="Background Cover" 
-        layout="fill" // Ensures the image fills the parent container
-        objectFit="cover" // Scales the image to cover the entire container
-        className="-z-10" // Pushes the image behind other content
-      /> */}
+    <div className="min-h-screen flex items-center justify-center p-4 font-montserrat">
+      <Tabs
+        defaultValue="owner"
+        onValueChange={(v: any) => {
+          setRole(v === "owner" ? "OWNER" : "BUYER");
+          setStage("password");
+        }}
+      >
+        <TabsList>
+          <TabsTrigger value="owner">Owner / Staff</TabsTrigger>
+          <TabsTrigger value="buyer">Buyer / Seller</TabsTrigger>
+        </TabsList>
 
+        <Card className="max-w-sm w-full bg-accent/50 shadow-lg mt-4">
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">Welcome Back</CardTitle>
+            <CardDescription className="text-center">
+              Login to Dairy Mate
+            </CardDescription>
+          </CardHeader>
 
-      <Card className="max-w-sm w-full bg-accent/50  shadow-lg">
-        <CardHeader className="space-y-2">
-          <CardTitle className="text-2xl font-semibold text-center">
-            Welcome Back
-          </CardTitle>
-          <CardDescription className="text-center">
-            Login to your Dairy Mate account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {/* <form onSubmit={handleLogin} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+          <CardContent>
 
-            <div className="space-y-2">
-              <Label htmlFor="mobile">Mobile Number</Label>
-              <Input
-                id="mobile"
-                type="text"
-                value={phone}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
-                placeholder="Enter your mobile number"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                required
-              />
-            </div>
-
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-[#008ED6] hover:bg-[#007ac0] text-white"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Logging in...
-                </>
-              ) : (
-                "Login"
-              )}
-            </Button>
-          </form> */}
-          <div className="space-y-4">
-
+            {/* ============= PASSWORD STEP ============= */}
             {stage === "password" && (
-              <>
+              <form onSubmit={handlePasswordSubmit} className="space-y-4">
+
                 <div className="space-y-2">
-                  <Label htmlFor="mobile">Mobile Number</Label>
+                  <Label>Mobile Number</Label>
                   <Input
-                    id="mobile"
                     type="text"
                     value={phone}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPhone(e.target.value)}
-                    placeholder="Enter your mobile number"
-                    required
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="Enter mobile number"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    required
-                  />
-                </div>
-                {/* <button onClick={handlePasswordStep}>Continue</button> */}
-                <Button
-                  // type="submit"
-                  // disabled={loading}
-                  onClick={handlePasswordStep}
-                  className="w-full bg-[#008ED6] hover:bg-[#007ac0] text-white"
-                >
+                {role === "OWNER" && (
+                  <div className="space-y-2">
+                    <Label>Password</Label>
+                    <Input
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter your password"
+                    />
+                  </div>
+                )}
+
+                <Button type="submit" className="w-full bg-primary text-white">
                   Continue
                 </Button>
-              </>
+
+              </form>
             )}
 
+          
             {stage === "otp" && (
-              <>
-                <Input placeholder="Enter OTP" value={otp} onChange={(e) => setOtp(e.target.value)} />
-                <Button
-                  onClick={handleOtpStep}
-                  className="w-full bg-[#008ED6] hover:bg-[#007ac0] text-white"
-                >
+              <form onSubmit={handleOtpSubmit} className="space-y-4">
+
+                <Input
+                  placeholder="Enter OTP"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                />
+
+                <Button type="submit" className="w-full bg-primary text-white">
                   Verify OTP
                 </Button>
-              </>
+
+              </form>
             )}
-            {
-              stage === "dairies" && (
-                <div className="space-y-4" >
-                  <div>
-                    <Label className="text-lg font-semibold mb-4 w-full">Select Your Dairy</Label>
-                    <Select onValueChange={(v) => setSelectedDairy(v)}  >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select dairy" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {dairies.map((dairy) => (
-                          <SelectItem value={dairy.id} key={dairy.id}  >
-                            {dairy.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <Button onClick={handleLogin} disabled={loading} className="w-full bg-primary" >
-                    Login
-                  </Button>
-                </div>
-              )
-            }
-          </div>
-        </CardContent>
-      </Card>
+
+         
+            {stage === "dairies" && (
+              <form onSubmit={handleDairySubmit} className="space-y-4">
+
+                <Label>Select Your Dairy</Label>
+
+                <Select onValueChange={(v) => setSelectedDairy(v)}>
+                  <SelectTrigger><SelectValue placeholder="Select dairy" /></SelectTrigger>
+                  <SelectContent>
+                    {dairies.map((d) => (
+                      <SelectItem value={String(d.id)} key={d.id}>
+                        {d.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-primary text-white"
+                >
+                  {loading ? "Logging in..." : "Login"}
+                </Button>
+
+              </form>
+            )}
+
+          </CardContent>
+        </Card>
+      </Tabs>
     </div>
   );
 }

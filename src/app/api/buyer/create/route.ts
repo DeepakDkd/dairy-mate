@@ -8,6 +8,42 @@ export async function POST(req: Request) {
 
         const hashedPassword = bcrypt.hashSync(body.password, 10);
 
+
+        const isUserExist = await prisma.dairy.findFirst({
+            where: {
+                owner: {
+                    phone: body.phone
+                }
+            }
+        })
+        if (isUserExist) {
+            return NextResponse.json(
+                { message: "This phone number already exists" },
+                { status: 400 }
+            );
+        }
+        const isBuyerExist = await prisma.user.findFirst({
+            where: {
+                OR: [
+                    {
+                        phone: body.phone,
+                        dairyId: body.dairyId,
+                    },
+                    {
+                        email: body.email,
+                        dairyId: body.dairyId,
+                    },
+                ],
+            },
+        });
+
+        if (isBuyerExist) {
+            return NextResponse.json(
+                { message: "This phone/email already exists in this dairy" },
+                { status: 400 }
+            );
+        }
+
         const newBuyer = await prisma.user.create({
             data: {
                 firstName: body.firstName,
