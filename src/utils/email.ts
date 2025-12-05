@@ -15,7 +15,7 @@ export const sendEmail = async ({to, subject, text, html}: {to: string, subject:
         });
 
         await transporter.sendMail({
-            from: `ClassSync  <${process.env.EMAIL_FROM}>`,
+            from: `Dairy Mate <${process.env.EMAIL_FROM}>`,
             to,
             subject,
             text,
