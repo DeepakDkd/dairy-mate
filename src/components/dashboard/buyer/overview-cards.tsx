@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Milk, TrendingUp, Calendar, Wallet } from "lucide-react"
+import { en } from "zod/v4/locales";
 
 export function BuyerOverviewCards({ buyers }: { buyers: any }) {
 
@@ -35,11 +36,11 @@ export function BuyerOverviewCards({ buyers }: { buyers: any }) {
       const entryDate = new Date(entry.date);
       const now = new Date();
 
-     
-    const isSameDay =
-      entryDate.getDate() === now.getDate() &&
-      entryDate.getMonth() === now.getMonth() &&     
-      entryDate.getFullYear() === now.getFullYear();
+
+      const isSameDay =
+        entryDate.getDate() === now.getDate() &&
+        entryDate.getMonth() === now.getMonth() &&
+        entryDate.getFullYear() === now.getFullYear();
       if (isSameDay) {
         subTotal += entry.litres;
       }
@@ -49,11 +50,30 @@ export function BuyerOverviewCards({ buyers }: { buyers: any }) {
     return total;
   }, 0) || 0;
 
-  const ratePerLitre = 35 // ₹
-  const monthlyExpense = totalMonthlyLitres * ratePerLitre // ₹43,750
+
+  const totalMonthlyExpense = buyers?.reduce((total: number, buyer: any) => {
+    const buyerTotalLitresPrice = buyer?.buyerEntries?.reduce((subTotal: number, entry: any) => {
+      const entryDate = new Date(entry.date);
+      const now = new Date();
+
+      const isSameMonth =
+        entryDate.getMonth() === now.getMonth() &&
+        entryDate.getFullYear() === now.getFullYear();
+      const ratePerLitre = entry?.rate;
+      if (isSameMonth) {
+        subTotal += entry.litres * ratePerLitre;
+      }
+      return subTotal;
+    }, 0) || 0;
+    total += buyerTotalLitresPrice;
+    return total;
+  }, 0) || 0;
+
+
+  const monthlyExpense = totalMonthlyExpense
   const balanceAmount = -5000 // negative means pending, positive means advance
   const todayMilk = todaysMilkLitres // litres
-  const todayRate = 35 // ₹
+  const todayRate = 60 // ₹
 
 
   const cards = [
@@ -79,7 +99,8 @@ export function BuyerOverviewCards({ buyers }: { buyers: any }) {
     {
       title: "Today's Milk Taken",
       value: todayMilk,
-      unit: `@ ₹${todayRate}/L`,
+      // unit: `@ ₹${todayRate}/L`,
+      unit: `Litres`,
       subtitle: "Today",
       icon: Calendar,
       color: "bg-yellow-50",
