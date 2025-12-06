@@ -51,7 +51,8 @@ export async function GET(
           { email: { contains: search, mode: "insensitive" } },
         ],
       }, include: {
-        accountBalances: true
+        accountBalance: true,
+        sellerEntries: true
       },
       orderBy,
       skip,

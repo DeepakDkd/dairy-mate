@@ -55,8 +55,8 @@ export default function BuyerDashboardPage() {
 
 
   const { data: buyerData, isLoading, error, mutate: staffMutate } = useSWR(buyerKey ? buyerKey : null, fetcher, { revalidateOnFocus: false, dedupingInterval: 2000, });
-  
-  if(isLoading){
+
+  if (isLoading) {
     console.log("Loading buyer data...");
   }
 
@@ -75,13 +75,29 @@ export default function BuyerDashboardPage() {
 
   const totalPages = buyerData?.totalBuyers ? Math.ceil(buyerData.totalBuyers / limit) : 0;
 
-  
+
 
 
 
   return (
     <div className="p-6 space-y-6">
       {/* Greeting Section */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Buyer Dashboard</h1>
+          <p className="text-muted-foreground mt-1">Here&apos;s your milk consumption and payment summary.</p>
+        </div>
+        <div className="grid md:grid-cols-2 gap-2 md:gap-5" >
+          <Button onClick={() => setShowAddBuyer(true)} className="bg-primary hover:bg-primary/90 cursor-pointer text-white  gap-2">
+            <Plus className="w-4 h-4" />
+            Add Buyer
+          </Button>
+          <Button onClick={() => setShowMilkDialog(true)} className="bg-primary hover:bg-primary/90 cursor-pointer text-white  gap-2">
+            <Plus className="w-4 h-4" />
+            Add Milk Entry
+          </Button>
+        </div>
+      </div>
       <div className="flex gap-3 overflow-x-auto pb-2">
         {dairiesData?.dairies?.map((d: any) => (
           <div
@@ -102,27 +118,12 @@ export default function BuyerDashboardPage() {
           </div>
         ))}
       </div>
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Buyer Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Here&apos;s your milk consumption and payment summary.</p>
-        </div>
-        <div className="grid md:grid-cols-2 gap-2 md:gap-5" >
-          <Button onClick={() => setShowAddBuyer(true)} className="bg-primary hover:bg-primary/90 cursor-pointer text-white  gap-2">
-            <Plus className="w-4 h-4" />
-            Add Buyer
-          </Button>
-          <Button onClick={() => setShowMilkDialog(true)} className="bg-primary hover:bg-primary/90 cursor-pointer text-white  gap-2">
-            <Plus className="w-4 h-4" />
-            Add Milk Entry
-          </Button>
-        </div>
-      </div>
+
 
 
       {/* Overview Cards */}
       <BuyerOverviewCards buyers={buyerData?.buyers} />
- 
+
       <Card>
         <CardHeader>
           <CardTitle>Buyer List</CardTitle>
