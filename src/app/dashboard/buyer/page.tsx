@@ -59,7 +59,6 @@ export default function BuyerDashboardPage() {
   if(isLoading){
     console.log("Loading buyer data...");
   }
-  console.log("buyers Data from SWR:", buyerData?.buyers);
 
   const refreshBuyers = () => {
     if (buyerKey) {
@@ -73,6 +72,9 @@ export default function BuyerDashboardPage() {
     setPage(1);
     refreshBuyers();
   };
+
+  const totalPages = buyerData?.totalBuyers ? Math.ceil(buyerData.totalBuyers / limit) : 0;
+  console.log("Total Pages in Dashboard:", totalPages);
 
   
 
@@ -128,7 +130,7 @@ export default function BuyerDashboardPage() {
           <CardDescription>Manage all buyers  entries</CardDescription>
         </CardHeader>
         <CardContent>
-          <BuyerRosterTable buyer={buyerData?.buyers} />
+          <BuyerRosterTable buyer={buyerData?.buyers} setPage={setPage} page={page} totalPages={totalPages} />
         </CardContent>
       </Card>
 

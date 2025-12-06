@@ -1,7 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Milk, TrendingUp, Calendar, Wallet } from "lucide-react"
-import { en } from "zod/v4/locales";
 
 export function BuyerOverviewCards({ buyers }: { buyers: any }) {
 
@@ -26,8 +25,6 @@ export function BuyerOverviewCards({ buyers }: { buyers: any }) {
     return total;
   }, 0) || 0;
 
-  console.log("Calculating Total Milk Taken...");
-  console.log("Total Milk Taken:", totalMonthlyLitres);
 
   const todaysMilkLitres = buyers?.reduce((total: number, buyer: any) => {
     // console.log(buyer?.firstName, "Processing buyer entries:", buyer.buyerEntries);

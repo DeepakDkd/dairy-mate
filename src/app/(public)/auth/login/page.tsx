@@ -71,6 +71,7 @@ export default function LoginForm() {
 
       if (res.data.success) {
         const otpRes = await axios.post("/api/auth/send-otp", { phone });
+        toast.success("OTP sent to your email");
 
         setRequestId(otpRes.data.requestId);
         setStage("otp");
@@ -246,7 +247,7 @@ export default function LoginForm() {
 
               </form>
             )}
-            
+
             {stage === "dairies" && (
               <form onSubmit={handleDairySubmit} className="space-y-4">
 
