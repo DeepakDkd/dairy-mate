@@ -27,7 +27,16 @@ export async function GET(req: Request, context: { params: { dairyId: string } }
             take: limit,
             orderBy: sort === "name_asc" ? { firstName: "asc" } : { firstName: "desc" },
         });
-        return NextResponse.json(staffData, { status: 200 });
+          if(!staffData){
+            return NextResponse.json({ message: "No staff found for this dairy" }, { status: 404 });
+        }
+         const totalStaff = await prisma.user.count({
+            where: {
+                role: "STAFF",
+                dairyId: parseInt(dairyId),
+            }
+        });
+        return NextResponse.json({ staff:staffData, totalStaff }, { status: 200 });
         
     } catch (error:any) {
         console.error("Error fetching dairies:", error);

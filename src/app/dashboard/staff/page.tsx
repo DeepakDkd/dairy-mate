@@ -58,6 +58,7 @@ export default function StaffDashboard() {
     setPage(1);
     refreshBuyers();
   };
+  const totalPages = staffData?.totalStaff ? Math.ceil(staffData?.totalStaff / limit) : 0;
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -95,7 +96,7 @@ export default function StaffDashboard() {
         ))}
       </div>
       {/* Overview Cards */}
-      <StaffOverviewCards staffData={staffData} />
+      <StaffOverviewCards staffData={staffData?.staff} />
 
       {/* Main Content - Tabs */}
       <Tabs defaultValue="roster" className="w-full">
@@ -117,7 +118,7 @@ export default function StaffDashboard() {
                 isLoading ? (
                   <p>Loading staff data...</p>
                 ) : (
-                  <StaffRosterTable staff={staffData} />
+                  <StaffRosterTable staff={staffData?.staff} setPage={setPage} page={page} totalPages={totalPages} />
                 )
               }
             </CardContent>

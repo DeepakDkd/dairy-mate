@@ -4,7 +4,7 @@ import { useState } from "react"
 import { User } from "@prisma/client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Edit2, Trash2, MoreVertical } from "lucide-react"
+import { Edit2, Trash2, MoreVertical, ChevronLeft, ChevronRight } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 
 
 
-export function StaffRosterTable({ staff }: { staff: User[] }) {
+export function StaffRosterTable({ staff ,setPage, page, totalPages}: { staff: User[], setPage: React.Dispatch<React.SetStateAction<number>>, page: number, totalPages: number }) {
   const [sortBy, setSortBy] = useState<"name" | "status" | "joinDate">("name")
 
   console.log("Staff Roster Table Staff Prop:", staff);
@@ -115,6 +115,34 @@ export function StaffRosterTable({ staff }: { staff: User[] }) {
             ))}
           </TableBody>
         </Table>
+        
+        <div className="flex items-center justify-between   w-full p-2">
+          <span className="text-sm text-muted-foreground">
+            Page {page} of {totalPages}
+          </span>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(Math.max(1, page - 1))}
+              disabled={page === 1}
+              className="gap-1"
+            >
+              <ChevronLeft className="w-4 h-4" />
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(Math.min(totalPages, page + 1))}
+              disabled={page === totalPages}
+              className="gap-1"
+            >
+              Next
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   )

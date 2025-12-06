@@ -74,7 +74,6 @@ export default function BuyerDashboardPage() {
   };
 
   const totalPages = buyerData?.totalBuyers ? Math.ceil(buyerData.totalBuyers / limit) : 0;
-  console.log("Total Pages in Dashboard:", totalPages);
 
   
 

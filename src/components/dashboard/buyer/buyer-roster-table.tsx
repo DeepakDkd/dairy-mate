@@ -26,7 +26,6 @@ export function BuyerRosterTable({ buyer ,setPage, page,totalPages}: { buyer: Us
     // if (sortBy === "joinDate") return new Date(b?.staffProfile?.joinDate).getTime() - new Date(a?.staffProfile?.joinDate).getTime()
     return 0
   })
-  console.log("Total Pages:", totalPages);
 
 
   return (
