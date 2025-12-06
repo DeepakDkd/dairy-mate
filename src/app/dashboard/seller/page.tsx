@@ -97,7 +97,7 @@ export default  function SellerDashboardPage() {
       {/* Header Section */}
 
       {/* Overview Cards */}
-      <SellerOverviewCards />
+      <SellerOverviewCards sellers={sellerData?.data} />
       <hr />
       {/* Seller list Section */}
       <div className="space-y-4">

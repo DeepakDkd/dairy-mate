@@ -2,12 +2,79 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Milk, Banknote, Calendar, Wallet } from "lucide-react"
 
-export function SellerOverviewCards() {
-  // Mock data - would be dynamic from API
+export function SellerOverviewCards({ sellers }: { sellers: any }) {
+  
+  const totalMonthlyLitres = sellers?.reduce((total: number, seller: any) => {
+    // console.log(seller?.firstName, "Processing seller entries:", seller.sellerEntries);
+    const sellerTotalLitres = seller?.sellerEntries?.reduce((subTotal: number, entry: any) => {
+      // console.log("  Entry:", entry, "Litres:", entry.litres);
+      const entryDate = new Date(entry.date);
+      const now = new Date();
+
+      const isSameMonth =
+        entryDate.getMonth() === now.getMonth() &&
+        entryDate.getFullYear() === now.getFullYear();
+
+      if (isSameMonth) {
+        subTotal += entry.litres;
+      }
+      return subTotal;
+    }, 0) || 0;
+    total += sellerTotalLitres;
+    return total;
+  }, 0) || 0;
+
+
+  const todaysMilkLitres = sellers?.reduce((total: number, seller: any) => {
+    // console.log(seller?.firstName, "Processing seller entries:", seller.sellerEntries);
+    const sellerTotalLitres = seller?.sellerEntries?.reduce((subTotal: number, entry: any) => {
+      // console.log("  Entry:", entry, "Litres:", entry.litres);
+      const entryDate = new Date(entry.date);
+      const now = new Date();
+
+
+      const isSameDay =
+        entryDate.getDate() === now.getDate() &&
+        entryDate.getMonth() === now.getMonth() &&
+        entryDate.getFullYear() === now.getFullYear();
+      if (isSameDay) {
+        subTotal += entry.litres;
+      }
+      return subTotal;
+    }, 0) || 0;
+    total += sellerTotalLitres;
+    return total;
+  }, 0) || 0;
+
+
+  const totalMonthlyExpense = sellers?.reduce((total: number, seller: any) => {
+    const sellerTotalLitresPrice = seller?.sellerEntries?.reduce((subTotal: number, entry: any) => {
+      const entryDate = new Date(entry.date);
+      const now = new Date();
+
+      const isSameMonth =
+        entryDate.getMonth() === now.getMonth() &&
+        entryDate.getFullYear() === now.getFullYear();
+      const ratePerLitre = entry?.rate;
+      if (isSameMonth) {
+        subTotal += entry.litres * ratePerLitre;
+      }
+      return subTotal;
+    }, 0) || 0;
+    total += sellerTotalLitresPrice;
+    return total;
+  }, 0) || 0;
+
+
+  const monthlyExpense = totalMonthlyExpense
+  const balanceAmount = -5000 // negative means pending, positive means advance
+  const todayMilk = todaysMilkLitres // litres
+  const todayRate = 60 // ₹
+
   const cards = [
     {
       title: "Total Milk Sold",
-      value: "2,450",
+      value: totalMonthlyLitres,
       unit: "Litres",
       subtitle: "This Month",
       icon: Milk,
@@ -16,7 +83,7 @@ export function SellerOverviewCards() {
     },
     {
       title: "Total Earnings",
-      value: "₹98,500",
+      value: `₹${totalMonthlyExpense.toFixed(2)}`,
       unit: "Amount to be received",
       badge: "Pending ₹12,300",
       badgeColor: "bg-red-100 text-red-800",
@@ -26,7 +93,7 @@ export function SellerOverviewCards() {
     },
     {
       title: "Today's Milk Sold",
-      value: "85",
+      value: `${todaysMilkLitres}`,
       unit: "Litres @ ₹40/L",
       subtitle: "Today",
       icon: Calendar,
