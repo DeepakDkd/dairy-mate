@@ -3,13 +3,13 @@ import { Badge } from "@/components/ui/badge"
 import { Milk, TrendingUp, Calendar, Wallet } from "lucide-react"
 
 export function BuyerOverviewCards({ buyers }: { buyers: any }) {
-  
+
 
   const totalMonthlyLitres = buyers?.reduce((total: number, buyer: any) => {
     // console.log(buyer?.firstName, "Processing buyer entries:", buyer.buyerEntries);
     const buyerTotalLitres = buyer?.buyerEntries?.reduce((subTotal: number, entry: any) => {
       // console.log("  Entry:", entry, "Litres:", entry.litres);
-      const entryDate = new Date(entry.createdAt);
+      const entryDate = new Date(entry.date);
       const now = new Date();
 
       const isSameMonth =
@@ -24,15 +24,35 @@ export function BuyerOverviewCards({ buyers }: { buyers: any }) {
     total += buyerTotalLitres;
     return total;
   }, 0) || 0;
-  
+
   console.log("Calculating Total Milk Taken...");
   console.log("Total Milk Taken:", totalMonthlyLitres);
 
+  const todaysMilkLitres = buyers?.reduce((total: number, buyer: any) => {
+    // console.log(buyer?.firstName, "Processing buyer entries:", buyer.buyerEntries);
+    const buyerTotalLitres = buyer?.buyerEntries?.reduce((subTotal: number, entry: any) => {
+      // console.log("  Entry:", entry, "Litres:", entry.litres);
+      const entryDate = new Date(entry.date);
+      const now = new Date();
+
+     
+    const isSameDay =
+      entryDate.getDate() === now.getDate() &&
+      entryDate.getMonth() === now.getMonth() &&     
+      entryDate.getFullYear() === now.getFullYear();
+      if (isSameDay) {
+        subTotal += entry.litres;
+      }
+      return subTotal;
+    }, 0) || 0;
+    total += buyerTotalLitres;
+    return total;
+  }, 0) || 0;
 
   const ratePerLitre = 35 // ₹
   const monthlyExpense = totalMonthlyLitres * ratePerLitre // ₹43,750
   const balanceAmount = -5000 // negative means pending, positive means advance
-  const todayMilk = 42 // litres
+  const todayMilk = todaysMilkLitres // litres
   const todayRate = 35 // ₹
 
 
