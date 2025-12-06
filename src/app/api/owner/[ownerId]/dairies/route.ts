@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function GET(
-  req: Request,context:{params:Promise<{ownerId: string}>}
+  req: Request, context: { params: Promise<{ ownerId: string }> }
 ) {
   try {
     const { ownerId } = await context.params;
@@ -21,7 +21,8 @@ export async function GET(
       select: {
         ownedDairies: {
           include: {
-            users:true 
+            users: true,
+            buyerEntries: true
           }
         }
       },

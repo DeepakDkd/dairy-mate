@@ -15,7 +15,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 export function BuyerRosterTable({ buyer }: { buyer: User[] }) {
   const [sortBy, setSortBy] = useState<"name" | "status" | "joinDate">("name")
 
-  console.log("Staff Roster buyersss:", buyer);
 
   if (!buyer || buyer.length === 0) {
     return <div>No staff data available.</div>

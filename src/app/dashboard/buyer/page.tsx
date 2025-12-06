@@ -55,7 +55,11 @@ export default function BuyerDashboardPage() {
 
 
   const { data: buyerData, isLoading, error, mutate: staffMutate } = useSWR(buyerKey ? buyerKey : null, fetcher, { revalidateOnFocus: false, dedupingInterval: 2000, });
-  console.log("Staff Data from SWR:", buyerData);
+  
+  if(isLoading){
+    console.log("Loading buyer data...");
+  }
+  console.log("buyers Data from SWR:", buyerData?.buyers);
 
   const refreshBuyers = () => {
     if (buyerKey) {
@@ -69,6 +73,8 @@ export default function BuyerDashboardPage() {
     setPage(1);
     refreshBuyers();
   };
+
+  
 
 
 
@@ -114,7 +120,7 @@ export default function BuyerDashboardPage() {
 
 
       {/* Overview Cards */}
-      <BuyerOverviewCards />
+      <BuyerOverviewCards buyers={buyerData?.buyers} />
  
       <Card>
         <CardHeader>

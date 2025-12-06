@@ -2,19 +2,44 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Milk, TrendingUp, Calendar, Wallet } from "lucide-react"
 
-export function BuyerOverviewCards() {
-  // Mock data - would be dynamic from API
-  const totalMilkTaken = 1250 // litres this month
+export function BuyerOverviewCards({ buyers }: { buyers: any }) {
+  
+
+  const totalMonthlyLitres = buyers?.reduce((total: number, buyer: any) => {
+    // console.log(buyer?.firstName, "Processing buyer entries:", buyer.buyerEntries);
+    const buyerTotalLitres = buyer?.buyerEntries?.reduce((subTotal: number, entry: any) => {
+      // console.log("  Entry:", entry, "Litres:", entry.litres);
+      const entryDate = new Date(entry.createdAt);
+      const now = new Date();
+
+      const isSameMonth =
+        entryDate.getMonth() === now.getMonth() &&
+        entryDate.getFullYear() === now.getFullYear();
+
+      if (isSameMonth) {
+        subTotal += entry.litres;
+      }
+      return subTotal;
+    }, 0) || 0;
+    total += buyerTotalLitres;
+    return total;
+  }, 0) || 0;
+  
+  console.log("Calculating Total Milk Taken...");
+  console.log("Total Milk Taken:", totalMonthlyLitres);
+
+
   const ratePerLitre = 35 // ₹
-  const monthlyExpense = totalMilkTaken * ratePerLitre // ₹43,750
+  const monthlyExpense = totalMonthlyLitres * ratePerLitre // ₹43,750
   const balanceAmount = -5000 // negative means pending, positive means advance
   const todayMilk = 42 // litres
   const todayRate = 35 // ₹
 
+
   const cards = [
     {
       title: "Total Milk Taken",
-      value: totalMilkTaken.toLocaleString(),
+      value: totalMonthlyLitres,
       unit: "Litres",
       subtitle: "This Month",
       icon: Milk,
@@ -66,6 +91,7 @@ export function BuyerOverviewCards() {
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-baseline gap-2">
+                  {/* <span className="text-2xl font-bold text-foreground">{card.value}</span> */}
                   <span className="text-2xl font-bold text-foreground">{card.value}</span>
                   <span className="text-xs text-muted-foreground">{card.unit}</span>
                 </div>

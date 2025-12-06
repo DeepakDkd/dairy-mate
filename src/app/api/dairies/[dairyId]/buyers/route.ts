@@ -48,7 +48,8 @@ export async function GET(req: Request, context: { params: { dairyId: string } }
                 ]
             },
             include: {
-                accountBalance: true
+                accountBalance: true,
+                buyerEntries: true
             },
             orderBy: orderBy,
             skip: skip,
