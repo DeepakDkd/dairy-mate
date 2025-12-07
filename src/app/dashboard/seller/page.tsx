@@ -99,7 +99,7 @@ export default function SellerDashboardPage() {
       {/* Header Section */}
 
       {/* Overview Cards */}
-      <SellerOverviewCards sellers={sellerData?.data} />
+      <SellerOverviewCards totalMonthlyLitres={sellerData?.totalMonthlyLitres} todaysMilkLitres={sellerData?.todaysMilkLitres} totalMonthlyExpense={sellerData?.totalMonthlyExpense} />
       <hr />
       {/* Seller list Section */}
       <div className="space-y-4">

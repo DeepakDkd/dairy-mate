@@ -6,7 +6,7 @@ export async function GET(
   context: { params: Promise<{ dairyId: string }> }
 ) {
   try {
-    const {dairyId} = await context.params;
+    const { dairyId } = await context.params;
     const dairyIdNum = Number(dairyId)
     if (isNaN(dairyIdNum)) {
       return NextResponse.json(
@@ -44,7 +44,7 @@ export async function GET(
     const sellers = await prisma.user.findMany({
       where: {
         role: "SELLER",
-        dairyId:dairyIdNum,
+        dairyId: dairyIdNum,
         OR: [
           { firstName: { contains: search, mode: "insensitive" } },
           { lastName: { contains: search, mode: "insensitive" } },
@@ -58,11 +58,25 @@ export async function GET(
       skip,
       take: limit,
     });
+    if (!sellers) {
+      return NextResponse.json({
+        message: "No entries found ", status: 404
+      })
+    }
+    const sellersOverview = await prisma.user.findMany({
+      where: {
+        role: "SELLER",
+        dairyId: dairyIdNum,
+      }, include: {
+        accountBalance: true,
+        sellerEntries: true
+      },
+    });
 
     const totalSellers = await prisma.user.count({
       where: {
         role: "SELLER",
-        dairyId:dairyIdNum,
+        dairyId: dairyIdNum,
         OR: [
           { firstName: { contains: search, mode: "insensitive" } },
           { lastName: { contains: search, mode: "insensitive" } },
@@ -71,10 +85,72 @@ export async function GET(
       },
     });
 
+
+    const totalMonthlyLitres = sellersOverview?.reduce((total: number, seller: any) => {
+      const sellerTotalLitres = seller?.sellerEntries?.reduce((subTotal: number, entry: any) => {
+        const entryDate = new Date(entry.date);
+        const now = new Date();
+
+        const isSameMonth =
+          entryDate.getMonth() === now.getMonth() &&
+          entryDate.getFullYear() === now.getFullYear();
+
+        if (isSameMonth) {
+          subTotal += entry.litres;
+        }
+        return subTotal;
+      }, 0) || 0;
+      total += sellerTotalLitres;
+      return total;
+    }, 0) || 0;
+
+
+    const todaysMilkLitres = sellersOverview?.reduce((total: number, seller: any) => {
+      const sellerTotalLitres = seller?.sellerEntries?.reduce((subTotal: number, entry: any) => {
+        const entryDate = new Date(entry.date);
+        const now = new Date();
+
+
+        const isSameDay =
+          entryDate.getDate() === now.getDate() &&
+          entryDate.getMonth() === now.getMonth() &&
+          entryDate.getFullYear() === now.getFullYear();
+        if (isSameDay) {
+          subTotal += entry.litres;
+        }
+        return subTotal;
+      }, 0) || 0;
+      total += sellerTotalLitres;
+      return total;
+    }, 0) || 0;
+
+
+    const totalMonthlyExpense = sellersOverview?.reduce((total: number, seller: any) => {
+      const sellerTotalLitresPrice = seller?.sellerEntries?.reduce((subTotal: number, entry: any) => {
+        const entryDate = new Date(entry.date);
+        const now = new Date();
+
+        const isSameMonth =
+          entryDate.getMonth() === now.getMonth() &&
+          entryDate.getFullYear() === now.getFullYear();
+        const ratePerLitre = entry?.rate;
+        if (isSameMonth) {
+          subTotal += entry.litres * ratePerLitre;
+        }
+        return subTotal;
+      }, 0) || 0;
+      total += sellerTotalLitresPrice;
+      return total;
+    }, 0) || 0;
+
+
     return NextResponse.json(
       {
         data: sellers,
         total: totalSellers,
+        totalMonthlyLitres,
+        todaysMilkLitres,
+        totalMonthlyExpense,
         page,
         pageSize: limit,
         message: "Sellers fetched successfully",

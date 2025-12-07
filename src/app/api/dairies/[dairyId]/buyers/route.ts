@@ -79,7 +79,6 @@ export async function GET(req: Request, context: { params: { dairyId: string } }
             })
         }
 
-
         const totalMonthlyLitres = buyersOverview?.reduce((total: number, buyer: any) => {
             const buyerTotalLitres = buyer?.buyerEntries?.reduce((subTotal: number, entry: any) => {
                 const entryDate = new Date(entry.date);
