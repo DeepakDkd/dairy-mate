@@ -24,7 +24,7 @@ export function BuyerMilkEntriesTable({ selectedDairyId }: { selectedDairyId: an
   const [limit, setLimit] = useState(10);
   const [sort, setSort] = useState("name_asc");
 
-  const milkEntriesKey = selectedDairyId && `/api/dairies/${selectedDairyId}/sellers/milk-entries?page=${page}&limit=${limit}&sort=${sort}`;
+  const milkEntriesKey = selectedDairyId && `/api/dairies/${selectedDairyId}/buyers/milk-entries?page=${page}&limit=${limit}&sort=${sort}`;
 
   const { data: milkEntries, isLoading: milkEntriesLoading, mutate: milkEntriesMutate } = useSWR(milkEntriesKey ? milkEntriesKey : null, fetcher, { revalidateOnFocus: false });
   console.log("Milk entries  :::", milkEntries)
@@ -44,6 +44,7 @@ export function BuyerMilkEntriesTable({ selectedDairyId }: { selectedDairyId: an
             <TableHeader>
               <TableRow className="border-b border-gray-200--- hover:bg-transparent">
                 <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Date</TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Name</TableHead>
                 <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Shift</TableHead>
                 <TableHead className="text-xs font-semibold text-muted-foreground uppercase text-right">
                   Quantity (L)
@@ -54,7 +55,7 @@ export function BuyerMilkEntriesTable({ selectedDairyId }: { selectedDairyId: an
                 <TableHead className="text-xs font-semibold text-muted-foreground uppercase text-right">
                   Amount (₹)
                 </TableHead>
-                <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Remarks</TableHead>
+                
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -64,6 +65,9 @@ export function BuyerMilkEntriesTable({ selectedDairyId }: { selectedDairyId: an
                     <TableRow key={entry.id} className="border-b border-gray-100--- hover:bg-gray-50--- transition-colors">
                       <TableCell className="text-sm text-foreground">
                         {new Date(entry.date).toLocaleDateString("en-IN")}
+                      </TableCell>
+                      <TableCell className="text-sm text-foreground">
+                        {entry?.buyer?.firstName} {entry?.buyer?.lastName}
                       </TableCell>
                       <TableCell>
                         <Badge
@@ -81,7 +85,7 @@ export function BuyerMilkEntriesTable({ selectedDairyId }: { selectedDairyId: an
                       <TableCell className="text-right text-foreground font-medium">
                         ₹{entry.totalAmount.toLocaleString()}
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">{entry.totalAmount || "—"}</TableCell>
+                      {/* <TableCell className="text-sm text-muted-foreground">{entry.totalAmount || "—"}</TableCell> */}
                     </TableRow>
                   )) : <div className="w-full text-center" >
                     <p>No entries found</p>
