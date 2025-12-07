@@ -15,13 +15,13 @@ import { SellerRosterTable } from "@/components/dashboard/seller/seller-roster-t
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 
-export default  function SellerDashboardPage() {
+export default function SellerDashboardPage() {
 
   const session = useSession();
   const userId = session.data?.user?.id;
 
 
-  
+
   const { mutate: globalMutate } = useSWRConfig();
 
   const [selectedDairyId, setSelectedDairyId] = useState<number | null>(null);
@@ -48,11 +48,17 @@ export default  function SellerDashboardPage() {
 
 
   const { data: sellerData, isLoading, error, mutate: staffMutate } = useSWR(sellerKey ? sellerKey : null, fetcher, { revalidateOnFocus: false, dedupingInterval: 2000, });
-  
-  if(isLoading){
+
+  if (isLoading) {
     console.log("Loading seller data...");
   }
+  // console.log("seller entries : ", sellerData)
 
+  // const milkEntriesKey = selectedDairyId && `/api/dairies/${selectedDairyId}/sellers/milk-entries`;
+  const milkEntriesKey = selectedDairyId && `/api/dairies/${selectedDairyId}/sellers/milk-entries?page=${page}&limit=${limit}&sort=${sort}`;
+
+  const { data: milkEntries, isLoading: milkEntriesLoading, mutate: milkEntriesMutate } = useSWR(milkEntriesKey ? milkEntriesKey : null, fetcher, { revalidateOnFocus: false, dedupingInterval: 2000, });
+  console.log("Milk entries  :::", milkEntries)
   const refreshSellers = () => {
     if (sellerKey) {
       staffMutate();
@@ -68,13 +74,13 @@ export default  function SellerDashboardPage() {
 
   const totalPages = sellerData?.total ? Math.ceil(sellerData.total / limit) : 0;
 
-  
+
 
 
   return (
     <div className="p-6 space-y-6  ">
-         <Header userId={userId} />
-       <div className="flex gap-3 overflow-x-auto pb-2">
+      <Header userId={userId} />
+      <div className="flex gap-3 overflow-x-auto pb-2">
         {dairiesData?.dairies?.map((d: any) => (
           <div
             key={d.id}
@@ -104,7 +110,7 @@ export default  function SellerDashboardPage() {
         {/* <h2 className="text-xl font-bold font-montserrat text-foreground">Seller List</h2> */}
         {/* <SellerListTable /> */}
       </div>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>Seller List</CardTitle>
@@ -118,7 +124,7 @@ export default  function SellerDashboardPage() {
       {/* Milk Entries Section */}
       <div className="space-y-4">
         <h2 className="text-xl font-bold font-montserrat text-foreground">Milk Entries</h2>
-        <SellerMilkTable />
+        <SellerMilkTable milkEntries={milkEntries} />
       </div>
       <hr />
 
