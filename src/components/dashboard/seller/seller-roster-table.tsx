@@ -65,15 +65,15 @@ export function SellerRosterTable({ seller ,setPage, page,totalPages}: { seller:
               <TableHead>Status</TableHead>
               <TableHead>Balance</TableHead>
               <TableHead>Join Date</TableHead>
-
               {/* <TableHead>Attendance</TableHead> */}
+
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedSeller?.length > 0 && sortedSeller.map((member: any) => (
               <TableRow key={member.id} className="hover:bg-muted/50">
-                <TableCell className="font-medium">{member?.firstName} {member?.lastName}</TableCell>
+                <TableCell className="font-medium capitalize">{member?.firstName} {member?.lastName}</TableCell>
                 <TableCell className="text-sm">{member.role}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{member.email}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{member.phone}</TableCell>

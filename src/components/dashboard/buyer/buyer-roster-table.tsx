@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 
 
 
-export function BuyerRosterTable({ buyer ,setPage, page,totalPages}: { buyer: User[], setPage: React.Dispatch<React.SetStateAction<number>>, page: number, totalPages: number }) {
+export function BuyerRosterTable({ buyer, setPage, page, totalPages }: { buyer: User[], setPage: React.Dispatch<React.SetStateAction<number>>, page: number, totalPages: number }) {
   const [sortBy, setSortBy] = useState<"name" | "status" | "joinDate">("name")
 
 
@@ -73,7 +73,7 @@ export function BuyerRosterTable({ buyer ,setPage, page,totalPages}: { buyer: Us
           <TableBody>
             {sortedBuyer?.length > 0 && sortedBuyer.map((member: any) => (
               <TableRow key={member.id} className="hover:bg-muted/50">
-                <TableCell className="font-medium">{member?.firstName} {member?.lastName}</TableCell>
+                <TableCell className="font-medium capitalize">{member?.firstName} {member?.lastName}</TableCell>
                 <TableCell className="text-sm">{member.role}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{member.email}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{member.phone}</TableCell>
@@ -89,7 +89,7 @@ export function BuyerRosterTable({ buyer ,setPage, page,totalPages}: { buyer: Us
                 {/* <TableCell className="font-medium">₹{member?.buyerProfile?.balance.toLocaleString()}</TableCell> */}
                 <TableCell className="font-medium">{member?.accountBalance?.currentBalance}</TableCell>
                 <TableCell className="text-sm">{new Date(member?.createdAt).toLocaleDateString("en-IN")}</TableCell>
-               
+
                 <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

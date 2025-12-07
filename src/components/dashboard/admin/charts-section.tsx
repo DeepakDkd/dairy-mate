@@ -3,11 +3,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 
-interface ChartsSectionProps {
-  timeFilter: string
-}
+// interface ChartsSectionProps {
+//   timeFilter: string
+// }
 
-export function ChartsSection({ timeFilter }: ChartsSectionProps) {
+export function ChartsSection({ data }:{data:any}) {
   // Mock data for milk collection trend
   const milkTrendData = [
     { day: "Mon", litres: 450 },
@@ -37,7 +37,7 @@ export function ChartsSection({ timeFilter }: ChartsSectionProps) {
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={milkTrendData}>
+            <LineChart data={data}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis dataKey="day" stroke="#6b7280" />
               <YAxis stroke="#6b7280" />

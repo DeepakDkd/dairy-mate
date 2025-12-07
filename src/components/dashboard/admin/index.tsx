@@ -9,8 +9,18 @@ import { AdminDashboardProps } from "@/types/admin-dashboard";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import CreateDairyDialog from "@/components/Dialog/admin/create-dairy";
+import toast from "react-hot-toast";
+import useSWR from "swr";
 
 
+
+const fecher = async (url: string) => {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error("Failed to fetch data");
+  }
+  return res.json();
+}
 
 
 function AdminDashboard({ user }: AdminDashboardProps) {
@@ -18,6 +28,14 @@ function AdminDashboard({ user }: AdminDashboardProps) {
   const [showCreateDairy, setShowCreateDairy] = useState(false);
   const greeting = useGreeting(user)
   console.log("user in AdminDashboard:", user);
+
+
+  const { data, isLoading } = useSWR(`/api/owner/${user?.id}/milk-collection`, fecher, { revalidateOnFocus: false });
+  console.log("Milk collection data:", data?.last7Days);
+
+  console.log(data)
+
+
   return (
     <div className="p-6 space-y-6">
       {/* Greeting Section */}
@@ -33,13 +51,13 @@ function AdminDashboard({ user }: AdminDashboardProps) {
       </div>
 
       {/* Filter Section */}
-      <TimeFilter value={timeFilter} onChange={setTimeFilter} />
+      {/* <TimeFilter value={timeFilter} onChange={setTimeFilter} /> */}
 
       {/* Overview Cards */}
       <OverviewCards timeFilter={timeFilter} />
 
       {/* Charts Section */}
-      <ChartsSection timeFilter={timeFilter} />
+      <ChartsSection data={data?.last7Days} />
 
       {/* Recent Transactions */}
       <RecentTransactionsTable timeFilter={timeFilter} />

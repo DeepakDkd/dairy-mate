@@ -3,12 +3,12 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   req: Request,
-  { params }: { params: { dairyId: string } }
+  context: { params: Promise<{ dairyId: string }> }
 ) {
   try {
-    const dairyId = Number(params.dairyId);
-
-    if (isNaN(dairyId)) {
+    const {dairyId} = await context.params;
+    const dairyIdNum = Number(dairyId)
+    if (isNaN(dairyIdNum)) {
       return NextResponse.json(
         { message: "Invalid dairy ID" },
         { status: 400 }
@@ -44,7 +44,7 @@ export async function GET(
     const sellers = await prisma.user.findMany({
       where: {
         role: "SELLER",
-        dairyId,
+        dairyId:dairyIdNum,
         OR: [
           { firstName: { contains: search, mode: "insensitive" } },
           { lastName: { contains: search, mode: "insensitive" } },
@@ -62,7 +62,7 @@ export async function GET(
     const totalSellers = await prisma.user.count({
       where: {
         role: "SELLER",
-        dairyId,
+        dairyId:dairyIdNum,
         OR: [
           { firstName: { contains: search, mode: "insensitive" } },
           { lastName: { contains: search, mode: "insensitive" } },

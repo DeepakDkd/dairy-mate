@@ -65,15 +65,15 @@ export function StaffRosterTable({ staff ,setPage, page, totalPages}: { staff: U
               <TableHead>Status</TableHead>
               <TableHead>Salary</TableHead>
               <TableHead>Join Date</TableHead>
-              <TableHead>Attendance</TableHead>
+              <TableHead>Role</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {staff?.length > 0 && sortedStaff.map((member:any) => (
               <TableRow key={member.id} className="hover:bg-muted/50">
-                <TableCell className="font-medium">{member?.firstName} {member?.lastName}</TableCell>
-                <TableCell className="text-sm">{member.role}</TableCell>
+                <TableCell className="font-medium capitalize">{member?.firstName} {member?.lastName}</TableCell>
+                <TableCell className="text-sm ">{member.role}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{member.email}</TableCell>
                 <TableCell className="text-sm text-muted-foreground">{member.phone}</TableCell>
                 <TableCell>
@@ -81,16 +81,8 @@ export function StaffRosterTable({ staff ,setPage, page, totalPages}: { staff: U
                 </TableCell>
                 <TableCell className="font-medium">₹{member?.staffProfile?.salary.toLocaleString()}</TableCell>
                 <TableCell className="text-sm">{new Date(member?.staffProfile?.joinDate).toLocaleDateString("en-IN")}</TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1">
-                    {/* <span className="font-medium">{member.attendance}%</span> */}
-                    <div className="w-12 h-2 bg-muted rounded-full overflow-hidden">
-                      <div
-                        // className={`h-full ${member.attendance >= 90 ? "bg-green-500" : member.attendance >= 75 ? "bg-yellow-500" : "bg-red-500"}`}
-                        // style={{ width: `${member.attendance}%` }}
-                      />
-                    </div>
-                  </div>
+                <TableCell className="capitalize">
+                  {member?.staffProfile?.position}
                 </TableCell>
                 <TableCell className="text-right">
                   <DropdownMenu>
