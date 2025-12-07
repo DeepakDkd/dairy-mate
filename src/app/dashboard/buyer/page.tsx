@@ -122,7 +122,7 @@ export default function BuyerDashboardPage() {
 
 
       {/* Overview Cards */}
-      <BuyerOverviewCards buyers={buyerData?.buyers} />
+      <BuyerOverviewCards totalMonthlyLitres={buyerData?.totalMonthlyLitres} todaysMilkLitres={buyerData?.todaysMilkLitres} totalMonthlyExpense={buyerData?.totalMonthlyExpense} />
 
       <Card>
         <CardHeader>
@@ -139,18 +139,18 @@ export default function BuyerDashboardPage() {
 
       {/* Milk Entries and Payments */}
       {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"> */}
-        {/* <div className="lg:col-span-2"> */}
-          <BuyerMilkEntriesTable selectedDairyId={selectedDairyId} />
-        {/* </div> */}
-        <div className="space-y-4">
-          <BuyerPaymentsTable />
-          <button
-            onClick={() => setIsPaymentDialogOpen(true)}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg font-medium transition-colors"
-          >
-            Add Payment
-          </button>
-        </div>
+      {/* <div className="lg:col-span-2"> */}
+      <BuyerMilkEntriesTable selectedDairyId={selectedDairyId} />
+      {/* </div> */}
+      <div className="space-y-4">
+        <BuyerPaymentsTable />
+        <button
+          onClick={() => setIsPaymentDialogOpen(true)}
+          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg font-medium transition-colors"
+        >
+          Add Payment
+        </button>
+      </div>
       {/* </div> */}
 
       {/* Add Payment Dialog */}

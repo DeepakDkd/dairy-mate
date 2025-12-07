@@ -2,69 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Milk, TrendingUp, Calendar, Wallet } from "lucide-react"
 
-export function BuyerOverviewCards({ buyers }: { buyers: any }) {
+export function BuyerOverviewCards({ totalMonthlyLitres,todaysMilkLitres,totalMonthlyExpense }:any ) {
 
-
-  const totalMonthlyLitres = buyers?.reduce((total: number, buyer: any) => {
-    // console.log(buyer?.firstName, "Processing buyer entries:", buyer.buyerEntries);
-    const buyerTotalLitres = buyer?.buyerEntries?.reduce((subTotal: number, entry: any) => {
-      // console.log("  Entry:", entry, "Litres:", entry.litres);
-      const entryDate = new Date(entry.date);
-      const now = new Date();
-
-      const isSameMonth =
-        entryDate.getMonth() === now.getMonth() &&
-        entryDate.getFullYear() === now.getFullYear();
-
-      if (isSameMonth) {
-        subTotal += entry.litres;
-      }
-      return subTotal;
-    }, 0) || 0;
-    total += buyerTotalLitres;
-    return total;
-  }, 0) || 0;
-
-
-  const todaysMilkLitres = buyers?.reduce((total: number, buyer: any) => {
-    // console.log(buyer?.firstName, "Processing buyer entries:", buyer.buyerEntries);
-    const buyerTotalLitres = buyer?.buyerEntries?.reduce((subTotal: number, entry: any) => {
-      // console.log("  Entry:", entry, "Litres:", entry.litres);
-      const entryDate = new Date(entry.date);
-      const now = new Date();
-
-
-      const isSameDay =
-        entryDate.getDate() === now.getDate() &&
-        entryDate.getMonth() === now.getMonth() &&
-        entryDate.getFullYear() === now.getFullYear();
-      if (isSameDay) {
-        subTotal += entry.litres;
-      }
-      return subTotal;
-    }, 0) || 0;
-    total += buyerTotalLitres;
-    return total;
-  }, 0) || 0;
-
-
-  const totalMonthlyExpense = buyers?.reduce((total: number, buyer: any) => {
-    const buyerTotalLitresPrice = buyer?.buyerEntries?.reduce((subTotal: number, entry: any) => {
-      const entryDate = new Date(entry.date);
-      const now = new Date();
-
-      const isSameMonth =
-        entryDate.getMonth() === now.getMonth() &&
-        entryDate.getFullYear() === now.getFullYear();
-      const ratePerLitre = entry?.rate;
-      if (isSameMonth) {
-        subTotal += entry.litres * ratePerLitre;
-      }
-      return subTotal;
-    }, 0) || 0;
-    total += buyerTotalLitresPrice;
-    return total;
-  }, 0) || 0;
 
 
   const monthlyExpense = totalMonthlyExpense
@@ -85,7 +24,7 @@ export function BuyerOverviewCards({ buyers }: { buyers: any }) {
     },
     {
       title: balanceAmount < 0 ? "Amount Due" : "Advance Balance",
-      value: `₹${Math.abs(balanceAmount).toLocaleString()}`,
+      value: `₹${Math.abs(balanceAmount)}`,
       unit: balanceAmount < 0 ? "To Pay" : "In Account",
       badge: balanceAmount < 0 ? "Pending" : "Advance",
       badgeColor: balanceAmount < 0 ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800",
@@ -105,7 +44,7 @@ export function BuyerOverviewCards({ buyers }: { buyers: any }) {
     },
     {
       title: "Monthly Expense",
-      value: `₹${monthlyExpense.toLocaleString()}`,
+      value: `₹${monthlyExpense}`,
       unit: "Total Amount",
       subtitle: "This Month",
       icon: Wallet,
