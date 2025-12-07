@@ -48,8 +48,17 @@ export async function GET(req: Request, context: { params: Promise<{ dairyId: st
                 dairy: true
             }
         })
+        if (!entries) {
+            return NextResponse.json({ message: "No entries found", status: 404 })
+        }
+        const totalEntries = await prisma.sellerEntry.count({
+            where: {
+                dairyId: dairyIdNum
+            }
+        }) || 0;
+
         console.log("Entries :: ", entries)
-        return NextResponse.json({ entries }, { status: 200 })
+        return NextResponse.json({ entries,totalEntries }, { status: 200 })
 
     } catch (error) {
         console.log("Failed to get milk entries : ", error)

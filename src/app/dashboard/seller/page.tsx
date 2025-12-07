@@ -54,11 +54,7 @@ export default function SellerDashboardPage() {
   }
   // console.log("seller entries : ", sellerData)
 
-  // const milkEntriesKey = selectedDairyId && `/api/dairies/${selectedDairyId}/sellers/milk-entries`;
-  const milkEntriesKey = selectedDairyId && `/api/dairies/${selectedDairyId}/sellers/milk-entries?page=${page}&limit=${limit}&sort=${sort}`;
 
-  const { data: milkEntries, isLoading: milkEntriesLoading, mutate: milkEntriesMutate } = useSWR(milkEntriesKey ? milkEntriesKey : null, fetcher, { revalidateOnFocus: false, dedupingInterval: 2000, });
-  console.log("Milk entries  :::", milkEntries)
   const refreshSellers = () => {
     if (sellerKey) {
       staffMutate();
@@ -124,7 +120,7 @@ export default function SellerDashboardPage() {
       {/* Milk Entries Section */}
       <div className="space-y-4">
         <h2 className="text-xl font-bold font-montserrat text-foreground">Milk Entries</h2>
-        <SellerMilkTable milkEntries={milkEntries} />
+        <SellerMilkTable selectedDairyId={selectedDairyId} />
       </div>
       <hr />
 
