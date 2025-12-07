@@ -95,7 +95,7 @@ export function SellerMilkTable({ selectedDairyId }: { selectedDairyId: any }) {
             <TableBody>
               {
                 milkEntriesLoading ? "Loading..." :
-                  milkEntries?.entries.length > 0 ? milkEntries?.entries?.map((entry: SellerEntry) => (
+                  milkEntries?.entries?.length > 0 ? milkEntries?.entries?.map((entry: SellerEntry) => (
                     <TableRow key={entry.id} className="hover:bg-secondary/50">
                       <TableCell className="font-medium">  {new Date(entry?.date).toLocaleString()}</TableCell>
                       <TableCell>

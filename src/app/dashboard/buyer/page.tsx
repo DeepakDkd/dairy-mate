@@ -138,10 +138,10 @@ export default function BuyerDashboardPage() {
       <MonthlyConsumptionChart />
 
       {/* Milk Entries and Payments */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <BuyerMilkEntriesTable />
-        </div>
+      {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-6"> */}
+        {/* <div className="lg:col-span-2"> */}
+          <BuyerMilkEntriesTable selectedDairyId={selectedDairyId} />
+        {/* </div> */}
         <div className="space-y-4">
           <BuyerPaymentsTable />
           <button
@@ -151,7 +151,7 @@ export default function BuyerDashboardPage() {
             Add Payment
           </button>
         </div>
-      </div>
+      {/* </div> */}
 
       {/* Add Payment Dialog */}
       <AddPaymentDialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen} />

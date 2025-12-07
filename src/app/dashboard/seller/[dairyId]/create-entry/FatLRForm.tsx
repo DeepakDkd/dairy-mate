@@ -92,22 +92,7 @@ export function FatLRForm({ seller, dairy ,setSelectedSeller}: { seller: any; da
                 toast.error("Please calculate the rate and total before submitting.");
                 return;
             }
-            // const response = fetch("/api/milk-entries", {
-            //     method: "POST",
-            //     headers: {
-            //         "Content-Type": "application/json",
-            //     },
-            //     body: JSON.stringify({
-            //         dairyId: dairy.id,
-            //         userId: user.id,
-            //         fat: data.fat,
-            //         lr: data.lr,
-            //         liter: data.liter,
-            //         type: data.type,
-            //         rate,
-            //         total,
-            //     }),
-            // });
+         
             const response = await axios.post(`/api/milk-entries/seller/${seller.id}`, {
                 dairyId: dairy.id,
                 sellerId: seller.id,

@@ -32,10 +32,10 @@ export async function GET(req: Request, context: { params: Promise<{ dairyId: st
         const orderBy = sortMap[sort] || { createdAt: "desc" };
 
 
-        const entries = await prisma.sellerEntry.findMany({
+        const entries = await prisma.buyerEntry.findMany({
             where: {
                 dairyId: dairyIdNum,
-                // seller: {
+                // buyer: {
                 //     OR: [
                 //         { firstName: { contains: search, mode: "insensitive" } },
                 //         { lastName: { contains: search, mode: "insensitive" } },
@@ -44,7 +44,7 @@ export async function GET(req: Request, context: { params: Promise<{ dairyId: st
                 // }
             },
             include: {
-                seller: true,
+                buyer: true,
                 dairy: true
             },
             // orderBy,
