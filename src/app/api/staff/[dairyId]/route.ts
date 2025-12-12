@@ -27,16 +27,36 @@ export async function GET(req: Request, context: { params: Promise<{ dairyId: st
             take: limit,
             orderBy: sort === "name_asc" ? { firstName: "asc" } : { firstName: "desc" },
         });
+        const staffDataOverview = await prisma.user.findMany({
+            where: {
+                dairyId: dairyIdNum,
+                role: 'STAFF'
+            },
+            include: {
+                staffProfile: true
+            },
+            skip: (page - 1) * limit,
+            take: limit,
+            orderBy: sort === "name_asc" ? { firstName: "asc" } : { firstName: "desc" },
+        });
         if (!staffData) {
             return NextResponse.json({ message: "No staff found for this dairy" }, { status: 404 });
         }
+
+
         const totalStaff = await prisma.user.count({
             where: {
                 role: "STAFF",
                 dairyId: parseInt(dairyId),
             }
         });
-        return NextResponse.json({ staff: staffData, totalStaff }, { status: 200 });
+
+        const activeStaff = staffDataOverview?.filter((s) => s.status === "active").length
+        const inactiveStaff = staffDataOverview?.filter((s) => s.status === "inactive").length
+        const totalMonthlySalary = staffDataOverview?.reduce((sum, s: any) => s?.staffProfile?.salary ? sum + Number(s?.staffProfile?.salary) : sum, 0)
+
+
+        return NextResponse.json({ staff: staffData, totalStaff, activeStaff, inactiveStaff, totalMonthlySalary }, { status: 200 });
 
     } catch (error: any) {
         console.error("Error fetching dairies:", error);

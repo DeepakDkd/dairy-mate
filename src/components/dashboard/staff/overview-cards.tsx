@@ -3,22 +3,23 @@
 import { Card, CardContent } from "@/components/ui/card"
 import { Users, UserCheck, UserX, DollarSign, IndianRupee } from "lucide-react"
 
-interface StaffOverviewCardsProps {
-  staffData: Array<{
-    id: number
-    name: string
-    role: string
-    status: string
-    salary: number
-    attendance: number
-  }>
-}
+// interface StaffOverviewCardsProps {
+//   staffData: Array<{
+//     id: number
+//     name: string
+//     role: string
+//     status: string
+//     salary: number
+//     attendance: number
+//   }>,
+//   totalStaff: number
+// }
 
-export function StaffOverviewCards({ staffData }: StaffOverviewCardsProps) {
-  const totalStaff = staffData?.length
-  const activeStaff = staffData?.filter((s) => s.status === "active").length
-  const inactiveStaff = staffData?.filter((s) => s.status === "inactive").length
-  const totalMonthlySalary = staffData?.reduce((sum, s:any) => s?.staffProfile?.salary ? sum + Number(s?.staffProfile?.salary) : sum, 0)
+export function StaffOverviewCards({ staffData, totalStaff }: any) {
+
+  const activeStaff = staffData?.activeStaff
+  const inactiveStaff = staffData?.inactiveStaff
+  const totalMonthlySalary = staffData?.totalMonthlySalary
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

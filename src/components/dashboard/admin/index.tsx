@@ -31,9 +31,7 @@ function AdminDashboard({ user }: AdminDashboardProps) {
 
 
   const { data, isLoading } = useSWR(`/api/owner/${user?.id}/milk-collection`, fecher, { revalidateOnFocus: false });
-  console.log("Milk collection data:", data?.last7Days);
 
-  console.log(data)
 
 
   return (

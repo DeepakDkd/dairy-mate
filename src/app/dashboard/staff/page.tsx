@@ -96,7 +96,7 @@ export default function StaffDashboard() {
         ))}
       </div>
       {/* Overview Cards */}
-      <StaffOverviewCards staffData={staffData?.staff} />
+      <StaffOverviewCards staffData={staffData?.staff} totalStaff={staffData?.totalStaff} />
 
       {/* Main Content - Tabs */}
       <Tabs defaultValue="roster" className="w-full">

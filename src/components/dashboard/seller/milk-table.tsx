@@ -21,55 +21,7 @@ export function SellerMilkTable({ selectedDairyId }: { selectedDairyId: any }) {
   const milkEntriesKey = selectedDairyId && `/api/dairies/${selectedDairyId}/sellers/milk-entries?page=${page}&limit=${limit}&sort=${sort}`;
 
   const { data: milkEntries, isLoading: milkEntriesLoading, mutate: milkEntriesMutate } = useSWR(milkEntriesKey ? milkEntriesKey : null, fetcher, { revalidateOnFocus: false, dedupingInterval: 2000, });
-  console.log("Milk entries  :::", milkEntries)
-  // Mock data
-  // const milkEntries = [
-  //   {
-  //     id: 1,
-  //     date: "Nov 7, 2025",
-  //     shift: "Morning",
-  //     quantity: 45,
-  //     mawaWeight: 1.8,
-  //     ratePerLitre: 40,
-  //     totalAmount: 1800,
-  //     remarks: "Good quality",
-  //   },
-  //   {
-  //     id: 2,
-  //     date: "Nov 7, 2025",
-  //     shift: "Evening",
-  //     quantity: 40,
-  //     mawaWeight: 1.7,
-  //     ratePerLitre: 40,
-  //     totalAmount: 1600,
-  //     remarks: "-",
-  //   },
-  //   {
-  //     id: 3,
-  //     date: "Nov 6, 2025",
-  //     shift: "Morning",
-  //     quantity: 50,
-  //     mawaWeight: 1.9,
-  //     ratePerLitre: 40,
-  //     totalAmount: 2000,
-  //     remarks: "Premium quality",
-  //   },
-  //   {
-  //     id: 4,
-  //     date: "Nov 6, 2025",
-  //     shift: "Evening",
-  //     quantity: 42,
-  //     mawaWeight: 1.6,
-  //     ratePerLitre: 40,
-  //     totalAmount: 1680,
-  //     remarks: "-",
-  //   },
-  // ]
-
-  // const itemsPerPage = 5
-  // const totalPages = Math.ceil(milkEntries?.length / itemsPerPage)
-  // const startIdx = (currentPage - 1) * itemsPerPage
-  // const displayedEntries = milkEntries.slice(startIdx, startIdx + itemsPerPage)
+  
   const totalPages = milkEntries?.totalEntries ? Math.ceil(milkEntries?.totalEntries / limit) : 0;
 
 

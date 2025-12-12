@@ -2,9 +2,9 @@ import { getServerActionUser } from "@/fetchers/user/action";
 import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 
-export async function GET(req: Request, context: { params: { dairyId: string } }) {
+export async function GET(req: Request, context: { params: Promise<{ dairyId: string }> }) {
     try {
-        const { dairyId } = context.params;
+        const { dairyId } = await context.params;
         const { searchParams } = new URL(req.url);
         const page = searchParams.get("page") || "1";
         const limit = searchParams.get("pageSize") || "10";

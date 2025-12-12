@@ -8,17 +8,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 // }
 
 export function ChartsSection({ data }:{data:any}) {
-  // Mock data for milk collection trend
-  const milkTrendData = [
-    { day: "Mon", litres: 450 },
-    { day: "Tue", litres: 520 },
-    { day: "Wed", litres: 480 },
-    { day: "Thu", litres: 620 },
-    { day: "Fri", litres: 580 },
-    { day: "Sat", litres: 550 },
-    { day: "Sun", litres: 490 },
-  ]
-
+  
   // Mock data for revenue overview
   const revenueData = [
     { week: "Week 1", paid: 28000, pending: 4000 },

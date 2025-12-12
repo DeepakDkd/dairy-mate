@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 
 
 
-export function SellerRosterTable({ seller ,setPage, page,totalPages}: { seller: User[], setPage: React.Dispatch<React.SetStateAction<number>>, page: number, totalPages: number }) {
+export function SellerRosterTable({ seller ,setPage, page,totalPages,onRefresh}: { seller: User[], setPage: React.Dispatch<React.SetStateAction<number>>, page: number, totalPages: number ,onRefresh:any}) {
   const [sortBy, setSortBy] = useState<"name" | "status" | "joinDate">("name")
 
 

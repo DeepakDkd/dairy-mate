@@ -29,7 +29,7 @@ export function BuyerMilkEntriesTable({ selectedDairyId }: { selectedDairyId: an
   const milkEntriesKey = selectedDairyId && `/api/dairies/${selectedDairyId}/buyers/milk-entries?page=${page}&limit=${limit}&sort=${sort}`;
 
   const { data: milkEntries, isLoading: milkEntriesLoading, mutate: milkEntriesMutate } = useSWR(milkEntriesKey ? milkEntriesKey : null, fetcher, { revalidateOnFocus: false });
-  console.log("Milk entries  :::", milkEntries)
+
 
 
   const totalPages = milkEntries?.totalEntries ? Math.ceil(milkEntries?.totalEntries / limit) : 0;
@@ -57,7 +57,7 @@ export function BuyerMilkEntriesTable({ selectedDairyId }: { selectedDairyId: an
                 <TableHead className="text-xs font-semibold text-muted-foreground uppercase text-right">
                   Amount (₹)
                 </TableHead>
-                
+
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -69,7 +69,9 @@ export function BuyerMilkEntriesTable({ selectedDairyId }: { selectedDairyId: an
                         {new Date(entry.date).toLocaleDateString("en-IN")}
                       </TableCell>
                       <TableCell className="text-sm text-foreground">
-                        {entry?.buyer?.firstName} {entry?.buyer?.lastName}
+                        {
+                          //@ts-ignore
+                          entry?.buyer?.firstName} {entry?.buyer?.lastName}
                       </TableCell>
                       <TableCell>
                         <Badge
@@ -96,34 +98,34 @@ export function BuyerMilkEntriesTable({ selectedDairyId }: { selectedDairyId: an
               }
             </TableBody>
           </Table>
-          
-        <div className="flex items-center justify-between   w-full p-2">
-          <span className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
-          </span>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(Math.max(1, page - 1))}
-              disabled={page === 1}
-              className="gap-1"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPage(Math.min(totalPages, page + 1))}
-              disabled={page === totalPages}
-              className="gap-1"
-            >
-              Next
-              <ChevronRight className="w-4 h-4" />
-            </Button>
+
+          <div className="flex items-center justify-between   w-full p-2">
+            <span className="text-sm text-muted-foreground">
+              Page {page} of {totalPages}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(Math.max(1, page - 1))}
+                disabled={page === 1}
+                className="gap-1"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(Math.min(totalPages, page + 1))}
+                disabled={page === totalPages}
+                className="gap-1"
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
-        </div>
         </div>
       </CardContent>
     </Card>

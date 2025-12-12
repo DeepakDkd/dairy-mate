@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
-// get all milk entires
+
 export async function GET(req: Request, context: { params: Promise<{ dairyId: string }> }) {
     try {
         const { dairyId } = await context.params;
