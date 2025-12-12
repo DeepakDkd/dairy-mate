@@ -36,18 +36,31 @@ export default function BuyerDashboardPage() {
   const [limit, setLimit] = useState(10);
   const [sort, setSort] = useState("name_asc");
 
-  const { data: dairiesData, error: dairiesError, isLoading: dairiesLoading } = useSWR(
+  // const { data: dairiesData, error: dairiesError, isLoading: dairiesLoading } = useSWR(
+  //   userId ? `/api/owner/${userId}/dairies` : null,
+  //   fetcher,
+  //   {
+  //     revalidateOnFocus: false,
+  //   }
+  // );
+  // useEffect(() => {
+  //   if (dairiesData?.dairies?.length > 0 && !selectedDairyId) {
+  //     setSelectedDairyId(dairiesData.dairies[0].id);
+  //   }
+  // }, [dairiesData, selectedDairyId]);
+    const { data: dairiesData, isLoading: dairiesLoading } = useSWR(
     userId ? `/api/owner/${userId}/dairies` : null,
     fetcher,
-    {
-      revalidateOnFocus: false,
-    }
+    { revalidateOnFocus: false }
   );
+  
+
   useEffect(() => {
-    if (dairiesData?.dairies?.length > 0 && !selectedDairyId) {
+    if (dairiesData?.dairies?.length && !selectedDairyId) {
       setSelectedDairyId(dairiesData.dairies[0].id);
     }
   }, [dairiesData, selectedDairyId]);
+
 
   const buyerKey =
     selectedDairyId &&
@@ -59,6 +72,8 @@ export default function BuyerDashboardPage() {
   if (isLoading) {
     console.log("Loading buyer data...");
   }
+
+  console.log(buyerData)
 
   const refreshBuyers = () => {
     if (buyerKey) {
@@ -99,21 +114,23 @@ export default function BuyerDashboardPage() {
         </div>
       </div>
       <div className="flex gap-3 overflow-x-auto pb-2">
-        {dairiesData?.dairies?.map((d: any) => (
+         {dairiesData?.dairies?.map((d: any) => (
           <div
             key={d.id}
             onClick={() => handleSelectDairy(d.id)}
-            className={`p-4 border rounded-lg cursor-pointer w-48
-                ${selectedDairyId === d.id ? "border-blue-500 bg-blue-50---" : "border-gray-300---"}
+            className={`p-4 border rounded-lg cursor-pointer w-48 transition
+              ${selectedDairyId === d.id
+                ? "border-blue-500 bg-blue-50 dark:bg-accent"
+                : "border-gray-300"
+              }
             `}
           >
             <h3 className="font-semibold">{d.name}</h3>
-            <p className="text-xs text-gray-500---">{d.address || "No address"}</p>
+            <p className="text-xs text-muted-foreground">
+              {d.address || "No address"}
+            </p>
             <p className="text-xs mt-1">
-              Buyers: {d.users?.filter(
-                (u: any) => u.role === "BUYER"
-              ).length || 0
-              }
+              Buyers: {d.stats?.buyers ?? 0}
             </p>
           </div>
         ))}
