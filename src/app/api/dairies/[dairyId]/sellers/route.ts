@@ -7,9 +7,10 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   req: Request,
-  { params }: { params: { dairyId: string } }
+  context: { params: Promise<{ dairyId: string }> }
 ) {
   try {
+    const params = await context.params;
     const dairyId = Number(params.dairyId);
     if (isNaN(dairyId)) {
       return NextResponse.json({ message: "Invalid dairy ID" }, { status: 400 });

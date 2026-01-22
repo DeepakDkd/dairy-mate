@@ -3,9 +3,10 @@ import { NextResponse } from "next/server";
 
 export async function GET(
   _req: Request,
-  { params }: { params: { ownerId: string } }
+  context: { params: Promise<{ ownerId: string }> }
 ) {
   try {
+    const params = await context.params;
     const ownerId = Number(params.ownerId);
 
     if (isNaN(ownerId)) {
