@@ -50,16 +50,16 @@ export async function GET(
     });
 
     
-    const allEntries = await prisma.sellerEntry.findMany({
-      where: { dairyId },
-      select: {
-        litres: true,
-        rate: true,
-        date: true,
-      },
-    });
+    // const allEntries = await prisma.sellerEntry.findMany({
+    //   where: { dairyId },
+    //   select: {
+    //     litres: true,
+    //     rate: true,
+    //     date: true,
+    //   },
+    // });
 
-    const stats = calculateSellerStats(allEntries);
+    // const stats = calculateSellerStats(allEntries);
 
     return NextResponse.json(
       {
@@ -67,7 +67,7 @@ export async function GET(
         total,
         page,
         pageSize,
-        ...stats,
+        // ...stats,
       },
       { status: 200 }
     );
