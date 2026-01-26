@@ -2,6 +2,13 @@ import { getServerActionUser } from "@/fetchers/user/action";
 import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 
+//
+// remove stats code from this route
+// create stats route for dashboard to fetch stats
+// no longer need utils stats file
+// need versioning in api like v1 v2 
+
+
 export async function GET(req: Request, context: { params: Promise<{ dairyId: string }> }) {
     try {
         const { dairyId } = await context.params;

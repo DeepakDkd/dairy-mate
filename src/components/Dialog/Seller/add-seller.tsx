@@ -77,7 +77,7 @@ export default function AddSellerDialog({ open, onOpenChange, userId }: AddSelle
 
 
 
-      const res = await axios.post("/api/seller/create", {
+      const res = await axios.post(`/api/dairies/${data.dairyId}/sellers/create`, {
         ...finalData
       });
 

@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { Plus } from "lucide-react"
+import useSWR, { useSWRConfig } from "swr"
+import { useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import AddBuyerDialog from "@/components/Dialog/buyer/add-buyer"
@@ -13,9 +14,15 @@ import { BuyerMilkEntriesTable } from "@/components/dashboard/buyer/milk-entries
 import { AddBuyerMilkEntryDialog } from "@/components/Dialog/buyer/add-milk-entry-dialog"
 import { MonthlyConsumptionChart } from "@/components/dashboard/buyer/monthly-consumption-chart"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import useSWR, { useSWRConfig } from "swr"
 
 
+// 
+// 
+// 
+// fix buyer dashboard/page hydration errors 
+// 
+// 
+// 
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -36,18 +43,8 @@ export default function BuyerDashboardPage() {
   const [limit, setLimit] = useState(10);
   const [sort, setSort] = useState("name_asc");
 
-  // const { data: dairiesData, error: dairiesError, isLoading: dairiesLoading } = useSWR(
-  //   userId ? `/api/owner/${userId}/dairies` : null,
-  //   fetcher,
-  //   {
-  //     revalidateOnFocus: false,
-  //   }
-  // );
-  // useEffect(() => {
-  //   if (dairiesData?.dairies?.length > 0 && !selectedDairyId) {
-  //     setSelectedDairyId(dairiesData.dairies[0].id);
-  //   }
-  // }, [dairiesData, selectedDairyId]);
+
+  
     const { data: dairiesData, isLoading: dairiesLoading } = useSWR(
     userId ? `/api/owner/${userId}/dairies` : null,
     fetcher,
@@ -67,17 +64,27 @@ export default function BuyerDashboardPage() {
     `/api/dairies/${selectedDairyId}/buyers?page=${page}&limit=${limit}&sort=${sort}`;
 
 
-  const { data: buyerData, isLoading, error, mutate: staffMutate } = useSWR(buyerKey ? buyerKey : null, fetcher, { revalidateOnFocus: false, dedupingInterval: 2000, });
+  const { data: buyerData, isLoading, error, mutate: buyerMutate } = useSWR(buyerKey ? buyerKey : null, fetcher, { revalidateOnFocus: false, dedupingInterval: 2000, });
+
+  const statsKey =
+    selectedDairyId &&
+    `/api/dairies/${selectedDairyId}/buyers/stats`;
+
+  const { data: buyerStats } = useSWR(
+    statsKey ? statsKey : undefined,
+    fetcher,
+    { refreshInterval: 60_000, revalidateOnFocus: false }
+  );
+
 
   if (isLoading) {
     console.log("Loading buyer data...");
   }
 
-  console.log(buyerData)
-
+  
   const refreshBuyers = () => {
     if (buyerKey) {
-      staffMutate();
+      buyerMutate();
       globalMutate(buyerKey);
     }
   };
@@ -96,7 +103,7 @@ export default function BuyerDashboardPage() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Greeting Section */}
+      
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Buyer Dashboard</h1>
@@ -139,7 +146,13 @@ export default function BuyerDashboardPage() {
 
 
       {/* Overview Cards */}
-      <BuyerOverviewCards totalMonthlyLitres={buyerData?.totalMonthlyLitres} todaysMilkLitres={buyerData?.todaysMilkLitres} totalMonthlyExpense={buyerData?.totalMonthlyExpense} />
+
+      <BuyerOverviewCards
+        totalMonthlyLitres={buyerStats?.totalMonthlyLitres}
+        todaysMilkLitres={buyerStats?.todaysMilkLitres}
+        totalMonthlyExpense={buyerStats?.totalMonthlyExpense}
+      />
+
 
       <Card>
         <CardHeader>

@@ -74,11 +74,14 @@ export default function AddBuyerDialog({ open, onOpenChange, userId }: AddBuyerD
         role: "BUYER", // auto
       }
 
-
-
-      const res = await axios.post("/api/buyer/create", {
+      // create buyer
+      const res = await axios.post(`/api/dairies/${data.dairyId}/buyers/create`, {
         ...finalData
       });
+
+      // const res = await axios.post("/api/buyer/create", {
+      //   ...finalData
+      // });
 
       // mutate(`/api/owner/${userId}/buyers`);
       console.log("buyerrr:", res.data)
@@ -184,7 +187,7 @@ export default function AddBuyerDialog({ open, onOpenChange, userId }: AddBuyerD
             </Button>
 
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Create Seller"}
+              {isSubmitting ? "Saving..." : "Create Buyer"}
             </Button>
           </div>
         </form>
