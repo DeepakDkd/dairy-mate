@@ -9,6 +9,7 @@ export default async function DashboardPage() {
   if(!user){
     return <div className="container mx-auto ">User not found</div>
   }
+  
   return (
     <div className="container mx-auto ">
       <AdminDashboard user={user} />
