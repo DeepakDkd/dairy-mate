@@ -1,7 +1,7 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { Users, UserCheck, UserX, DollarSign, IndianRupee } from "lucide-react"
+import { Users, UserCheck, UserX, IndianRupee } from "lucide-react"
 
 // interface StaffOverviewCardsProps {
 //   staffData: Array<{
@@ -16,10 +16,9 @@ import { Users, UserCheck, UserX, DollarSign, IndianRupee } from "lucide-react"
 // }
 
 export function StaffOverviewCards({ staffData, totalStaff }: any) {
-
-  const activeStaff = staffData?.activeStaff
-  const inactiveStaff = staffData?.inactiveStaff
-  const totalMonthlySalary = staffData?.totalMonthlySalary
+  const activeStaff = staffData?.activeStaff ?? 0
+  const inactiveStaff = staffData?.inactiveStaff ?? 0
+  const totalMonthlySalary = staffData?.totalMonthlySalary ?? 0
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

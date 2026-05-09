@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 interface AddMilkEntryDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  getEntryHref?: (dairyId: string) => string
 }
 
 const fetcher = async (url: string) => {
@@ -20,7 +21,11 @@ const fetcher = async (url: string) => {
   return response.data;
 }
 
-export function AddBuyerMilkEntryDialog({ open, onOpenChange }: AddMilkEntryDialogProps) {
+export function AddBuyerMilkEntryDialog({
+  open,
+  onOpenChange,
+  getEntryHref,
+}: AddMilkEntryDialogProps) {
 
   const router = useRouter();
 
@@ -47,7 +52,13 @@ export function AddBuyerMilkEntryDialog({ open, onOpenChange }: AddMilkEntryDial
               <Loader />
             ) : (
               <Select
-                onValueChange={(value) => router.push(`/dashboard/buyer/${value}/create-entry`)}
+                onValueChange={(value) =>
+                  router.push(
+                    getEntryHref
+                      ? getEntryHref(value)
+                      : `/dashboard/buyer/${value}/create-entry`
+                  )
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select dairy" />
