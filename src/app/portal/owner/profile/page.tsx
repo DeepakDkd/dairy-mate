@@ -70,7 +70,7 @@ export default async function OwnerProfilePage() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Address</p>
-              <p className="break-words font-medium">{owner.address || "Not added"}</p>
+              <p className="wrap-break-words font-medium">{owner.address || "Not added"}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Joined</p>
