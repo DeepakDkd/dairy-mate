@@ -2,10 +2,11 @@ import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function GET(
-  req: Request, 
-  { params }: { params: { dairyId: string } }
+  req: Request,
+  context: { params: Promise<{ dairyId: string }> }
 ) {
   try {
+    const params = await context.params;
     const dairyId = Number(params.dairyId);
 
     if (isNaN(dairyId)) {
