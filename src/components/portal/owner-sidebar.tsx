@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import toast from "react-hot-toast";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -20,18 +20,16 @@ import {
   X,
 } from "lucide-react";
 
-function isActivePath(pathname: string, href: string) {
-  return pathname === href || pathname.startsWith(`${href}/`);
+function getNavState(pathname: string, href: string) {
+  if (pathname === href) return "active";
+  if (href !== "/portal" && pathname.startsWith(`${href}/`)) return "ancestor";
+  return "idle";
 }
 
 export function OwnerPortalSidebar() {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-
-  useEffect(() => {
-    setIsMobileOpen(false);
-  }, [pathname]);
 
   const currentDairyBasePath = useMemo(() => {
     const match = pathname.match(/^\/portal\/owner\/dairies\/([^/]+)/);
@@ -105,17 +103,21 @@ export function OwnerPortalSidebar() {
     collapsed: boolean
   ) => {
     const Icon = item.icon;
-    const isActive = isActivePath(pathname, item.href);
+    const navState = getNavState(pathname, item.href);
 
     return (
       <Link
         key={item.href}
         href={item.href}
         title={collapsed ? item.label : undefined}
-        className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
-          isActive
-            ? "bg-primary text-primary-foreground"
-            : "text-foreground hover:bg-muted"
+        aria-current={navState === "active" ? "page" : undefined}
+        onClick={() => setIsMobileOpen(false)}
+        className={`flex items-center gap-3 rounded-lg border-l-2 px-3 py-2 text-sm transition-colors ${
+          navState === "active"
+            ? "border-primary bg-primary font-medium text-primary-foreground shadow-sm"
+            : navState === "ancestor"
+              ? "border-primary/50 bg-primary/10 font-medium text-primary hover:bg-primary/15"
+            : "border-transparent text-foreground hover:bg-muted"
         }`}
       >
         <Icon className="h-4 w-4 shrink-0" />
