@@ -41,7 +41,7 @@ export function OwnerPortalSidebar() {
     {
       label: "Portal Home",
       icon: LayoutDashboard,
-      href: "/portal",
+      href: "/portal/owner",
     },
     {
       label: "All Dairies",

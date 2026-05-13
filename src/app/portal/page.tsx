@@ -17,5 +17,5 @@ export default async function PortalPage() {
     redirect("/portal/buyer");
   }
 
-  redirect("/portal/owner/dairies");
+  redirect("/portal/owner");
 }
