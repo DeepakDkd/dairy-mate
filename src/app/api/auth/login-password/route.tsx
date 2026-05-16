@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/db";
 import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
-import { success } from "zod";
 
 export async function POST(req: Request) {
     const { phone, password, role } = await req.json();
