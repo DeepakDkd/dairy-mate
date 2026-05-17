@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { signIn, useSession } from "next-auth/react";
 import axios from "axios";
 import toast from "react-hot-toast";
 
@@ -38,6 +38,10 @@ import { Loader2 } from "lucide-react";
 export default function LoginForm() {
   const router = useRouter();
 
+  const { status } = useSession();
+  const searchParams = useSearchParams();
+  const callBackUrl = searchParams.get("callbackUrl") || "/portal";
+
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
@@ -52,6 +56,12 @@ export default function LoginForm() {
   const [selectedDairy, setSelectedDairy] = useState("");
 
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace(callBackUrl);
+    }
+  }, [status, router, callBackUrl]);
 
 
   async function handlePasswordSubmit(e: React.FormEvent) {
@@ -103,12 +113,19 @@ export default function LoginForm() {
       }
 
       if (res.data.owner) {
-        await signIn("credentials", {
+        const result = await signIn("credentials", {
           redirect: false,
           phone,
           role: "OWNER"
         });
-        router.replace("/dashboard");
+
+        if (result?.error) {
+          toast.error("Login failed");
+          setLoading(false);
+          return;
+        }
+
+        router.replace(callBackUrl);
         return;
       }
 
@@ -130,16 +147,20 @@ export default function LoginForm() {
     if (!selectedDairy) return toast.error("Select a dairy");
 
     setLoading(true);
-
-    await signIn("credentials", {
+    const result = await signIn("credentials", {
       redirect: false,
       phone,
       dairyId: selectedDairy,
       role: "BUYER"
     });
 
-    setLoading(false);
-    router.replace("/dashboard");
+    if (result?.error) {
+      toast.error("Login failed");
+      setLoading(false);
+      return;
+    }
+
+    router.replace(callBackUrl);
   }
 
   function goBack() {
