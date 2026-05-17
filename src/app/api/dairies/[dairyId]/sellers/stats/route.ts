@@ -55,29 +55,59 @@ export async function GET(
     const todaysMilkLitres = todayLitresAgg._sum.litres ?? 0;
 
     
-    const monthlyEntries = await prisma.sellerEntry.findMany({
+    const monthlyAmountAgg = await prisma.sellerEntry.aggregate({
       where: {
         dairyId,
         date: {
           gte: startOfMonth,
         },
       },
-      select: {
-        litres: true,
-        rate: true,
+      _sum: {
+        totalAmount: true,
       },
     });
 
-    const totalMonthlyExpense = monthlyEntries.reduce(
-      (total, entry) => total + entry.litres * entry.rate,
-      0
-    );
+    const totalMonthlyExpense = monthlyAmountAgg._sum.totalAmount ?? 0;
+
+    const [sellerCounts, balanceAgg, entriesTodayCount] = await Promise.all([
+      prisma.user.count({
+        where: {
+          dairyId,
+          role: "SELLER",
+          isActive: true,
+        },
+      }),
+      prisma.accountBalance.aggregate({
+        where: {
+          dairyId,
+          user: {
+            role: "SELLER",
+          },
+        },
+        _sum: {
+          currentBalance: true,
+        },
+      }),
+      prisma.sellerEntry.count({
+        where: {
+          dairyId,
+          date: {
+            gte: startOfToday,
+          },
+        },
+      }),
+    ]);
+
+    const sellerBalance = balanceAgg._sum.currentBalance ?? 0;
 
     return NextResponse.json(
       {
         totalMonthlyLitres,
         todaysMilkLitres,
         totalMonthlyExpense,
+        activeSellers: sellerCounts,
+        sellerBalance,
+        entriesTodayCount,
       },
       { status: 200 }
     );

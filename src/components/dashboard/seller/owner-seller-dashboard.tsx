@@ -161,6 +161,9 @@ export default function OwnerSellerDashboard({
           totalMonthlyLitres={sellerStats?.totalMonthlyLitres}
           todaysMilkLitres={sellerStats?.todaysMilkLitres}
           totalMonthlyExpense={sellerStats?.totalMonthlyExpense}
+          sellerBalance={sellerStats?.sellerBalance}
+          activeSellers={sellerStats?.activeSellers}
+          entriesTodayCount={sellerStats?.entriesTodayCount}
         />
       )}
 

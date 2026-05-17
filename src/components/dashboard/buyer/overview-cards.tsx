@@ -1,21 +1,40 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Milk, TrendingUp, Calendar, Wallet } from "lucide-react"
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calendar, Milk, TrendingUp, Wallet } from "lucide-react";
 
-export function BuyerOverviewCards({ totalMonthlyLitres,todaysMilkLitres,totalMonthlyExpense }:any ) {
+interface BuyerOverviewCardsProps {
+  totalMonthlyLitres?: number;
+  todaysMilkLitres?: number;
+  totalMonthlyExpense?: number;
+  buyerBalance?: number;
+  activeBuyers?: number;
+  entriesTodayCount?: number;
+}
 
+const formatLitres = (value: number) =>
+  Number(value.toFixed(2)).toLocaleString("en-IN");
 
+const formatMoney = (value: number) =>
+  `Rs ${Math.round(Math.abs(value)).toLocaleString("en-IN")}`;
 
-  const monthlyExpense = totalMonthlyExpense
-  const balanceAmount = -5000 // negative means pending, positive means advance
-  const todayMilk = todaysMilkLitres // litres
-  const todayRate = 60 // ₹
-
+export function BuyerOverviewCards({
+  totalMonthlyLitres = 0,
+  todaysMilkLitres = 0,
+  totalMonthlyExpense = 0,
+  buyerBalance = 0,
+  activeBuyers = 0,
+  entriesTodayCount = 0,
+}: BuyerOverviewCardsProps) {
+  const balanceTitle = buyerBalance >= 0 ? "Amount Due" : "Advance Balance";
+  const balanceUnit = buyerBalance >= 0 ? "To Collect" : "In Account";
+  const balanceBadge = buyerBalance >= 0 ? "Receivable" : "Advance";
+  const balanceBadgeColor =
+    buyerBalance >= 0 ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800";
 
   const cards = [
     {
-      title: "Total Milk Taken",
-      value: totalMonthlyLitres,
+      title: "Total Milk Supplied",
+      value: formatLitres(totalMonthlyLitres),
       unit: "Litres",
       subtitle: "This Month",
       icon: Milk,
@@ -23,52 +42,53 @@ export function BuyerOverviewCards({ totalMonthlyLitres,todaysMilkLitres,totalMo
       iconColor: "text-primary",
     },
     {
-      title: balanceAmount < 0 ? "Amount Due" : "Advance Balance",
-      value: `₹${Math.abs(balanceAmount)}`,
-      unit: balanceAmount < 0 ? "To Pay" : "In Account",
-      badge: balanceAmount < 0 ? "Pending" : "Advance",
-      badgeColor: balanceAmount < 0 ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800",
+      title: balanceTitle,
+      value: formatMoney(buyerBalance),
+      unit: balanceUnit,
+      badge: `${activeBuyers} active buyers`,
+      badgeColor: "bg-slate-100 text-slate-700",
       icon: TrendingUp,
-      color: balanceAmount < 0 ? "bg-red-50" : "bg-green-50",
-      iconColor: balanceAmount < 0 ? "text-red-600" : "text-green-600",
+      color: buyerBalance >= 0 ? "bg-red-50" : "bg-green-50",
+      iconColor: buyerBalance >= 0 ? "text-red-600" : "text-green-600",
     },
     {
-      title: "Today's Milk Taken",
-      value: todayMilk,
-      // unit: `@ ₹${todayRate}/L`,
-      unit: `Litres`,
-      subtitle: "Today",
+      title: "Today's Supply",
+      value: formatLitres(todaysMilkLitres),
+      unit: "Litres",
+      subtitle: `${entriesTodayCount} entries today`,
       icon: Calendar,
       color: "bg-yellow-50",
       iconColor: "text-accent",
     },
     {
-      title: "Monthly Expense",
-      value: `₹${monthlyExpense}`,
+      title: "Monthly Buyer Billing",
+      value: formatMoney(totalMonthlyExpense),
       unit: "Total Amount",
-      subtitle: "This Month",
+      badge: balanceBadge,
+      badgeColor: balanceBadgeColor,
       icon: Wallet,
       color: "bg-emerald-50",
       iconColor: "text-emerald-600",
     },
-  ]
+  ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {cards.map((card, index) => {
-        const Icon = card.icon
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {cards.map((card) => {
+        const Icon = card.icon;
         return (
-          <Card key={index} className={`${card.color} dark:bg-accent   border-0 shadow-sm rounded-lg`}>
+          <Card key={card.title} className={`${card.color} dark:bg-accent border-0 shadow-sm rounded-lg`}>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
-                <Icon className={`w-5 h-5 ${card.iconColor}`} />
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {card.title}
+                </CardTitle>
+                <Icon className={`h-5 w-5 ${card.iconColor}`} />
               </div>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="flex items-baseline gap-2">
-                  {/* <span className="text-2xl font-bold text-foreground">{card.value}</span> */}
                   <span className="text-2xl font-bold text-foreground">{card.value}</span>
                   <span className="text-xs text-muted-foreground">{card.unit}</span>
                 </div>
@@ -83,8 +103,8 @@ export function BuyerOverviewCards({ totalMonthlyLitres,todaysMilkLitres,totalMo
               </div>
             </CardContent>
           </Card>
-        )
+        );
       })}
     </div>
-  )
+  );
 }

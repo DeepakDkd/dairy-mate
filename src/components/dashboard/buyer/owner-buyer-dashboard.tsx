@@ -179,6 +179,9 @@ export default function OwnerBuyerDashboard({
           totalMonthlyLitres={buyerStats?.totalMonthlyLitres}
           todaysMilkLitres={buyerStats?.todaysMilkLitres}
           totalMonthlyExpense={buyerStats?.totalMonthlyExpense}
+          buyerBalance={buyerStats?.buyerBalance}
+          activeBuyers={buyerStats?.activeBuyers}
+          entriesTodayCount={buyerStats?.entriesTodayCount}
         />
       )}
 

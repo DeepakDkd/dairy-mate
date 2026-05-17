@@ -1,20 +1,45 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Milk, Banknote, Calendar, Wallet } from "lucide-react"
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Banknote, Calendar, Milk, Wallet } from "lucide-react";
 
-export function SellerOverviewCards({ todaysMilkLitres, totalMonthlyExpense, totalMonthlyLitres }: any) {
+interface SellerOverviewCardsProps {
+  todaysMilkLitres?: number;
+  totalMonthlyExpense?: number;
+  totalMonthlyLitres?: number;
+  sellerBalance?: number;
+  activeSellers?: number;
+  entriesTodayCount?: number;
+}
 
+const formatLitres = (value: number) =>
+  Number(value.toFixed(2)).toLocaleString("en-IN");
 
+const formatMoney = (value: number) =>
+  `Rs ${Math.round(Math.abs(value)).toLocaleString("en-IN")}`;
 
-  const monthlyExpense = totalMonthlyExpense
-  const balanceAmount = -5000 // negative means pending, positive means advance
-  const todayMilk = todaysMilkLitres // litres
-  const todayRate = 60 // ₹
+export function SellerOverviewCards({
+  todaysMilkLitres = 0,
+  totalMonthlyExpense = 0,
+  totalMonthlyLitres = 0,
+  sellerBalance = 0,
+  activeSellers = 0,
+  entriesTodayCount = 0,
+}: SellerOverviewCardsProps) {
+  const balanceStatus =
+    sellerBalance > 0 ? "To Receive" : sellerBalance < 0 ? "Advance Paid" : "Settled";
+  const balanceBadge =
+    sellerBalance > 0 ? "Receivable" : sellerBalance < 0 ? "Advance" : "Settled";
+  const balanceBadgeColor =
+    sellerBalance > 0
+      ? "bg-amber-100 text-amber-800"
+      : sellerBalance < 0
+        ? "bg-blue-100 text-blue-800"
+        : "bg-green-100 text-green-800";
 
   const cards = [
     {
-      title: "Total Milk Sold",
-      value: totalMonthlyLitres || 0,
+      title: "Total Milk Collected",
+      value: formatLitres(totalMonthlyLitres),
       unit: "Litres",
       subtitle: "This Month",
       icon: Milk,
@@ -22,46 +47,48 @@ export function SellerOverviewCards({ todaysMilkLitres, totalMonthlyExpense, tot
       iconColor: "text-primary",
     },
     {
-      title: "Total Earnings",
-      value: `₹${totalMonthlyExpense || 0}`,
-      unit: "Amount to be received",
-      badge: "Pending ₹12,300",
-      badgeColor: "bg-red-100 text-red-800",
+      title: "Monthly Seller Payout",
+      value: formatMoney(totalMonthlyExpense),
+      unit: "Amount",
+      badge: `${activeSellers} active sellers`,
+      badgeColor: "bg-slate-100 text-slate-700",
       icon: Banknote,
       color: "bg-yellow-50",
       iconColor: "text-accent",
     },
     {
-      title: "Today's Milk Sold",
-      value: `${todaysMilkLitres || 0}`,
-      unit: "Litres @ ₹40/L",
-      subtitle: "Today",
+      title: "Today's Collection",
+      value: formatLitres(todaysMilkLitres),
+      unit: "Litres",
+      subtitle: `${entriesTodayCount} entries today`,
       icon: Calendar,
       color: "bg-green-50",
       iconColor: "text-green-600",
     },
     {
-      title: "Current Balance",
-      value: "₹45,000",
-      unit: "To Receive",
-      badge: "Positive",
-      badgeColor: "bg-green-100 text-green-800",
+      title: "Current Seller Balance",
+      value: formatMoney(sellerBalance),
+      unit: balanceStatus,
+      badge: balanceBadge,
+      badgeColor: balanceBadgeColor,
       icon: Wallet,
       color: "bg-emerald-50",
       iconColor: "text-emerald-600",
     },
-  ]
+  ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {cards.map((card, index) => {
-        const Icon = card.icon
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {cards.map((card) => {
+        const Icon = card.icon;
         return (
-          <Card key={index} className={`${card.color} dark:bg-accent border-0 shadow-sm rounded-lg`}>
+          <Card key={card.title} className={`${card.color} dark:bg-accent border-0 shadow-sm rounded-lg`}>
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
-                <Icon className={`w-5 h-5 ${card.iconColor}`} />
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {card.title}
+                </CardTitle>
+                <Icon className={`h-5 w-5 ${card.iconColor}`} />
               </div>
             </CardHeader>
             <CardContent>
@@ -81,8 +108,8 @@ export function SellerOverviewCards({ todaysMilkLitres, totalMonthlyExpense, tot
               </div>
             </CardContent>
           </Card>
-        )
+        );
       })}
     </div>
-  )
+  );
 }
