@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -39,8 +39,6 @@ export default function LoginForm() {
   const router = useRouter();
 
   const { status } = useSession();
-  const searchParams = useSearchParams();
-  const callBackUrl = searchParams.get("callbackUrl") || "/portal";
 
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -59,9 +57,9 @@ export default function LoginForm() {
 
   useEffect(() => {
     if (status === "authenticated") {
-      router.replace(callBackUrl);
+      router.replace("/portal");
     }
-  }, [status, router, callBackUrl]);
+  }, [status, router]);
 
 
   async function handlePasswordSubmit(e: React.FormEvent) {
@@ -125,7 +123,7 @@ export default function LoginForm() {
           return;
         }
 
-        router.replace(callBackUrl);
+        router.replace("/portal");
         return;
       }
 
@@ -160,7 +158,7 @@ export default function LoginForm() {
       return;
     }
 
-    router.replace(callBackUrl);
+    router.replace("/portal");
   }
 
   function goBack() {
