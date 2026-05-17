@@ -3,14 +3,8 @@ import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 
 export const getServerActionUser = async () => {
-    try {
-        const session = await getServerSession(authOptions);
-        // console.log("sessionsss", session    )
-        return session?.user || null;
-    } catch (error) {
-        console.error("Error fetching session:", error);
-        return null;
-    }
+    const session = await getServerSession(authOptions);
+    return session?.user || null;
 }
 
 export const getSellerByDairyId= async (dairyId:number)=>{
