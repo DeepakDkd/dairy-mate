@@ -7,12 +7,185 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 👉 After schema change:
-// npx prisma migrate dev --name <your_change>
-// npx prisma migrate dev --name add_profile_photo
+model Dairy {
+  id              Int                 @id @default(autoincrement())
+  ownerId         Int
+  name            String
+  address         String?
+  phone           String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  mawaPricePerKg  Float?
+  pricingMode     PricingMode         @default(FAT_LR)
+  email           String?             @unique
+  accountBalances AccountBalance[]    @relation("AccountBalanceDairyRelation")
+  buyerEntries    BuyerEntry[]
+  owner           User                @relation("OwnerDairies", fields: [ownerId], references: [id])
+  subscriptions   DairySubscription[]
+  milkRates       MilkRate[]
+  payments        Payment[]
+  sellerEntries   SellerEntry[]
+  staff           StaffProfile[]
+  users           User[]              @relation("UserDairyRelation")
+}
 
-// 👉 To inspect DB:
-// npx prisma studio
+model User {
+  role           Role
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  address        String?
+  dairyId        Int?
+  email          String
+  isActive       Boolean         @default(true)
+  phone          String
+  status         String          @default("active")
+  id             Int             @id @default(autoincrement())
+  password       String
+  firstName      String
+  lastName       String
+  bio            String?
+  profileUrl     String?
+  accountBalance AccountBalance? @relation("AccountBalanceUserRelation")
+  buyerEntries   BuyerEntry[]    @relation("BuyerEntryUser")
+  ownedDairies   Dairy[]         @relation("OwnerDairies")
+  payments       Payment[]
+  sellerEntries  SellerEntry[]   @relation("SellerEntryUser")
+  staffProfile   StaffProfile?   @relation("StaffProfileRelation")
+  dairy          Dairy?          @relation("UserDairyRelation", fields: [dairyId], references: [id])
+
+  @@unique([email, dairyId])
+  @@unique([phone, dairyId])
+}
+
+model StaffProfile {
+  id               Int        @id @default(autoincrement())
+  userId           Int        @unique
+  dairyId          Int
+  position         String?
+  salary           Float?
+  joinDate         DateTime?
+  emergencyContact String?
+  photoUrl         String?
+  notes            String?
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  shift            StaffShift @default(FULL_DAY)
+  jobLeaveDate     DateTime?
+  dairy            Dairy      @relation(fields: [dairyId], references: [id])
+  user             User       @relation("StaffProfileRelation", fields: [userId], references: [id])
+}
+
+model MilkRate {
+  id       Int      @id @default(autoincrement())
+  dairyId  Int
+  milkType MilkType
+  fat      Float
+  lr       Float
+  price    Float
+  dairy    Dairy    @relation(fields: [dairyId], references: [id])
+
+  @@index([dairyId, milkType, fat, lr])
+}
+
+model SellerEntry {
+  id                Int      @id @default(autoincrement())
+  dairyId           Int
+  sellerId          Int
+  date              DateTime
+  fat               Float?
+  rate              Float
+  totalAmount       Float
+  createdAt         DateTime @default(now())
+  litres            Float    @default(0)
+  lr                Float?
+  milkType          MilkType @default(COW)
+  shift             Shift    @default(MORNING)
+  mawaPerLitreGrams Float?
+  mawaTotalGrams    Float?
+  dairy             Dairy    @relation(fields: [dairyId], references: [id])
+  seller            User     @relation("SellerEntryUser", fields: [sellerId], references: [id])
+}
+
+model BuyerEntry {
+  id          Int      @id @default(autoincrement())
+  dairyId     Int
+  buyerId     Int
+  date        DateTime
+  rate        Float
+  totalAmount Float
+  createdAt   DateTime @default(now())
+  fat         Float?
+  litres      Float    @default(0)
+  shift       Shift    @default(MORNING)
+  buyer       User     @relation("BuyerEntryUser", fields: [buyerId], references: [id])
+  dairy       Dairy    @relation(fields: [dairyId], references: [id])
+}
+
+model AccountBalance {
+  id             Int      @id @default(autoincrement())
+  dairyId        Int
+  userId         Int      @unique
+  currentBalance Float    @default(0)
+  lastEntryId    Int?
+  lastPaymentId  Int?
+  updatedAt      DateTime @updatedAt
+  createdAt      DateTime @default(now())
+  dairy          Dairy    @relation("AccountBalanceDairyRelation", fields: [dairyId], references: [id])
+  user           User     @relation("AccountBalanceUserRelation", fields: [userId], references: [id])
+
+  @@unique([dairyId, userId], name: "dairyId_userId")
+}
+
+model Payment {
+  id        Int           @id @default(autoincrement())
+  dairyId   Int
+  userId    Int
+  amount    Float
+  type      PaymentType
+  method    PaymentMethod @default(CASH)
+  notes     String?
+  date      DateTime
+  createdAt DateTime      @default(now())
+  dairy     Dairy         @relation(fields: [dairyId], references: [id])
+  user      User          @relation(fields: [userId], references: [id])
+}
+
+model SubscriptionPlan {
+  id            Int                 @id @default(autoincrement())
+  name          String
+  price         Float
+  maxSellers    Int?
+  maxBuyers     Int?
+  maxStaff      Int?
+  maxEntries    Int?
+  durationDays  Int                 @default(30)
+  subscriptions DairySubscription[]
+}
+
+model DairySubscription {
+  id        Int              @id @default(autoincrement())
+  dairyId   Int
+  planId    Int
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean          @default(true)
+  dairy     Dairy            @relation(fields: [dairyId], references: [id])
+  plan      SubscriptionPlan @relation(fields: [planId], references: [id])
+}
+
+model OtpRequest {
+  id        Int      @id @default(autoincrement())
+  phone     String?
+  email     String?
+  otp       String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  salt      String
+  userId    Int
+
+  @@index([phone])
+  @@index([email])
+}
 
 enum Role {
   OWNER
@@ -60,260 +233,4 @@ enum StaffRole {
 enum MilkType {
   COW
   BUFFALO
-}
-
-// =========================
-// DAIRY
-// =========================
-model Dairy {
-  id      Int     @id @default(autoincrement())
-  ownerId Int
-  name    String
-  address String?
-  email   String? @unique
-  phone   String?
-
-  pricingMode    PricingMode @default(FAT_LR)
-  mawaPricePerKg Float? // only used for MAWA-type dairies, optional
-
-  // Relations
-  owner         User                @relation("OwnerDairies", fields: [ownerId], references: [id])
-  users         User[]              @relation("UserDairyRelation")
-  staff         StaffProfile[]
-  milkRates     MilkRate[]
-  sellerEntries SellerEntry[]
-  buyerEntries  BuyerEntry[]
-  payments      Payment[]
-  subscriptions DairySubscription[]
-
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  accountBalances AccountBalance[] @relation("AccountBalanceDairyRelation")
-}
-
-// =========================
-// USER (Universal Users)
-// =========================
-model User {
-  id         Int     @id @default(autoincrement())
-  dairyId    Int?
-  role       Role
-  status     String  @default("active")
-  firstName  String
-  lastName   String
-  email      String
-  phone      String
-  password   String
-  address    String?
-  profileUrl String?
-  bio        String?
-  isActive   Boolean @default(true)
-
-  // Belongs to one Dairy
-  dairy Dairy? @relation("UserDairyRelation", fields: [dairyId], references: [id])
-
-  // Owner can own many dairies
-  ownedDairies Dairy[] @relation("OwnerDairies")
-
-  // Staff Profile (optional)
-  staffProfile StaffProfile? @relation("StaffProfileRelation")
-
-  // Entries
-  sellerEntries SellerEntry[] @relation("SellerEntryUser")
-  buyerEntries  BuyerEntry[]  @relation("BuyerEntryUser")
-
-  // Account Balances
-  accountBalance AccountBalance? @relation("AccountBalanceUserRelation")
-
-  payments Payment[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([email, dairyId])
-  @@unique([phone, dairyId])
-}
-
-// =========================
-// STAFF PROFILE
-// =========================
-model StaffProfile {
-  id      Int @id @default(autoincrement())
-  userId  Int @unique
-  dairyId Int
-
-  shift            StaffShift @default(FULL_DAY)
-  // role             StaffRole @default(HELPER)
-  position         String? //position and role are same [modify or use as need]
-  salary           Float?
-  joinDate         DateTime?
-  jobLeaveDate     DateTime?
-  emergencyContact String?
-  photoUrl         String?
-  notes            String?
-
-  user  User  @relation("StaffProfileRelation", fields: [userId], references: [id])
-  dairy Dairy @relation(fields: [dairyId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-// =========================
-// FAT RATE CHART
-// =========================
-model MilkRate {
-  id       Int      @id @default(autoincrement())
-  dairyId  Int
-  milkType MilkType
-  fat      Float
-  lr       Float
-  price    Float
-
-  dairy Dairy @relation(fields: [dairyId], references: [id])
-
-  //   Why?
-  // Because 99% of queries will be:
-  // findFirst({ where: { dairyId, fat, lr, milkType } })
-
-  // This removes full table scans.
-  @@index([dairyId, milkType, fat, lr])
-}
-
-// =========================
-// SELLER ENTRIES
-// =========================
-model SellerEntry {
-  id       Int @id @default(autoincrement())
-  dairyId  Int
-  sellerId Int
-
-  date   DateTime
-  shift  Shift    @default(MORNING)
-  litres Float    @default(0)
-
-  // For FAT_LR dairies
-  fat      Float?
-  lr       Float? // optional now
-  milkType MilkType @default(COW)
-
-  // For MAWA dairies
-  mawaPerLitreGrams Float? // e.g. 180g mawa from 1 liter milk
-  mawaTotalGrams    Float? // litres * mawaPerLitreGrams (can be stored or computed)
-
-  // Common result fields
-  rate        Float // final Rs per litre (for FAT_LR) OR effective Rs/litre (for MAWA)
-  totalAmount Float // total payment for this entry
-
-  dairy  Dairy @relation(fields: [dairyId], references: [id])
-  seller User  @relation("SellerEntryUser", fields: [sellerId], references: [id])
-
-  createdAt DateTime @default(now())
-}
-
-// =========================
-// BUYER ENTRIES
-// =========================
-model BuyerEntry {
-  id      Int @id @default(autoincrement())
-  dairyId Int
-  buyerId Int
-
-  date        DateTime
-  shift       Shift    @default(MORNING)
-  fat         Float?
-  litres      Float    @default(0)
-  rate        Float
-  totalAmount Float
-
-  dairy Dairy @relation(fields: [dairyId], references: [id])
-  buyer User  @relation("BuyerEntryUser", fields: [buyerId], references: [id])
-
-  createdAt DateTime @default(now())
-}
-
-model AccountBalance {
-  id             Int   @id @default(autoincrement())
-  dairyId        Int
-  userId         Int @unique
-  currentBalance Float @default(0)
-
-  lastEntryId   Int? // SellerEntry or BuyerEntry
-  lastPaymentId Int? // Payment record
-  updatedAt     DateTime @updatedAt
-  createdAt     DateTime @default(now())
-
-  user  User  @relation("AccountBalanceUserRelation", fields: [userId], references: [id])
-  dairy Dairy @relation("AccountBalanceDairyRelation", fields: [dairyId], references: [id])
-
-  @@unique([dairyId, userId], name: "dairyId_userId") // One balance record per seller per dairy
-}
-
-// =========================
-// PAYMENTS
-// =========================
-model Payment {
-  id      Int @id @default(autoincrement())
-  dairyId Int
-  userId  Int
-
-  amount Float
-  type   PaymentType
-  method PaymentMethod @default(CASH)
-  notes  String?
-  date   DateTime
-
-  dairy Dairy @relation(fields: [dairyId], references: [id])
-  user  User  @relation(fields: [userId], references: [id])
-
-  createdAt DateTime @default(now())
-}
-
-// =========================
-// SUBSCRIPTION PLANS
-// =========================
-model SubscriptionPlan {
-  id    Int    @id @default(autoincrement())
-  name  String
-  price Float
-
-  maxSellers   Int?
-  maxBuyers    Int?
-  maxStaff     Int?
-  maxEntries   Int?
-  durationDays Int  @default(30)
-
-  subscriptions DairySubscription[]
-}
-
-// =========================
-// DAIRY SUBSCRIPTIONS
-// =========================
-model DairySubscription {
-  id      Int @id @default(autoincrement())
-  dairyId Int
-  planId  Int
-
-  startDate DateTime
-  endDate   DateTime
-  isActive  Boolean  @default(true)
-
-  dairy Dairy            @relation(fields: [dairyId], references: [id])
-  plan  SubscriptionPlan @relation(fields: [planId], references: [id])
-}
-
-
-
-model OtpRequest {
-  id        Int      @id @default(autoincrement())
-  phone     String?
-  email     String?
-  otp       String
-  salt      String
-  userId    Int
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  @@index([phone])
-  @@index([email])
 }
