@@ -166,7 +166,17 @@ export default function BuyerDashboardPage() {
           <CardDescription>Manage all buyers  entries</CardDescription>
         </CardHeader>
         <CardContent>
-          <BuyerRosterTable buyer={buyerData?.buyers} setPage={setPage} page={page} totalPages={totalPages} />
+          <BuyerRosterTable
+            buyer={buyerData?.buyers}
+            setPage={setPage}
+            page={page}
+            totalPages={totalPages}
+            getLedgerHref={(buyerId) =>
+              selectedDairyId
+                ? `/portal/owner/dairies/${selectedDairyId}/buyers/${buyerId}/ledger`
+                : "#"
+            }
+          />
         </CardContent>
       </Card>
 

@@ -1,18 +1,29 @@
 "use client"
 
+import Link from "next/link"
 import { useState } from "react"
 import { User } from "@prisma/client"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Edit2, Trash2, MoreVertical, ChevronLeft, ChevronRight } from "lucide-react"
+import { Edit2, Trash2, MoreVertical, ChevronLeft, ChevronRight, ReceiptText } from "lucide-react"
 import { Table, TableBody, TableCell,  TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
-
-
-
-
-export function SellerRosterTable({ seller ,setPage, page,totalPages,onRefresh}: { seller: User[], setPage: React.Dispatch<React.SetStateAction<number>>, page: number, totalPages: number ,onRefresh:any}) {
+export function SellerRosterTable({
+  seller,
+  setPage,
+  page,
+  totalPages,
+  onRefresh,
+  getLedgerHref,
+}: {
+  seller: User[],
+  setPage: React.Dispatch<React.SetStateAction<number>>,
+  page: number,
+  totalPages: number,
+  onRefresh: any,
+  getLedgerHref?: (sellerId: number) => string,
+}) {
   const [sortBy, setSortBy] = useState<"name" | "status" | "joinDate">("name")
 
 
@@ -98,6 +109,14 @@ export function SellerRosterTable({ seller ,setPage, page,totalPages,onRefresh}:
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      {getLedgerHref && (
+                        <DropdownMenuItem asChild>
+                          <Link href={getLedgerHref(member.id)} className="flex items-center gap-2">
+                            <ReceiptText size={14} />
+                            <span>View History</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem className="flex items-center gap-2">
                         <Edit2 size={14} />
                         <span>Edit</span>

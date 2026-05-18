@@ -208,6 +208,9 @@ export default function OwnerBuyerDashboard({
               setPage={setPage}
               page={page}
               totalPages={totalPages}
+              getLedgerHref={(buyerId) =>
+                `${basePath}/${dairyId}/buyers/${buyerId}/ledger`
+              }
             />
           )}
         </CardContent>

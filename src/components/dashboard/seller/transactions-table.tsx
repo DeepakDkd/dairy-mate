@@ -13,6 +13,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 const fetcher = (url: string) => fetch(url).then((response) => response.json());
 
+const formatDateTime = (value: string | Date) =>
+  new Date(value).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
 interface PartyOption {
   id: number;
   name: string;
@@ -51,7 +60,7 @@ export function SellerTransactionsTable({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold font-montserrat text-foreground">Transactions</h2>
+        <h2 className="text-xl font-bold font-montserrat text-foreground">Transaction History</h2>
         <Button onClick={() => setShowPaymentDialog(true)} variant="outline" className="gap-2" disabled={!dairyId || sellers.length === 0}>
           <Plus className="w-4 h-4" />
           Add Payment
@@ -59,7 +68,7 @@ export function SellerTransactionsTable({
       </div>
       <Card className="shadow-sm border-0">
         <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold">All Transactions</CardTitle>
+          <CardTitle className="text-base font-semibold">Transaction History</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -80,7 +89,7 @@ export function SellerTransactionsTable({
                   data.ledger.map((transaction: any) => (
                     <TableRow key={transaction.id} className="hover:bg-secondary/50">
                       <TableCell className="font-medium">
-                        {new Date(transaction.date).toLocaleDateString("en-IN")}
+                        {formatDateTime(transaction.date)}
                       </TableCell>
                       <TableCell>{transaction.sellerName}</TableCell>
                       <TableCell>

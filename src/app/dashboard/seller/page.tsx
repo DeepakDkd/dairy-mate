@@ -135,6 +135,11 @@ export default function SellerDashboardPage() {
             setPage={setPage}
             totalPages={totalPages}
             onRefresh={sellersMutate}
+            getLedgerHref={(sellerId) =>
+              selectedDairyId
+                ? `/portal/owner/dairies/${selectedDairyId}/sellers/${sellerId}/ledger`
+                : "#"
+            }
           />
         </CardContent>
       </Card>

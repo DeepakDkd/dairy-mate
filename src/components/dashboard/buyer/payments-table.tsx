@@ -10,6 +10,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 const fetcher = (url: string) => fetch(url).then((response) => response.json());
 
+const formatDateTime = (value: string | Date) =>
+  new Date(value).toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
 interface BuyerPaymentsTableProps {
   dairyId: number;
   refreshToken?: number;
@@ -35,8 +44,8 @@ export function BuyerPaymentsTable({ dairyId, refreshToken = 0 }: BuyerPaymentsT
   return (
     <Card className="shadow-md rounded-2xl border">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">Buyer Transactions</CardTitle>
-        <p className="text-sm text-muted-foreground mt-1">Recent milk entries and payments</p>
+        <CardTitle className="text-lg font-semibold">Transaction History</CardTitle>
+        <p className="text-sm text-muted-foreground mt-1">Recent milk entries and payments across all buyers</p>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
@@ -60,7 +69,7 @@ export function BuyerPaymentsTable({ dairyId, refreshToken = 0 }: BuyerPaymentsT
                 data.ledger.map((item: any) => (
                   <TableRow key={item.id} className="border-b hover:bg-gray-50 transition-colors">
                     <TableCell className="text-sm text-foreground">
-                      {new Date(item.date).toLocaleDateString("en-IN")}
+                      {formatDateTime(item.date)}
                     </TableCell>
                     <TableCell className="text-sm text-foreground">{item.buyerName}</TableCell>
                     <TableCell>

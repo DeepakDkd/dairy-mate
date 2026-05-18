@@ -192,6 +192,9 @@ export default function OwnerSellerDashboard({
               setPage={setPage}
               totalPages={totalPages}
               onRefresh={sellersMutate}
+              getLedgerHref={(sellerId) =>
+                `${basePath}/${dairyId}/sellers/${sellerId}/ledger`
+              }
             />
           )}
         </CardContent>
