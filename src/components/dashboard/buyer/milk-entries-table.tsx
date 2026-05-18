@@ -80,7 +80,7 @@ export function BuyerMilkEntriesTable({ selectedDairyId }: { selectedDairyId: an
               <TableBody>
                 {milkEntries?.entries?.length > 0 ? (
                   milkEntries.entries.map((entry: BuyerEntry) => (
-                    <TableRow key={entry.id} className="transition-colors hover:bg-gray-50">
+                    <TableRow key={entry.id} className="transition-colors hover:bg-secondary/50">
                       <TableCell className="text-sm text-foreground">
                         {new Date(entry.date).toLocaleDateString("en-IN")}
                       </TableCell>

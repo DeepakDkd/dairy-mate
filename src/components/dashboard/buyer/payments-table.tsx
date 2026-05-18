@@ -67,7 +67,7 @@ export function BuyerPaymentsTable({ dairyId, refreshToken = 0 }: BuyerPaymentsT
             <TableBody>
               {data?.ledger?.length > 0 ? (
                 data.ledger.map((item: any) => (
-                  <TableRow key={item.id} className="border-b hover:bg-gray-50 transition-colors">
+                  <TableRow key={item.id} className="border-b hover:bg-secondary/50 transition-colors">
                     <TableCell className="text-sm text-foreground">
                       {formatDateTime(item.date)}
                     </TableCell>
