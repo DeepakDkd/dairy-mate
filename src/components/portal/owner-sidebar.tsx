@@ -19,6 +19,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { ModeToggle } from "@/components/theme/modeToggle";
 
 function getNavState(pathname: string, href: string) {
   if (pathname === href) return "active";
@@ -153,11 +154,14 @@ export function OwnerPortalSidebar() {
       </nav>
 
       <div className="space-y-2 border-t p-4">
-        {!collapsed && (
-          <p className="px-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            Account
-          </p>
-        )}
+        <div className={`flex items-center ${collapsed ? "justify-center" : "justify-between px-3"}`}>
+          {!collapsed && (
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Account
+            </p>
+          )}
+          <ModeToggle />
+        </div>
 
         {accountItems.map((item) => renderLink(item, collapsed))}
 
@@ -191,13 +195,16 @@ export function OwnerPortalSidebar() {
             </div>
           </div>
 
-          <button
-            onClick={() => setIsMobileOpen(true)}
-            className="rounded-md p-2 transition-colors hover:bg-muted"
-            aria-label="Open navigation"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <ModeToggle />
+            <button
+              onClick={() => setIsMobileOpen(true)}
+              className="rounded-md p-2 transition-colors hover:bg-muted"
+              aria-label="Open navigation"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </div>
 
