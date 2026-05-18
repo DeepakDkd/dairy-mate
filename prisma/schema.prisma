@@ -104,6 +104,8 @@ model SellerEntry {
   mawaTotalGrams    Float?
   dairy             Dairy    @relation(fields: [dairyId], references: [id])
   seller            User     @relation("SellerEntryUser", fields: [sellerId], references: [id])
+
+  @@index([dairyId, sellerId, date])
 }
 
 model BuyerEntry {
@@ -119,6 +121,8 @@ model BuyerEntry {
   shift       Shift    @default(MORNING)
   buyer       User     @relation("BuyerEntryUser", fields: [buyerId], references: [id])
   dairy       Dairy    @relation(fields: [dairyId], references: [id])
+
+  @@index([dairyId, buyerId, date])
 }
 
 model AccountBalance {
@@ -126,7 +130,8 @@ model AccountBalance {
   dairyId        Int
   userId         Int      @unique
   currentBalance Float    @default(0)
-  lastEntryId    Int?
+  lastSellerEntryId Int?
+  lastBuyerEntryId  Int?
   lastPaymentId  Int?
   updatedAt      DateTime @updatedAt
   createdAt      DateTime @default(now())
@@ -148,6 +153,8 @@ model Payment {
   createdAt DateTime      @default(now())
   dairy     Dairy         @relation(fields: [dairyId], references: [id])
   user      User          @relation(fields: [userId], references: [id])
+
+  @@index([dairyId, userId, date])
 }
 
 model SubscriptionPlan {

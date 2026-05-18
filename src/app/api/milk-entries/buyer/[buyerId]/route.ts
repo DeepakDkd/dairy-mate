@@ -76,40 +76,42 @@ export async function POST(request: Request) {
       date,
     } = body;
 
-    // Create milk entry
-    const milkEntry = await prisma.buyerEntry.create({
-      data: {
-        dairyId,
-        buyerId,
-        litres,
-        rate,
-        totalAmount,
-        shift,
-        date: new Date(date),
-      },
-    });
+    const result = await prisma.$transaction(async (tx) => {
+      const milkEntry = await tx.buyerEntry.create({
+        data: {
+          dairyId,
+          buyerId,
+          litres,
+          rate,
+          totalAmount,
+          shift,
+          date: new Date(date),
+        },
+      });
 
-    // Update or Create accountBalance using UPSERT
-    const accountBalance = await prisma.accountBalance.upsert({
-      where: {
-        dairyId_userId: {
+      const accountBalance = await tx.accountBalance.upsert({
+        where: {
+          dairyId_userId: {
+            dairyId,
+            userId: buyerId,
+          },
+        },
+        update: {
+          currentBalance: { increment: totalAmount },
+          lastBuyerEntryId: milkEntry.id,
+        },
+        create: {
           dairyId,
           userId: buyerId,
+          currentBalance: totalAmount,
+          lastBuyerEntryId: milkEntry.id,
         },
-      },
-      update: {
-        currentBalance: { increment: totalAmount },
-        lastEntryId: milkEntry.id,
-      },
-      create: {
-        dairyId,
-        userId: buyerId,
-        currentBalance: totalAmount,
-        lastEntryId: milkEntry.id,
-      },
+      });
+
+      return { milkEntry, accountBalance };
     });
     return NextResponse.json(
-      { milkEntry, accountBalance },
+      result,
       { status: 201 }
     );
   } catch (error) {
