@@ -125,16 +125,16 @@ function OwnerOverview({overview:initialOverview }:any) {
       icon: Banknote,
     },
     {
-      title: "Buyer Sales",
-      value: formatMoney(totals?.monthlyBuyerAmount),
-      detail: "Milk amount billed this month",
-      icon: Wallet,
-    },
-    {
       title: "Seller Balance",
       value: formatMoney(totals?.sellerBalance),
       detail: "Current seller account balance",
       icon: Users,
+    },
+    {
+      title: "Buyer Sales",
+      value: formatMoney(totals?.monthlyBuyerAmount),
+      detail: "Milk amount billed this month",
+      icon: Wallet,
     },
     {
       title: "Buyer Balance",
