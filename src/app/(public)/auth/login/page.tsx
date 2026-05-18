@@ -65,6 +65,8 @@ export default function LoginForm() {
   async function handlePasswordSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    if (loading) return;
+
     if (!phone) return toast.error("Enter phone number");
     if (role === "OWNER" && !password) return toast.error("Enter password");
 
@@ -86,13 +88,15 @@ export default function LoginForm() {
       }
     } catch {
       toast.error("Invalid credentials");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
   async function handleOtpSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (loading) return;
 
     if (!otp) return toast.error("Enter OTP");
 
@@ -133,32 +137,37 @@ export default function LoginForm() {
 
     } catch {
       toast.error("OTP verification failed");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }
 
 
   async function handleDairySubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    if (loading) return;
+
     if (!selectedDairy) return toast.error("Select a dairy");
 
     setLoading(true);
-    const result = await signIn("credentials", {
-      redirect: false,
-      phone,
-      dairyId: selectedDairy,
-      role: "BUYER"
-    });
+    try {
+      const result = await signIn("credentials", {
+        redirect: false,
+        phone,
+        dairyId: selectedDairy,
+        role: "BUYER"
+      });
 
-    if (result?.error) {
-      toast.error("Login failed");
+      if (result?.error) {
+        toast.error("Login failed");
+        return;
+      }
+
+      router.replace("/portal");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    router.replace("/portal");
   }
 
   function goBack() {
@@ -182,8 +191,8 @@ export default function LoginForm() {
         }}
       >
         <TabsList className="grid grid-cols-2 w-full max-w-sm mx-auto">
-          <TabsTrigger value="owner">Owner / Staff</TabsTrigger>
-          <TabsTrigger value="buyer">Buyer / Seller</TabsTrigger>
+          <TabsTrigger value="owner" disabled={loading}>Owner / Staff</TabsTrigger>
+          <TabsTrigger value="buyer" disabled={loading}>Buyer / Seller</TabsTrigger>
         </TabsList>
 
         <Card className="max-w-sm w-full bg-accent/40 shadow-xl mt-4 border border-white/20">
@@ -229,7 +238,7 @@ export default function LoginForm() {
                   {loading ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
                   ) : null}
-                  Continue
+                  {loading ? "Please wait..." : "Continue"}
                 </Button>
 
               </form>
@@ -252,7 +261,7 @@ export default function LoginForm() {
                   {loading ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
                   ) : null}
-                  Verify OTP
+                  {loading ? "Verifying..." : "Verify OTP"}
                 </Button>
 
                 <button
@@ -292,7 +301,7 @@ export default function LoginForm() {
                   {loading ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
                   ) : null}
-                  Login
+                  {loading ? "Logging in..." : "Login"}
                 </Button>
 
                 <button

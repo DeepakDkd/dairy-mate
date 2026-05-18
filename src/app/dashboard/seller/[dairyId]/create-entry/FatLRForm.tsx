@@ -23,6 +23,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { Dairy } from "@prisma/client";
 import axios from "axios";
+import { Loader2 } from "lucide-react";
 
 interface Data {
     type: "COW" | "BUFFALO";
@@ -35,6 +36,7 @@ interface Data {
 export function FatLRForm({ seller, dairy ,setSelectedSeller}: { seller: any; dairy: Dairy,setSelectedSeller:any }) {
     const [rate, setRate] = useState<number | null>(null);
     const [total, setTotal] = useState<number | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [data, setData] = useState<Data>({
         type: "COW",
@@ -81,7 +83,9 @@ export function FatLRForm({ seller, dairy ,setSelectedSeller}: { seller: any; da
     };
 
     async function submit() {
-
+        if (isSubmitting) {
+            return;
+        }
 
         try {
             if (data.liter == null || data.fat == null || data.lr == null) {
@@ -92,7 +96,9 @@ export function FatLRForm({ seller, dairy ,setSelectedSeller}: { seller: any; da
                 toast.error("Please calculate the rate and total before submitting.");
                 return;
             }
-         
+
+            setIsSubmitting(true);
+
             const response = await axios.post(`/api/milk-entries/seller/${seller.id}`, {
                 dairyId: dairy.id,
                 sellerId: seller.id,
@@ -124,6 +130,8 @@ export function FatLRForm({ seller, dairy ,setSelectedSeller}: { seller: any; da
             console.error("Error submitting milk entry:", error);
             toast.error("Failed to submit milk entry. Please try again.");
             return;
+        } finally {
+            setIsSubmitting(false);
         }
 
         console.log("Submitting data:", {
@@ -227,7 +235,7 @@ export function FatLRForm({ seller, dairy ,setSelectedSeller}: { seller: any; da
                 </div>
                </div>
 
-                <Button onClick={calculate} className="cursor-pointer">
+                <Button onClick={calculate} className="cursor-pointer" disabled={isSubmitting}>
                     Calculate
                 </Button>
 
@@ -302,10 +310,17 @@ export function FatLRForm({ seller, dairy ,setSelectedSeller}: { seller: any; da
 
                 <Button
                     onClick={submit}
-                    disabled={total === null}
+                    disabled={total === null || isSubmitting}
                     className="w-full"
                 >
-                    Submit Entry
+                    {isSubmitting ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving Entry...
+                        </>
+                    ) : (
+                        "Submit Entry"
+                    )}
                 </Button>
             </CardContent>
         </Card>

@@ -1,33 +1,40 @@
 import { NextResponse } from "next/server";
 
+import { jsonError, parsePositiveInt, requirePartyAccess } from "@/lib/api-access";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getServerSession } from "next-auth";
 
 export async function GET(
   _req: Request,
   context: { params: Promise<{ dairyId: string; sellerId: string }> }
 ) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
   try {
     const { dairyId: dairyIdParam, sellerId: sellerIdParam } = await context.params;
-    const dairyId = Number(dairyIdParam);
-    const sellerId = Number(sellerIdParam);
+    const dairyId = parsePositiveInt(dairyIdParam);
+    const sellerId = parsePositiveInt(sellerIdParam);
 
-    if (!dairyId || !sellerId || Number.isNaN(dairyId) || Number.isNaN(sellerId)) {
-      return NextResponse.json({ message: "Invalid dairy or seller ID" }, { status: 400 });
+    if (!dairyId || !sellerId) {
+      return jsonError("Invalid dairy or seller ID", 400);
     }
 
-    const [seller, entries, payments] = await Promise.all([
-      prisma.user.findFirst({
-        where: {
-          id: sellerId,
-          dairyId,
-          role: "SELLER",
-        },
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-        },
-      }),
+    const access = await requirePartyAccess(session, {
+      dairyId,
+      partyId: sellerId,
+      role: "SELLER",
+    });
+    if (!access.ok) {
+      return access.response;
+    }
+
+    const seller = access.data;
+
+    const [entries, payments] = await Promise.all([
       prisma.sellerEntry.findMany({
         where: {
           dairyId,
@@ -44,10 +51,6 @@ export async function GET(
         orderBy: { date: "asc" },
       }),
     ]);
-
-    if (!seller) {
-      return NextResponse.json({ message: "Seller not found" }, { status: 404 });
-    }
 
     const merged = [
       ...entries.map((entry) => ({

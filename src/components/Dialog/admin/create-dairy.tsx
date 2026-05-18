@@ -10,6 +10,7 @@ import toast from "react-hot-toast"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import axios from "axios"
+import { Loader2 } from "lucide-react"
 
 interface AddSellerDialogProps {
   open: boolean
@@ -40,6 +41,10 @@ export default function CreateDairyDialog({ open, onOpenChange, userId }: AddSel
 
   })
   const onSubmit = async (data: DairyFormData) => {
+    if (isSubmitting) {
+      return;
+    }
+
     try {
       console.log("userId in CreateDairyDialog:", userId);
 
@@ -104,6 +109,7 @@ export default function CreateDairyDialog({ open, onOpenChange, userId }: AddSel
           <div>
             <Label>Pricing Mode*</Label>
             <Select
+              disabled={isSubmitting}
               onValueChange={(v) => setValue("dairyMode", v as any)}
             >
               <SelectTrigger>
@@ -117,12 +123,19 @@ export default function CreateDairyDialog({ open, onOpenChange, userId }: AddSel
             {errors.dairyMode && <p className="text-red-500 text-xs">{errors.dairyMode.message}</p>}
           </div>
           <div className="w-full grid md:grid-cols-2 gap-5">
-            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
               Cancel
             </Button>
 
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Create Dairy"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Create Dairy"
+              )}
             </Button>
           </div>
         </form>

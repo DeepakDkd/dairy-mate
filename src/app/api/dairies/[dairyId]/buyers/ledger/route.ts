@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
+import { jsonError, parsePositiveInt, requireOwnedDairy } from "@/lib/api-access";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getServerSession } from "next-auth";
 
 type BuyerLedgerItem = {
   id: string;
@@ -16,12 +19,22 @@ export async function GET(
   _req: Request,
   context: { params: Promise<{ dairyId: string }> }
 ) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
   try {
     const { dairyId: dairyIdParam } = await context.params;
-    const dairyId = Number(dairyIdParam);
+    const dairyId = parsePositiveInt(dairyIdParam);
 
-    if (!dairyId || Number.isNaN(dairyId)) {
-      return NextResponse.json({ message: "Invalid dairy ID" }, { status: 400 });
+    if (!dairyId) {
+      return jsonError("Invalid dairy ID", 400);
+    }
+
+    const access = await requireOwnedDairy(session, dairyId);
+    if (!access.ok) {
+      return access.response;
     }
 
     const [entries, payments] = await Promise.all([

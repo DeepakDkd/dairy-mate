@@ -23,6 +23,7 @@ import { useState } from "react";
 import axios from "axios";
 import { z } from "zod";
 import { Dairy } from "@prisma/client";
+import { Loader2 } from "lucide-react";
 
 const buyerEntrySchema = z.object({
   litres: z.number().min(0.1, "Enter a valid litres amount"),
@@ -41,6 +42,7 @@ export function BuyerEntryForm({
   setSelectedSeller: any;
 }) {
   const [total, setTotal] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [data, setData] = useState({
     litres: undefined as number | undefined,
@@ -67,6 +69,10 @@ export function BuyerEntryForm({
   };
 
   const submit = async () => {
+    if (isSubmitting) {
+      return;
+    }
+
     try {
       const parsed = buyerEntrySchema.parse({
         litres: data.litres,
@@ -79,6 +85,8 @@ export function BuyerEntryForm({
         toast.error("Please calculate the total before submitting.");
         return;
       }
+
+      setIsSubmitting(true);
 
       const response = await axios.post(
         `/api/milk-entries/buyer/${buyers.id}`,
@@ -109,6 +117,8 @@ export function BuyerEntryForm({
         return;
       }
       toast.error("Failed to submit milk entry.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -183,7 +193,7 @@ export function BuyerEntryForm({
           </div>
         </div>
 
-        <Button onClick={calculate}>Calculate</Button>
+        <Button onClick={calculate} disabled={isSubmitting}>Calculate</Button>
 
         {total !== null && (
           <Card className="p-4 border rounded-lg  shadow-sm">
@@ -242,10 +252,17 @@ export function BuyerEntryForm({
 
         <Button
           onClick={submit}
-          disabled={total === null}
+          disabled={total === null || isSubmitting}
           className="w-full"
         >
-          Submit Entry
+          {isSubmitting ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving Entry...
+            </>
+          ) : (
+            "Submit Entry"
+          )}
         </Button>
       </CardContent>
     </Card>

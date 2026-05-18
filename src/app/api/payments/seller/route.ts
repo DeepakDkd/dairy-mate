@@ -1,6 +1,14 @@
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
+import {
+  isPaymentMethod,
+  jsonError,
+  parseDateInput,
+  parsePositiveInt,
+  parsePositiveNumber,
+  requirePartyAccess,
+} from "@/lib/api-access";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
@@ -14,18 +22,31 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { dairyId, sellerId, amount, method = "CASH", notes, date } = body;
 
-    const dairyIdNum = Number(dairyId);
-    const sellerIdNum = Number(sellerId);
-    const amountNum = Number(amount);
+    const dairyIdNum = parsePositiveInt(dairyId);
+    const sellerIdNum = parsePositiveInt(sellerId);
+    const amountNum = parsePositiveNumber(amount);
 
-    if (!dairyIdNum || !sellerIdNum || !amountNum || amountNum <= 0) {
-      return NextResponse.json(
-        { message: "Invalid dairyId, sellerId or amount" },
-        { status: 400 }
-      );
+    if (!dairyIdNum || !sellerIdNum || !amountNum) {
+      return jsonError("Invalid dairyId, sellerId or amount", 400);
     }
 
-    const paymentDate = date ? new Date(date) : new Date();
+    if (!isPaymentMethod(method)) {
+      return jsonError("Invalid payment method", 400);
+    }
+
+    const paymentDate = parseDateInput(date);
+    if (!paymentDate) {
+      return jsonError("Invalid payment date", 400);
+    }
+
+    const access = await requirePartyAccess(session, {
+      dairyId: dairyIdNum,
+      partyId: sellerIdNum,
+      role: "SELLER",
+    });
+    if (!access.ok) {
+      return access.response;
+    }
 
     const result = await prisma.$transaction(async (tx) => {
       const payment = await tx.payment.create({
@@ -35,7 +56,7 @@ export async function POST(request: Request) {
           amount: amountNum,
           type: "SELLER_PAYMENT",
           method,
-          notes,
+          notes: typeof notes === "string" ? notes.trim() || null : null,
           date: paymentDate,
         },
       });

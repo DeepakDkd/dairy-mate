@@ -5,6 +5,7 @@ import type React from "react";
 import axios from "axios";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -54,6 +55,10 @@ export function AddPaymentDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (isSubmitting) {
+      return;
+    }
 
     if (!dairyId) {
       toast.error("Select a dairy first");
@@ -126,6 +131,7 @@ export function AddPaymentDialog({
               min="1"
               step="0.01"
               required
+              disabled={isSubmitting}
             />
           </div>
 
@@ -153,15 +159,23 @@ export function AddPaymentDialog({
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
               className="resize-none"
+              disabled={isSubmitting}
             />
           </div>
 
           <div className="flex gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1" disabled={isSubmitting}>
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting} className="flex-1 bg-primary hover:bg-primary/90 text-white">
-              {isSubmitting ? "Recording..." : "Record Payment"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Recording...
+                </>
+              ) : (
+                "Record Payment"
+              )}
             </Button>
           </div>
         </form>

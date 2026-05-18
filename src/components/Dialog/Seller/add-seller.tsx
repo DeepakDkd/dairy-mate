@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import axios from "axios"
 import useSWR from "swr";
 import { useSWRConfig } from "swr"
-import { Loader } from "lucide-react"
+import { Loader, Loader2 } from "lucide-react"
 
 
 interface AddSellerDialogProps {
@@ -69,6 +69,10 @@ export default function AddSellerDialog({ open, onOpenChange, userId }: AddSelle
   // console.log("ownedDairies:", data?.dairies);
 
   const onSubmit = async (data: SellerFormData) => {
+    if (isSubmitting) {
+      return;
+    }
+
     try {
       const finalData = {
         ...data,
@@ -133,6 +137,7 @@ export default function AddSellerDialog({ open, onOpenChange, userId }: AddSelle
               <Loader />
             ) : (
               <Select
+                disabled={isSubmitting}
                 onValueChange={(value) => setValue("dairyId", Number(value))}
               >
                 <SelectTrigger>
@@ -161,6 +166,7 @@ export default function AddSellerDialog({ open, onOpenChange, userId }: AddSelle
             <div className="space-y-2">
               <Label>Status</Label>
               <Select
+                disabled={isSubmitting}
                 defaultValue="active"
                 onValueChange={(value: "active" | "inactive") => setValue("status", value)}
               >
@@ -184,12 +190,19 @@ export default function AddSellerDialog({ open, onOpenChange, userId }: AddSelle
 
           {/* Buttons */}
           <div className="w-full grid md:grid-cols-2 gap-5">
-            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
               Cancel
             </Button>
 
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Create Seller"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Create Seller"
+              )}
             </Button>
           </div>
         </form>

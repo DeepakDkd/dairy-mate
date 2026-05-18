@@ -1,33 +1,40 @@
 import { NextResponse } from "next/server";
 
+import { jsonError, parsePositiveInt, requirePartyAccess } from "@/lib/api-access";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getServerSession } from "next-auth";
 
 export async function GET(
   _req: Request,
   context: { params: Promise<{ dairyId: string; buyerId: string }> }
 ) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
   try {
     const { dairyId: dairyIdParam, buyerId: buyerIdParam } = await context.params;
-    const dairyId = Number(dairyIdParam);
-    const buyerId = Number(buyerIdParam);
+    const dairyId = parsePositiveInt(dairyIdParam);
+    const buyerId = parsePositiveInt(buyerIdParam);
 
-    if (!dairyId || !buyerId || Number.isNaN(dairyId) || Number.isNaN(buyerId)) {
-      return NextResponse.json({ message: "Invalid dairy or buyer ID" }, { status: 400 });
+    if (!dairyId || !buyerId) {
+      return jsonError("Invalid dairy or buyer ID", 400);
     }
 
-    const [buyer, entries, payments] = await Promise.all([
-      prisma.user.findFirst({
-        where: {
-          id: buyerId,
-          dairyId,
-          role: "BUYER",
-        },
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-        },
-      }),
+    const access = await requirePartyAccess(session, {
+      dairyId,
+      partyId: buyerId,
+      role: "BUYER",
+    });
+    if (!access.ok) {
+      return access.response;
+    }
+
+    const buyer = access.data;
+
+    const [entries, payments] = await Promise.all([
       prisma.buyerEntry.findMany({
         where: {
           dairyId,
@@ -44,10 +51,6 @@ export async function GET(
         orderBy: { date: "asc" },
       }),
     ]);
-
-    if (!buyer) {
-      return NextResponse.json({ message: "Buyer not found" }, { status: 404 });
-    }
 
     const merged = [
       ...entries.map((entry) => ({

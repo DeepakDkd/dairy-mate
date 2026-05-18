@@ -86,6 +86,10 @@ export function AddStaffDialog({ userId }: AddStaffDialogProps) {
   });
 
   const onSubmit = async (formData: StaffFormData) => {
+    if (isSubmitting) {
+      return;
+    }
+
     console.log("Final form data:", formData);
 
     try {
@@ -189,6 +193,7 @@ export function AddStaffDialog({ userId }: AddStaffDialogProps) {
                   name="dairyId"
                   render={({ field }) => (
                     <Select
+                      disabled={isSubmitting}
                       onValueChange={(v) => field.onChange(Number(v))}
                       value={field.value ? String(field.value) : undefined}
                     >
@@ -255,7 +260,7 @@ export function AddStaffDialog({ userId }: AddStaffDialogProps) {
                 control={control}
                 name="shift"
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isSubmitting}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select shift" />
                     </SelectTrigger>
@@ -323,12 +328,20 @@ export function AddStaffDialog({ userId }: AddStaffDialogProps) {
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
 
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Add Staff Member"}
+              {isSubmitting ? (
+                <>
+                  <Loader className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Add Staff Member"
+              )}
             </Button>
           </div>
         </form>

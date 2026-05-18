@@ -95,6 +95,10 @@ export default function RegisterForm() {
 
   const role = watch("role");
   const onSubmit = async (data: RegisterFormType) => {
+    if (isSubmitting) {
+      return;
+    }
+
     try {
       const res = await axios.post("/api/auth/register", data);
 
@@ -170,6 +174,7 @@ export default function RegisterForm() {
             <div>
               <Label>Role*</Label>
               <Select
+                disabled={isSubmitting}
                 onValueChange={(v) => setValue("role", v as any)}
               >
                 <SelectTrigger>
@@ -221,6 +226,7 @@ export default function RegisterForm() {
                 <div>
                   <Label>Pricing Mode*</Label>
                   <Select
+                    disabled={isSubmitting}
                     onValueChange={(v) => setValue("dairyMode", v as any)}
                   >
                     <SelectTrigger>

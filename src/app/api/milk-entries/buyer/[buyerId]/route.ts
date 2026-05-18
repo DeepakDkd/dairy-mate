@@ -1,9 +1,21 @@
 import prisma from "@/lib/prisma";
 import { authOptions } from "@/lib/auth";
+import {
+  isShift,
+  jsonError,
+  parseDateInput,
+  parsePositiveInt,
+  parsePositiveNumber,
+  requirePartyAccess,
+  requirePartyByIdAccess,
+} from "@/lib/api-access";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 
-export async function GET(request: Request) {
+export async function GET(
+  request: Request,
+  context: { params: Promise<{ buyerId: string }> }
+) {
   const session = await getServerSession(authOptions);
 
   if (!session) {
@@ -12,10 +24,19 @@ export async function GET(request: Request) {
 
   try {
     const { searchParams } = new URL(request.url);
+    const { buyerId: buyerIdParam } = await context.params;
 
-    const sellerId = Number(searchParams.get("sellerId"));
-    if (!sellerId) {
-      return new NextResponse("sellerId is required", { status: 400 });
+    const buyerId = parsePositiveInt(buyerIdParam);
+    if (!buyerId) {
+      return jsonError("buyerId is required", 400);
+    }
+
+    const access = await requirePartyByIdAccess(session, {
+      partyId: buyerId,
+      role: "BUYER",
+    });
+    if (!access.ok) {
+      return access.response;
     }
 
     const dateStr = searchParams.get("date") ??
@@ -27,7 +48,7 @@ export async function GET(request: Request) {
 
     const milkEntries = await prisma.buyerEntry.findMany({
       where: {
-        buyerId: sellerId,
+        buyerId,
         date: {
           gte: startOfDay,
           lte: endOfDay,
@@ -57,7 +78,10 @@ export async function GET(request: Request) {
 
 
 
-export async function POST(request: Request) {
+export async function POST(
+  request: Request,
+  context: { params: Promise<{ buyerId: string }> }
+) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return new NextResponse("Unauthorized", { status: 401 });
@@ -66,6 +90,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     console.log("POST Body:", body);
+    const { buyerId: buyerIdParam } = await context.params;
     const {
       dairyId,
       buyerId,
@@ -76,34 +101,67 @@ export async function POST(request: Request) {
       date,
     } = body;
 
+    const routeBuyerId = parsePositiveInt(buyerIdParam);
+    const dairyIdNum = parsePositiveInt(dairyId);
+    const buyerIdNum = parsePositiveInt(buyerId);
+    const litresNum = parsePositiveNumber(litres);
+    const rateNum = parsePositiveNumber(rate);
+    const totalAmountNum = parsePositiveNumber(totalAmount);
+    const entryDate = parseDateInput(date);
+
+    if (!routeBuyerId || !dairyIdNum || !buyerIdNum) {
+      return jsonError("Invalid dairy or buyer ID", 400);
+    }
+
+    if (routeBuyerId !== buyerIdNum) {
+      return jsonError("Route buyerId does not match request body", 400);
+    }
+
+    if (!litresNum || !rateNum || !totalAmountNum || !entryDate) {
+      return jsonError("Invalid litres, rate, total amount, or date", 400);
+    }
+
+    if (!isShift(shift)) {
+      return jsonError("Invalid shift", 400);
+    }
+
+    const access = await requirePartyAccess(session, {
+      dairyId: dairyIdNum,
+      partyId: buyerIdNum,
+      role: "BUYER",
+    });
+    if (!access.ok) {
+      return access.response;
+    }
+
     const result = await prisma.$transaction(async (tx) => {
       const milkEntry = await tx.buyerEntry.create({
         data: {
-          dairyId,
-          buyerId,
-          litres,
-          rate,
-          totalAmount,
+          dairyId: dairyIdNum,
+          buyerId: buyerIdNum,
+          litres: litresNum,
+          rate: rateNum,
+          totalAmount: totalAmountNum,
           shift,
-          date: new Date(date),
+          date: entryDate,
         },
       });
 
       const accountBalance = await tx.accountBalance.upsert({
         where: {
           dairyId_userId: {
-            dairyId,
-            userId: buyerId,
+            dairyId: dairyIdNum,
+            userId: buyerIdNum,
           },
         },
         update: {
-          currentBalance: { increment: totalAmount },
+          currentBalance: { increment: totalAmountNum },
           lastBuyerEntryId: milkEntry.id,
         },
         create: {
-          dairyId,
-          userId: buyerId,
-          currentBalance: totalAmount,
+          dairyId: dairyIdNum,
+          userId: buyerIdNum,
+          currentBalance: totalAmountNum,
           lastBuyerEntryId: milkEntry.id,
         },
       });

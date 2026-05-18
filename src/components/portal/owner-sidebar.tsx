@@ -31,6 +31,7 @@ export function OwnerPortalSidebar() {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const currentDairyBasePath = useMemo(() => {
     const match = pathname.match(/^\/portal\/owner\/dairies\/([^/]+)/);
@@ -168,14 +169,17 @@ export function OwnerPortalSidebar() {
         <button
           type="button"
           onClick={() => {
+            if (isSigningOut) return;
+            setIsSigningOut(true);
             toast.loading("Signing out...", { id: "portal-signout" });
             signOut({ callbackUrl: "/auth/login" });
           }}
+          disabled={isSigningOut}
           title={collapsed ? "Logout" : undefined}
           className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
         >
           <LogOut className="h-4 w-4 shrink-0" />
-          {!collapsed && <span>Logout</span>}
+          {!collapsed && <span>{isSigningOut ? "Signing out..." : "Logout"}</span>}
         </button>
       </div>
     </>
