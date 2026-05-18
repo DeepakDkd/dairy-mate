@@ -1,106 +1,102 @@
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+"use client";
 
-interface Payment {
-  id: string
-  date: string
-  paymentAmount: number
-  balanceAfter: number
-  remarks: string
-  status: "Completed" | "Pending"
+import { useEffect } from "react";
+import toast from "react-hot-toast";
+import useSWR from "swr";
+
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+
+const fetcher = (url: string) => fetch(url).then((response) => response.json());
+
+interface BuyerPaymentsTableProps {
+  dairyId: number;
+  refreshToken?: number;
 }
 
-export function BuyerPaymentsTable() {
-  // Mock data - sorted newest first
-  const payments: Payment[] = [
-    {
-      id: "1",
-      date: "2024-11-07",
-      paymentAmount: 5000,
-      balanceAfter: -10000,
-      remarks: "Partial Payment",
-      status: "Completed",
-    },
-    {
-      id: "2",
-      date: "2024-11-05",
-      paymentAmount: 10000,
-      balanceAfter: -5000,
-      remarks: "Monthly Settlement",
-      status: "Completed",
-    },
-    {
-      id: "3",
-      date: "2024-10-30",
-      paymentAmount: 8000,
-      balanceAfter: 5000,
-      remarks: "Advance Paid",
-      status: "Completed",
-    },
-    {
-      id: "4",
-      date: "2024-10-25",
-      paymentAmount: 7500,
-      balanceAfter: 13000,
-      remarks: "Initial Advance",
-      status: "Completed",
-    },
-  ]
+export function BuyerPaymentsTable({ dairyId, refreshToken = 0 }: BuyerPaymentsTableProps) {
+  const { data, error, mutate } = useSWR(
+    dairyId ? `/api/dairies/${dairyId}/buyers/ledger` : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  useEffect(() => {
+    if (error) {
+      toast.error("Failed to load buyer transactions.");
+    }
+  }, [error]);
+
+  useEffect(() => {
+    mutate();
+  }, [mutate, refreshToken]);
 
   return (
-    <Card className="bg-white--- shadow-md rounded-2xl border border-gray-100---">
+    <Card className="shadow-md rounded-2xl border">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">Payment History</CardTitle>
-        <p className="text-sm text-muted-foreground mt-1">Recent payments</p>
-      </CardHeader> 
+        <CardTitle className="text-lg font-semibold">Buyer Transactions</CardTitle>
+        <p className="text-sm text-muted-foreground mt-1">Recent milk entries and payments</p>
+      </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="border-b border-gray-200 hover:bg-transparent">
+              <TableRow className="border-b hover:bg-transparent">
                 <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Date</TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Buyer</TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Type</TableHead>
                 <TableHead className="text-xs font-semibold text-muted-foreground uppercase text-right">
-                  Amount (₹)
+                  Amount (Rs)
                 </TableHead>
                 <TableHead className="text-xs font-semibold text-muted-foreground uppercase text-right">
-                  Balance (₹)
+                  Balance (Rs)
                 </TableHead>
-                <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Status</TableHead>
+                <TableHead className="text-xs font-semibold text-muted-foreground uppercase">Note</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {payments.map((payment) => (
-                <TableRow key={payment.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                  <TableCell className="text-sm text-foreground">
-                    {new Date(payment.date).toLocaleDateString("en-IN")}
-                  </TableCell>
-                  <TableCell className="text-right text-foreground font-medium">
-                    ₹{payment.paymentAmount.toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <span className={`font-medium ${payment.balanceAfter < 0 ? "text-red-600" : "text-green-600"}`}>
-                      ₹{payment.balanceAfter.toLocaleString()}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      className={`${
-                        payment.status === "Completed"
-                          ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-50"
-                          : "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-50"
-                      }`}
-                      variant="outline"
-                    >
-                      {payment.status}
-                    </Badge>
+              {data?.ledger?.length > 0 ? (
+                data.ledger.map((item: any) => (
+                  <TableRow key={item.id} className="border-b hover:bg-gray-50 transition-colors">
+                    <TableCell className="text-sm text-foreground">
+                      {new Date(item.date).toLocaleDateString("en-IN")}
+                    </TableCell>
+                    <TableCell className="text-sm text-foreground">{item.buyerName}</TableCell>
+                    <TableCell>
+                      <Badge
+                        className={
+                          item.type === "PAYMENT"
+                            ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-50"
+                            : "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50"
+                        }
+                        variant="outline"
+                      >
+                        {item.type === "PAYMENT" ? "Payment" : "Milk Entry"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right text-foreground font-medium">
+                      Rs {Number(item.amount).toLocaleString("en-IN")}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <span className={`font-medium ${item.balanceAfter < 0 ? "text-red-600" : "text-green-600"}`}>
+                        Rs {Number(item.balanceAfter).toLocaleString("en-IN")}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{item.note}</TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                    No transactions found
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

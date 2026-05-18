@@ -41,6 +41,7 @@ export default function OwnerSellerDashboard({
   const userId = session?.user?.id;
 
   const [page, setPage] = useState(1);
+  const [paymentRefreshToken, setPaymentRefreshToken] = useState(0);
 
   const limit = 10;
   const sort = "name_asc";
@@ -67,6 +68,7 @@ export default function OwnerSellerDashboard({
     data: sellerStats,
     error: sellerStatsError,
     isLoading: sellerStatsLoading,
+    mutate: sellerStatsMutate,
   } = useSWR(
     `/api/dairies/${dairyId}/sellers/stats`,
     fetcher,
@@ -113,6 +115,12 @@ export default function OwnerSellerDashboard({
     if (id === dairyId) return;
     router.push(`${basePath}/${id}/sellers`);
   };
+
+  const sellerOptions =
+    sellerData?.data?.map((seller: any) => ({
+      id: seller.id,
+      name: `${seller.firstName} ${seller.lastName}`,
+    })) ?? [];
 
   return (
     <div className="space-y-6 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
@@ -198,7 +206,16 @@ export default function OwnerSellerDashboard({
 
       <hr />
 
-      <SellerTransactionsTable />
+      <SellerTransactionsTable
+        dairyId={dairyId}
+        sellers={sellerOptions}
+        refreshToken={paymentRefreshToken}
+        onPaymentCreated={() => {
+          sellerStatsMutate();
+          sellersMutate();
+          setPaymentRefreshToken((value) => value + 1);
+        }}
+      />
     </div>
   );
 }

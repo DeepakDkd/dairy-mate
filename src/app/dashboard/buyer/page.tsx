@@ -70,7 +70,7 @@ export default function BuyerDashboardPage() {
     selectedDairyId &&
     `/api/dairies/${selectedDairyId}/buyers/stats`;
 
-  const { data: buyerStats } = useSWR(
+  const { data: buyerStats, mutate: buyerStatsMutate } = useSWR(
     statsKey ? statsKey : undefined,
     fetcher,
     { refreshInterval: 60_000, revalidateOnFocus: false }
@@ -96,6 +96,12 @@ export default function BuyerDashboardPage() {
   };
 
   const totalPages = buyerData?.totalBuyers ? Math.ceil(buyerData.totalBuyers / limit) : 0;
+
+  const buyerOptions =
+    buyerData?.buyers?.map((buyer: any) => ({
+      id: buyer.id,
+      name: `${buyer.firstName} ${buyer.lastName}`,
+    })) ?? [];
 
 
 
@@ -173,7 +179,7 @@ export default function BuyerDashboardPage() {
       <BuyerMilkEntriesTable selectedDairyId={selectedDairyId} />
       {/* </div> */}
       <div className="space-y-4">
-        <BuyerPaymentsTable />
+        <BuyerPaymentsTable dairyId={selectedDairyId ?? 0} />
         <button
           onClick={() => setIsPaymentDialogOpen(true)}
           className="w-full bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-lg font-medium transition-colors"
@@ -184,7 +190,16 @@ export default function BuyerDashboardPage() {
       {/* </div> */}
 
       {/* Add Payment Dialog */}
-      <AddPaymentDialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen} />
+      <AddPaymentDialog
+        open={isPaymentDialogOpen}
+        onOpenChange={setIsPaymentDialogOpen}
+        dairyId={selectedDairyId ?? 0}
+        buyers={buyerOptions}
+        onSuccess={() => {
+          buyerMutate();
+          buyerStatsMutate();
+        }}
+      />
       <AddBuyerDialog open={showAddBuyer} onOpenChange={setShowAddBuyer} userId={userId} />
       <AddBuyerMilkEntryDialog open={showMilkDialog} onOpenChange={setShowMilkDialog} />
     </div>

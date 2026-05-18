@@ -22,7 +22,7 @@ export default async function OwnerPortalPage() {
   }
 
   const overview = await getOwnerPortalOverview(user.id);
-  console.log("Fetched owner portal overview data on server:", overview);
+  // console.log("Fetched owner portal overview data on server:", overview);
  
  
  

@@ -17,7 +17,7 @@ export function BuyerRosterTable({ buyer, setPage, page, totalPages }: { buyer: 
 
 
   if (!buyer || buyer.length === 0) {
-    return <div>No staff data available.</div>
+    return <div>No buyer data available.</div>
   }
 
   const sortedBuyer = [...buyer]?.sort((a: any, b: any) => {

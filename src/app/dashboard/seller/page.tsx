@@ -70,6 +70,12 @@ export default function SellerDashboardPage() {
     ? Math.ceil(sellerData.total / LIMIT)
     : 0;
 
+  const sellerOptions =
+    sellerData?.data?.map((seller: any) => ({
+      id: seller.id,
+      name: `${seller.firstName} ${seller.lastName}`,
+    })) ?? [];
+
   const handleSelectDairy = (id: number) => {
     if (id === selectedDairyId) return;
     setSelectedDairyId(id);
@@ -144,7 +150,13 @@ export default function SellerDashboardPage() {
       <hr />
 
 
-      <SellerTransactionsTable />
+      <SellerTransactionsTable
+        dairyId={selectedDairyId ?? 0}
+        sellers={sellerOptions}
+        onPaymentCreated={() => {
+          sellersMutate();
+        }}
+      />
     </div>
   );
 }

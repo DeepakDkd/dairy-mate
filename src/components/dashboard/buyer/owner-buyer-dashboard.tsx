@@ -49,6 +49,7 @@ export default function OwnerBuyerDashboard({
   const [showAddBuyer, setShowAddBuyer] = useState(false);
   const [showMilkDialog, setShowMilkDialog] = useState(false);
   const [page, setPage] = useState(1);
+  const [paymentRefreshToken, setPaymentRefreshToken] = useState(0);
   const [limit] = useState(10);
   const [sort] = useState("name_asc");
 
@@ -72,6 +73,7 @@ export default function OwnerBuyerDashboard({
     data: buyerData,
     error: buyerDataError,
     isLoading: buyerDataLoading,
+    mutate: buyerDataMutate,
   } = useSWR(buyerKey, fetcher, {
     revalidateOnFocus: false,
     dedupingInterval: 2000,
@@ -81,6 +83,7 @@ export default function OwnerBuyerDashboard({
     data: buyerStats,
     error: buyerStatsError,
     isLoading: buyerStatsLoading,
+    mutate: buyerStatsMutate,
   } = useSWR(
     `/api/dairies/${dairyId}/buyers/stats`,
     fetcher,
@@ -113,6 +116,12 @@ export default function OwnerBuyerDashboard({
     if (id === dairyId) return;
     router.push(`${basePath}/${id}/buyers`);
   };
+
+  const buyerOptions =
+    buyerData?.buyers?.map((buyer: any) => ({
+      id: buyer.id,
+      name: `${buyer.firstName} ${buyer.lastName}`,
+    })) ?? [];
 
   return (
     <div className="space-y-6 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
@@ -209,7 +218,7 @@ export default function OwnerBuyerDashboard({
       <BuyerMilkEntriesTable selectedDairyId={dairyId} />
 
       <div className="space-y-4">
-        <BuyerPaymentsTable />
+        <BuyerPaymentsTable dairyId={dairyId} refreshToken={paymentRefreshToken} />
         <button
           onClick={() => setIsPaymentDialogOpen(true)}
           className="w-full rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-primary/90"
@@ -221,6 +230,13 @@ export default function OwnerBuyerDashboard({
       <AddPaymentDialog
         open={isPaymentDialogOpen}
         onOpenChange={setIsPaymentDialogOpen}
+        dairyId={dairyId}
+        buyers={buyerOptions}
+        onSuccess={() => {
+          buyerStatsMutate();
+          buyerDataMutate();
+          setPaymentRefreshToken((value) => value + 1);
+        }}
       />
       <AddBuyerDialog
         open={showAddBuyer}

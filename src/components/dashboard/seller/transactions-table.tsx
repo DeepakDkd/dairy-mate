@@ -1,61 +1,58 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Plus } from "lucide-react"
-import { useState } from "react"
-import { AddPaymentDialog } from "./add-payment-dialog"
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import useSWR from "swr";
+import { Plus } from "lucide-react";
 
-export function SellerTransactionsTable() {
+import { AddPaymentDialog } from "./add-payment-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-  const [showPaymentDialog, setShowPaymentDialog] = useState(false)
-  // Mock data
-  const transactions = [
-    {
-      id: 1,
-      date: "Nov 7, 2025",
-      type: "MILK_ENTRY",
-      paidAmount: null,
-      totalAmount: 85,
-      balanceAfter: 125000,
-      note: "Evening milk collection - 40L",
-    },
-    {
-      id: 2,
-      date: "Nov 6, 2025",
-      type: "PAYMENT",
-      paidAmount: 50000,
-      totalAmount: 50000,
-      balanceAfter: 125085,
-      note: "Weekly payment received",
-    },
-    {
-      id: 3,
-      date: "Nov 6, 2025",
-      type: "MILK_ENTRY",
-      paidAmount: null,
-      totalAmount: 92,
-      balanceAfter: 75085,
-      note: "Morning milk collection - 45L",
-    },
-    {
-      id: 4,
-      date: "Nov 5, 2025",
-      type: "MILK_ENTRY",
-      paidAmount: null,
-      totalAmount: 84,
-      balanceAfter: 74993,
-      note: "Evening milk collection",
-    },
-  ]
+const fetcher = (url: string) => fetch(url).then((response) => response.json());
+
+interface PartyOption {
+  id: number;
+  name: string;
+}
+
+interface SellerTransactionsTableProps {
+  dairyId: number;
+  sellers: PartyOption[];
+  onPaymentCreated?: () => void;
+  refreshToken?: number;
+}
+
+export function SellerTransactionsTable({
+  dairyId,
+  sellers,
+  onPaymentCreated,
+  refreshToken = 0,
+}: SellerTransactionsTableProps) {
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const { data, error, mutate } = useSWR(
+    dairyId ? `/api/dairies/${dairyId}/sellers/ledger` : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  useEffect(() => {
+    if (error) {
+      toast.error("Failed to load seller transactions.");
+    }
+  }, [error]);
+
+  useEffect(() => {
+    mutate();
+  }, [mutate, refreshToken]);
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold font-montserrat text-foreground">Transactions</h2>
-        <Button onClick={() => setShowPaymentDialog(true)} variant="outline" className="gap-2">
+        <Button onClick={() => setShowPaymentDialog(true)} variant="outline" className="gap-2" disabled={!dairyId || sellers.length === 0}>
           <Plus className="w-4 h-4" />
           Add Payment
         </Button>
@@ -70,6 +67,7 @@ export function SellerTransactionsTable() {
               <TableHeader>
                 <TableRow className="hover:bg-transparent border-b">
                   <TableHead className="font-semibold">Date</TableHead>
+                  <TableHead className="font-semibold">Seller</TableHead>
                   <TableHead className="font-semibold">Type</TableHead>
                   <TableHead className="text-right font-semibold">Paid Amount</TableHead>
                   <TableHead className="text-right font-semibold">Total Amount</TableHead>
@@ -78,30 +76,54 @@ export function SellerTransactionsTable() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {transactions.map((transaction) => (
-                  <TableRow key={transaction.id} className="hover:bg-secondary/50">
-                    <TableCell className="font-medium">{transaction.date}</TableCell>
-                    <TableCell>
-                      {transaction.type === "PAYMENT" ? (
-                        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Payment</Badge>
-                      ) : (
-                        <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Milk Entry</Badge>
-                      )}
+                {data?.ledger?.length > 0 ? (
+                  data.ledger.map((transaction: any) => (
+                    <TableRow key={transaction.id} className="hover:bg-secondary/50">
+                      <TableCell className="font-medium">
+                        {new Date(transaction.date).toLocaleDateString("en-IN")}
+                      </TableCell>
+                      <TableCell>{transaction.sellerName}</TableCell>
+                      <TableCell>
+                        {transaction.type === "PAYMENT" ? (
+                          <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Payment</Badge>
+                        ) : (
+                          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Milk Entry</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {transaction.paidAmount ? `Rs ${Number(transaction.paidAmount).toLocaleString("en-IN")}` : "-"}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        Rs {Number(transaction.totalAmount).toLocaleString("en-IN")}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold text-primary">
+                        Rs {Number(transaction.balanceAfter).toLocaleString("en-IN")}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{transaction.note}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
+                      No transactions found
                     </TableCell>
-                    <TableCell className="text-right">
-                      {transaction.paidAmount ? `₹${transaction.paidAmount}` : "-"}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">₹{transaction.totalAmount}</TableCell>
-                    <TableCell className="text-right font-semibold text-primary">₹{transaction.balanceAfter}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">{transaction.note}</TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </div>
         </CardContent>
       </Card>
-      <AddPaymentDialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog} />
+      <AddPaymentDialog
+        open={showPaymentDialog}
+        onOpenChange={setShowPaymentDialog}
+        dairyId={dairyId}
+        sellers={sellers}
+        onSuccess={() => {
+          mutate();
+          onPaymentCreated?.();
+        }}
+      />
     </div>
-  )
+  );
 }

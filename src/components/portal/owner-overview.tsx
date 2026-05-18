@@ -51,7 +51,7 @@ const fetcher = async ([_, userId]: [string, any]) => {
 
 
 function OwnerOverview({overview:initialOverview }:any) {
-    console.log("Received owner portal overview data as prop:", initialOverview );
+    // console.log("Received owner portal overview data as prop:", initialOverview );
 
     const session = useSession();
     const user = session.data?.user;
