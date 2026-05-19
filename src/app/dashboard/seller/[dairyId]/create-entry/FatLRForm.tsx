@@ -25,18 +25,43 @@ import { Dairy } from "@prisma/client";
 import axios from "axios";
 import { Loader2 } from "lucide-react";
 
+const getCurrentDateTimeParts = () => {
+    const now = new Date();
+    const date = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, "0"),
+        String(now.getDate()).padStart(2, "0"),
+    ].join("-");
+    const time = [
+        String(now.getHours()).padStart(2, "0"),
+        String(now.getMinutes()).padStart(2, "0"),
+    ].join(":");
+
+    return { date, time };
+};
+
+const combineDateAndTime = (date: string, time: string) => {
+    const [year, month, day] = date.split("-").map(Number);
+    const [hours, minutes] = time.split(":").map(Number);
+
+    return new Date(year, (month || 1) - 1, day || 1, hours || 0, minutes || 0, 0, 0);
+};
+
 interface Data {
     type: "COW" | "BUFFALO";
     lr: number | undefined;
     fat: number | undefined;
     liter: number | undefined;
     shift: "MORNING" | "EVENING";
+    date: string;
+    time: string;
 }
 
 export function FatLRForm({ seller, dairy ,setSelectedSeller}: { seller: any; dairy: Dairy,setSelectedSeller:any }) {
     const [rate, setRate] = useState<number | null>(null);
     const [total, setTotal] = useState<number | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const initialDateTime = getCurrentDateTimeParts();
 
     const [data, setData] = useState<Data>({
         type: "COW",
@@ -44,6 +69,8 @@ export function FatLRForm({ seller, dairy ,setSelectedSeller}: { seller: any; da
         fat: undefined,
         liter: undefined,
         shift: "MORNING",
+        date: initialDateTime.date,
+        time: initialDateTime.time,
     });
 
     const calculate = () => {
@@ -98,6 +125,7 @@ export function FatLRForm({ seller, dairy ,setSelectedSeller}: { seller: any; da
             }
 
             setIsSubmitting(true);
+            const entryDate = combineDateAndTime(data.date, data.time);
 
             const response = await axios.post(`/api/milk-entries/seller/${seller.id}`, {
                 dairyId: dairy.id,
@@ -109,19 +137,22 @@ export function FatLRForm({ seller, dairy ,setSelectedSeller}: { seller: any; da
                 rate,
                 totalAmount: total,
                 shift: data.shift,
-                date: new Date(),
+                date: entryDate,
             });
             if (!response.status.toString().startsWith("2")) {
                 throw new Error("Failed to submit milk entry");
             }
             toast.success("Milk entry submitted successfully!");
             setSelectedSeller(undefined)
+            const nextDefaultDateTime = getCurrentDateTimeParts();
             setData({
                 type: "COW",
                 lr: undefined,
                 fat: undefined,
                 liter: undefined,
                 shift: "MORNING",
+                date: nextDefaultDateTime.date,
+                time: nextDefaultDateTime.time,
             });
             setRate(null);
             setTotal(null);
@@ -169,6 +200,29 @@ export function FatLRForm({ seller, dairy ,setSelectedSeller}: { seller: any; da
                             setData({ ...data, liter: Number(e.target.value) })
                         }
                     />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-2 md:gap-4">
+                    <div>
+                        <Label>Date</Label>
+                        <Input
+                            type="date"
+                            value={data.date}
+                            onChange={(e) =>
+                                setData({ ...data, date: e.target.value })
+                            }
+                        />
+                    </div>
+                    <div>
+                        <Label>Time</Label>
+                        <Input
+                            type="time"
+                            value={data.time}
+                            onChange={(e) =>
+                                setData({ ...data, time: e.target.value })
+                            }
+                        />
+                    </div>
                 </div>
 
                 {/* Fat */}
@@ -262,7 +316,15 @@ export function FatLRForm({ seller, dairy ,setSelectedSeller}: { seller: any; da
 
                             <div className="flex justify-between">
                                 <span className="font-medium">Date & Time:</span>
-                                <span>{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                <span>
+                                    {combineDateAndTime(data.date, data.time).toLocaleString("en-IN", {
+                                        year: "numeric",
+                                        month: "long",
+                                        day: "numeric",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                    })}
+                                </span>
                             </div>
 
                             <div className="flex justify-between">

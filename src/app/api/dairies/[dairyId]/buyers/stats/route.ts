@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { getMonthFromSearchParams, getMonthValue } from "@/utils/month";
 import { NextResponse } from "next/server";
 
 export async function GET(
@@ -8,6 +9,7 @@ export async function GET(
   try {
     const { dairyId: dairyIdParam } = await context.params;
     const dairyId = Number(dairyIdParam);
+    const { searchParams } = new URL(req.url);
 
     if (!dairyId || isNaN(dairyId)) {
       return NextResponse.json(
@@ -17,47 +19,35 @@ export async function GET(
     }
 
     const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const selectedMonth = getMonthFromSearchParams(searchParams);
     const startOfToday = new Date(
       now.getFullYear(),
       now.getMonth(),
       now.getDate()
     );
+    const isCurrentMonth = selectedMonth.value === getMonthValue(now);
 
-    
-    const monthlyLitresAgg = await prisma.buyerEntry.aggregate({
-      where: {
-        dairyId,
-        date: { gte: startOfMonth },
-      },
-      _sum: { litres: true },
-    });
-
-    const totalMonthlyLitres = monthlyLitresAgg._sum.litres ?? 0;
-
-    
-    const todayLitresAgg = await prisma.buyerEntry.aggregate({
-      where: {
-        dairyId,
-        date: { gte: startOfToday },
-      },
-      _sum: { litres: true },
-    });
-
-    const todaysMilkLitres = todayLitresAgg._sum.litres ?? 0;
-
-    
-    const monthlyAmountAgg = await prisma.buyerEntry.aggregate({
-      where: {
-        dairyId,
-        date: { gte: startOfMonth },
-      },
-      _sum: { totalAmount: true },
-    });
-
-    const totalMonthlyExpense = monthlyAmountAgg._sum.totalAmount ?? 0;
-
-    const [activeBuyers, balanceAgg, entriesTodayCount] = await Promise.all([
+    const [monthlyLitresAgg, monthlyAmountAgg, activeBuyers, balanceAgg, periodEntryCount, todayLitresAgg, entriesTodayCount] = await Promise.all([
+      prisma.buyerEntry.aggregate({
+        where: {
+          dairyId,
+          date: {
+            gte: selectedMonth.start,
+            lt: selectedMonth.end,
+          },
+        },
+        _sum: { litres: true },
+      }),
+      prisma.buyerEntry.aggregate({
+        where: {
+          dairyId,
+          date: {
+            gte: selectedMonth.start,
+            lt: selectedMonth.end,
+          },
+        },
+        _sum: { totalAmount: true },
+      }),
       prisma.user.count({
         where: {
           dairyId,
@@ -80,22 +70,47 @@ export async function GET(
         where: {
           dairyId,
           date: {
+            gte: selectedMonth.start,
+            lt: selectedMonth.end,
+          },
+        },
+      }),
+      prisma.buyerEntry.aggregate({
+        where: {
+          dairyId,
+          date: {
+            gte: startOfToday,
+          },
+        },
+        _sum: { litres: true },
+      }),
+      prisma.buyerEntry.count({
+        where: {
+          dairyId,
+          date: {
             gte: startOfToday,
           },
         },
       }),
     ]);
 
+    const totalMonthlyLitres = monthlyLitresAgg._sum.litres ?? 0;
+    const totalMonthlyExpense = monthlyAmountAgg._sum.totalAmount ?? 0;
+    const todaysMilkLitres = todayLitresAgg._sum.litres ?? 0;
     const buyerBalance = balanceAgg._sum.currentBalance ?? 0;
 
     return NextResponse.json(
       {
         totalMonthlyLitres,
-        todaysMilkLitres,
         totalMonthlyExpense,
         activeBuyers,
         buyerBalance,
-        entriesTodayCount,
+        todaysMilkLitres: isCurrentMonth ? todaysMilkLitres : 0,
+        entriesTodayCount: isCurrentMonth ? entriesTodayCount : 0,
+        periodEntryCount,
+        selectedMonth: selectedMonth.value,
+        monthLabel: selectedMonth.label,
+        isCurrentMonth,
       },
       { status: 200 }
     );

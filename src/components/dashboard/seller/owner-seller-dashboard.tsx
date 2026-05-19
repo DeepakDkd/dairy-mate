@@ -24,6 +24,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { getMonthValue } from "@/utils/month";
 
 const fetcher = (url: string) => fetch(url).then((response) => response.json());
 
@@ -42,6 +45,7 @@ export default function OwnerSellerDashboard({
 
   const [page, setPage] = useState(1);
   const [paymentRefreshToken, setPaymentRefreshToken] = useState(0);
+  const [selectedMonth, setSelectedMonth] = useState(getMonthValue());
 
   const limit = 10;
   const sort = "name_asc";
@@ -70,7 +74,7 @@ export default function OwnerSellerDashboard({
     isLoading: sellerStatsLoading,
     mutate: sellerStatsMutate,
   } = useSWR(
-    `/api/dairies/${dairyId}/sellers/stats`,
+    `/api/dairies/${dairyId}/sellers/stats?month=${selectedMonth}`,
     fetcher,
     { revalidateOnFocus: false }
   );
@@ -165,14 +169,30 @@ export default function OwnerSellerDashboard({
       {sellerStatsLoading ? (
         <PortalStatsSkeleton count={4} />
       ) : (
-        <SellerOverviewCards
-          totalMonthlyLitres={sellerStats?.totalMonthlyLitres}
-          todaysMilkLitres={sellerStats?.todaysMilkLitres}
-          totalMonthlyExpense={sellerStats?.totalMonthlyExpense}
-          sellerBalance={sellerStats?.sellerBalance}
-          activeSellers={sellerStats?.activeSellers}
-          entriesTodayCount={sellerStats?.entriesTodayCount}
-        />
+        <div className="space-y-4">
+          <div className="flex justify-end">
+            <div className="w-full max-w-xs space-y-2">
+              <Label htmlFor="owner-seller-month">Month</Label>
+              <Input
+                id="owner-seller-month"
+                type="month"
+                value={selectedMonth}
+                onChange={(event) => setSelectedMonth(event.target.value)}
+              />
+            </div>
+          </div>
+          <SellerOverviewCards
+            totalMonthlyLitres={sellerStats?.totalMonthlyLitres}
+            todaysMilkLitres={sellerStats?.todaysMilkLitres}
+            totalMonthlyExpense={sellerStats?.totalMonthlyExpense}
+            sellerBalance={sellerStats?.sellerBalance}
+            activeSellers={sellerStats?.activeSellers}
+            entriesTodayCount={sellerStats?.entriesTodayCount}
+            periodEntryCount={sellerStats?.periodEntryCount}
+            monthLabel={sellerStats?.monthLabel}
+            isCurrentMonth={sellerStats?.isCurrentMonth}
+          />
+        </div>
       )}
 
       <hr />
@@ -204,7 +224,7 @@ export default function OwnerSellerDashboard({
 
       <div className="space-y-4">
         <h2 className="text-xl font-bold">Milk Entries</h2>
-        <SellerMilkTable selectedDairyId={dairyId} />
+        <SellerMilkTable selectedDairyId={dairyId} month={selectedMonth} showMonthPicker={false} />
       </div>
 
       <hr />
@@ -213,6 +233,8 @@ export default function OwnerSellerDashboard({
         dairyId={dairyId}
         sellers={sellerOptions}
         refreshToken={paymentRefreshToken}
+        month={selectedMonth}
+        showMonthPicker={false}
         onPaymentCreated={() => {
           sellerStatsMutate();
           sellersMutate();

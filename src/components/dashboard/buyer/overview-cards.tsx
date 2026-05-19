@@ -9,6 +9,9 @@ interface BuyerOverviewCardsProps {
   buyerBalance?: number;
   activeBuyers?: number;
   entriesTodayCount?: number;
+  periodEntryCount?: number;
+  monthLabel?: string;
+  isCurrentMonth?: boolean;
 }
 
 const formatLitres = (value: number) =>
@@ -24,6 +27,9 @@ export function BuyerOverviewCards({
   buyerBalance = 0,
   activeBuyers = 0,
   entriesTodayCount = 0,
+  periodEntryCount = 0,
+  monthLabel = "This Month",
+  isCurrentMonth = true,
 }: BuyerOverviewCardsProps) {
   const balanceTitle = buyerBalance >= 0 ? "Amount Due" : "Advance Balance";
   const balanceUnit = buyerBalance >= 0 ? "To Collect" : "In Account";
@@ -36,7 +42,7 @@ export function BuyerOverviewCards({
       title: "Total Milk Supplied",
       value: formatLitres(totalMonthlyLitres),
       unit: "Litres",
-      subtitle: "This Month",
+      subtitle: isCurrentMonth ? "This Month" : monthLabel,
       icon: Milk,
       color: "bg-blue-50",
       iconColor: "text-primary",
@@ -52,10 +58,10 @@ export function BuyerOverviewCards({
       iconColor: buyerBalance >= 0 ? "text-red-600" : "text-green-600",
     },
     {
-      title: "Today's Supply",
-      value: formatLitres(todaysMilkLitres),
-      unit: "Litres",
-      subtitle: `${entriesTodayCount} entries today`,
+      title: isCurrentMonth ? "Today's Supply" : "Entries In Month",
+      value: isCurrentMonth ? formatLitres(todaysMilkLitres) : String(periodEntryCount),
+      unit: isCurrentMonth ? "Litres" : "Entries",
+      subtitle: isCurrentMonth ? `${entriesTodayCount} entries today` : monthLabel,
       icon: Calendar,
       color: "bg-yellow-50",
       iconColor: "text-accent",

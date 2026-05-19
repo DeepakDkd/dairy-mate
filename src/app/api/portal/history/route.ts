@@ -146,10 +146,16 @@ export async function GET(req: Request) {
     const totalPages = Math.max(Math.ceil(totalItems / pageSize), 1);
     const safePage = Math.min(page, totalPages);
     const startIndex = (safePage - 1) * pageSize;
+    const monthlyStats = {
+      litres: entries.reduce((total, entry) => total + entry.litres, 0),
+      amount: entries.reduce((total, entry) => total + entry.totalAmount, 0),
+      entryCount: entries.length,
+    };
 
     return NextResponse.json(
       {
         ledger: orderedLedger.slice(startIndex, startIndex + pageSize),
+        monthlyStats,
         openingBalance,
         closingBalance: runningBalance,
         page: safePage,

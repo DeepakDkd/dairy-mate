@@ -25,6 +25,28 @@ import { z } from "zod";
 import { Dairy } from "@prisma/client";
 import { Loader2 } from "lucide-react";
 
+const getCurrentDateTimeParts = () => {
+  const now = new Date();
+  const date = [
+    now.getFullYear(),
+    String(now.getMonth() + 1).padStart(2, "0"),
+    String(now.getDate()).padStart(2, "0"),
+  ].join("-");
+  const time = [
+    String(now.getHours()).padStart(2, "0"),
+    String(now.getMinutes()).padStart(2, "0"),
+  ].join(":");
+
+  return { date, time };
+};
+
+const combineDateAndTime = (date: string, time: string) => {
+  const [year, month, day] = date.split("-").map(Number);
+  const [hours, minutes] = time.split(":").map(Number);
+
+  return new Date(year, (month || 1) - 1, day || 1, hours || 0, minutes || 0, 0, 0);
+};
+
 const buyerEntrySchema = z.object({
   litres: z.number().min(0.1, "Enter a valid litres amount"),
   rate: z.number().min(1, "Rate must be at least 1"),
@@ -43,20 +65,23 @@ export function BuyerEntryForm({
 }) {
   const [total, setTotal] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const initialDateTime = getCurrentDateTimeParts();
 
   const [data, setData] = useState({
     litres: undefined as number | undefined,
     rate: undefined as number | undefined,
-    date: undefined as Date | undefined,
+    date: initialDateTime.date,
+    time: initialDateTime.time,
     shift: "MORNING" as "MORNING" | "EVENING",
   });
 
   const calculate = () => {
     try {
+      const entryDate = combineDateAndTime(data.date, data.time);
       const parsed = buyerEntrySchema.parse({
         litres: data.litres,
         rate: data.rate,
-        date: data.date,
+        date: entryDate,
         shift: data.shift,
       });
 
@@ -74,10 +99,11 @@ export function BuyerEntryForm({
     }
 
     try {
+      const entryDate = combineDateAndTime(data.date, data.time);
       const parsed = buyerEntrySchema.parse({
         litres: data.litres,
         rate: data.rate,
-        date: data.date,
+        date: entryDate,
         shift: data.shift,
       });
 
@@ -104,10 +130,12 @@ export function BuyerEntryForm({
       toast.success("Milk entry submitted successfully!");
 
       setSelectedSeller(undefined);
+      const nextDefaultDateTime = getCurrentDateTimeParts();
       setData({
         litres: undefined,
         rate: undefined,
-        date: undefined,
+        date: nextDefaultDateTime.date,
+        time: nextDefaultDateTime.time,
         shift: "MORNING",
       });
       setTotal(null);
@@ -167,9 +195,20 @@ export function BuyerEntryForm({
             <Label>Date</Label>
             <Input
               type="date"
-              value={data.date ? data.date.toISOString().split("T")[0] : ""}
+              value={data.date}
               onChange={(e) =>
-                setData({ ...data, date: new Date(e.target.value) })
+                setData({ ...data, date: e.target.value })
+              }
+            />
+          </div>
+
+          <div>
+            <Label>Time</Label>
+            <Input
+              type="time"
+              value={data.time}
+              onChange={(e) =>
+                setData({ ...data, time: e.target.value })
               }
             />
           </div>
@@ -220,12 +259,14 @@ export function BuyerEntryForm({
               </div>
 
               <div className="flex justify-between">
-                <span className="font-medium">Date:</span>
+                <span className="font-medium">Date & Time:</span>
                 <span>
-                  {data.date?.toLocaleDateString("en-US", {
+                  {combineDateAndTime(data.date, data.time).toLocaleString("en-IN", {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
                   })}
                 </span>
               </div>

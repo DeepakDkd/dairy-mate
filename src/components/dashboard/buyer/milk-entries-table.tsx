@@ -17,10 +17,19 @@ import { getMonthValue } from "@/utils/month"
 
 const fetcher = (url: string) => fetch(url).then((response) => response.json())
 
-export function BuyerMilkEntriesTable({ selectedDairyId }: { selectedDairyId: any }) {
+export function BuyerMilkEntriesTable({
+  selectedDairyId,
+  month: controlledMonth,
+  showMonthPicker = true,
+}: {
+  selectedDairyId: any;
+  month?: string;
+  showMonthPicker?: boolean;
+}) {
   const [page, setPage] = useState(1)
   const [limit] = useState(10)
-  const [month, setMonth] = useState(getMonthValue())
+  const [internalMonth, setInternalMonth] = useState(getMonthValue())
+  const month = controlledMonth ?? internalMonth
 
   const milkEntriesKey =
     selectedDairyId &&
@@ -56,15 +65,17 @@ export function BuyerMilkEntriesTable({ selectedDairyId }: { selectedDairyId: an
               {milkEntries?.monthLabel ? `Showing ${milkEntries.monthLabel}` : "Review entries month by month."}
             </p>
           </div>
-          <div className="w-full max-w-xs space-y-2">
-            <Label htmlFor="buyer-milk-month">Month</Label>
-            <Input
-              id="buyer-milk-month"
-              type="month"
-              value={month}
-              onChange={(event) => setMonth(event.target.value)}
-            />
-          </div>
+          {showMonthPicker ? (
+            <div className="w-full max-w-xs space-y-2">
+              <Label htmlFor="buyer-milk-month">Month</Label>
+              <Input
+                id="buyer-milk-month"
+                type="month"
+                value={month}
+                onChange={(event) => setInternalMonth(event.target.value)}
+              />
+            </div>
+          ) : null}
         </div>
       </CardHeader>
       <CardContent>

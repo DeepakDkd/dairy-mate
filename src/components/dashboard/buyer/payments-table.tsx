@@ -27,10 +27,18 @@ const formatDateTime = (value: string | Date) =>
 interface BuyerPaymentsTableProps {
   dairyId: number;
   refreshToken?: number;
+  month?: string;
+  showMonthPicker?: boolean;
 }
 
-export function BuyerPaymentsTable({ dairyId, refreshToken = 0 }: BuyerPaymentsTableProps) {
-  const [month, setMonth] = useState(getMonthValue());
+export function BuyerPaymentsTable({
+  dairyId,
+  refreshToken = 0,
+  month: controlledMonth,
+  showMonthPicker = true,
+}: BuyerPaymentsTableProps) {
+  const [internalMonth, setInternalMonth] = useState(getMonthValue());
+  const month = controlledMonth ?? internalMonth;
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const requestUrl = useMemo(() => {
@@ -73,15 +81,17 @@ export function BuyerPaymentsTable({ dairyId, refreshToken = 0 }: BuyerPaymentsT
               {data?.monthLabel ? `Showing ${data.monthLabel}` : "Recent milk entries and payments across all buyers"}
             </p>
           </div>
-          <div className="w-full max-w-xs space-y-2">
-            <Label htmlFor="buyer-ledger-month">Month</Label>
-            <Input
-              id="buyer-ledger-month"
-              type="month"
-              value={month}
-              onChange={(event) => setMonth(event.target.value)}
-            />
-          </div>
+          {showMonthPicker ? (
+            <div className="w-full max-w-xs space-y-2">
+              <Label htmlFor="buyer-ledger-month">Month</Label>
+              <Input
+                id="buyer-ledger-month"
+                type="month"
+                value={month}
+                onChange={(event) => setInternalMonth(event.target.value)}
+              />
+            </div>
+          ) : null}
         </div>
       </CardHeader>
       <CardContent>

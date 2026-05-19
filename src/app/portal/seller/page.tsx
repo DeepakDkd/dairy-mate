@@ -7,8 +7,6 @@ import { PortalAccountActions } from "@/components/portal/portal-account-actions
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const formatMoney = (value: number) => `Rs ${Number(value).toLocaleString("en-IN")}`;
-const formatLitres = (value: number) => `${Number(value).toFixed(2)} L`;
-
 export default async function SellerPortalPage() {
   const user = await getServerActionUser();
 
@@ -45,44 +43,15 @@ export default async function SellerPortalPage() {
         <PortalAccountActions />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Current Balance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{formatMoney(Math.abs(currentBalance))}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{balanceLabel}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Monthly Milk</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{formatLitres(data.monthlyStats.litres)}</p>
-            <p className="mt-1 text-xs text-muted-foreground">This month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Monthly Amount</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{formatMoney(data.monthlyStats.amount)}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Milk value this month</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Entries This Month</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{data.monthlyStats.entryCount}</p>
-            <p className="mt-1 text-xs text-muted-foreground">Milk collection records</p>
-          </CardContent>
-        </Card>
-      </div>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm text-muted-foreground">Current Balance</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-2xl font-bold">{formatMoney(Math.abs(currentBalance))}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{balanceLabel}</p>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -106,6 +75,7 @@ export default async function SellerPortalPage() {
       <PortalAccountHistoryTable
         title="Account History"
         emptyLabel="No account history found for this month."
+        showMonthlySummary
       />
     </div>
   );

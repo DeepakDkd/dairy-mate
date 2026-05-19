@@ -35,6 +35,8 @@ interface SellerTransactionsTableProps {
   sellers: PartyOption[];
   onPaymentCreated?: () => void;
   refreshToken?: number;
+  month?: string;
+  showMonthPicker?: boolean;
 }
 
 export function SellerTransactionsTable({
@@ -42,9 +44,12 @@ export function SellerTransactionsTable({
   sellers,
   onPaymentCreated,
   refreshToken = 0,
+  month: controlledMonth,
+  showMonthPicker = true,
 }: SellerTransactionsTableProps) {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
-  const [month, setMonth] = useState(getMonthValue());
+  const [internalMonth, setInternalMonth] = useState(getMonthValue());
+  const month = controlledMonth ?? internalMonth;
   const [page, setPage] = useState(1);
   const pageSize = 10;
   const requestUrl = useMemo(() => {
@@ -95,15 +100,17 @@ export function SellerTransactionsTable({
                 {data?.monthLabel ? `Showing ${data.monthLabel}` : "Review transactions month by month."}
               </p>
             </div>
-            <div className="w-full max-w-xs space-y-2">
-              <Label htmlFor="seller-ledger-month">Month</Label>
-              <Input
-                id="seller-ledger-month"
-                type="month"
-                value={month}
-                onChange={(event) => setMonth(event.target.value)}
-              />
-            </div>
+            {showMonthPicker ? (
+              <div className="w-full max-w-xs space-y-2">
+                <Label htmlFor="seller-ledger-month">Month</Label>
+                <Input
+                  id="seller-ledger-month"
+                  type="month"
+                  value={month}
+                  onChange={(event) => setInternalMonth(event.target.value)}
+                />
+              </div>
+            ) : null}
           </div>
         </CardHeader>
         <CardContent>

@@ -9,6 +9,9 @@ interface SellerOverviewCardsProps {
   sellerBalance?: number;
   activeSellers?: number;
   entriesTodayCount?: number;
+  periodEntryCount?: number;
+  monthLabel?: string;
+  isCurrentMonth?: boolean;
 }
 
 const formatLitres = (value: number) =>
@@ -24,6 +27,9 @@ export function SellerOverviewCards({
   sellerBalance = 0,
   activeSellers = 0,
   entriesTodayCount = 0,
+  periodEntryCount = 0,
+  monthLabel = "This Month",
+  isCurrentMonth = true,
 }: SellerOverviewCardsProps) {
   const balanceStatus =
     sellerBalance > 0 ? "To Receive" : sellerBalance < 0 ? "Advance Paid" : "Settled";
@@ -41,7 +47,7 @@ export function SellerOverviewCards({
       title: "Total Milk Collected",
       value: formatLitres(totalMonthlyLitres),
       unit: "Litres",
-      subtitle: "This Month",
+      subtitle: isCurrentMonth ? "This Month" : monthLabel,
       icon: Milk,
       color: "bg-blue-50",
       iconColor: "text-primary",
@@ -57,10 +63,10 @@ export function SellerOverviewCards({
       iconColor: "text-accent",
     },
     {
-      title: "Today's Collection",
-      value: formatLitres(todaysMilkLitres),
-      unit: "Litres",
-      subtitle: `${entriesTodayCount} entries today`,
+      title: isCurrentMonth ? "Today's Collection" : "Entries In Month",
+      value: isCurrentMonth ? formatLitres(todaysMilkLitres) : String(periodEntryCount),
+      unit: isCurrentMonth ? "Litres" : "Entries",
+      subtitle: isCurrentMonth ? `${entriesTodayCount} entries today` : monthLabel,
       icon: Calendar,
       color: "bg-green-50",
       iconColor: "text-green-600",

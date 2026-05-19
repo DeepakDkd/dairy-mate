@@ -29,6 +29,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { getMonthValue } from "@/utils/month";
 
 const fetcher = (url: string) => fetch(url).then((response) => response.json());
 
@@ -52,6 +55,7 @@ export default function OwnerBuyerDashboard({
   const [paymentRefreshToken, setPaymentRefreshToken] = useState(0);
   const [limit] = useState(10);
   const [sort] = useState("name_asc");
+  const [selectedMonth, setSelectedMonth] = useState(getMonthValue());
 
   useEffect(() => {
     setPage(1);
@@ -85,7 +89,7 @@ export default function OwnerBuyerDashboard({
     isLoading: buyerStatsLoading,
     mutate: buyerStatsMutate,
   } = useSWR(
-    `/api/dairies/${dairyId}/buyers/stats`,
+    `/api/dairies/${dairyId}/buyers/stats?month=${selectedMonth}`,
     fetcher,
     { refreshInterval: 60_000, revalidateOnFocus: false }
   );
@@ -184,14 +188,30 @@ export default function OwnerBuyerDashboard({
       {buyerStatsLoading ? (
         <PortalStatsSkeleton count={4} />
       ) : (
-        <BuyerOverviewCards
-          totalMonthlyLitres={buyerStats?.totalMonthlyLitres}
-          todaysMilkLitres={buyerStats?.todaysMilkLitres}
-          totalMonthlyExpense={buyerStats?.totalMonthlyExpense}
-          buyerBalance={buyerStats?.buyerBalance}
-          activeBuyers={buyerStats?.activeBuyers}
-          entriesTodayCount={buyerStats?.entriesTodayCount}
-        />
+        <div className="space-y-4">
+          <div className="flex justify-end">
+            <div className="w-full max-w-xs space-y-2">
+              <Label htmlFor="owner-buyer-month">Month</Label>
+              <Input
+                id="owner-buyer-month"
+                type="month"
+                value={selectedMonth}
+                onChange={(event) => setSelectedMonth(event.target.value)}
+              />
+            </div>
+          </div>
+          <BuyerOverviewCards
+            totalMonthlyLitres={buyerStats?.totalMonthlyLitres}
+            todaysMilkLitres={buyerStats?.todaysMilkLitres}
+            totalMonthlyExpense={buyerStats?.totalMonthlyExpense}
+            buyerBalance={buyerStats?.buyerBalance}
+            activeBuyers={buyerStats?.activeBuyers}
+            entriesTodayCount={buyerStats?.entriesTodayCount}
+            periodEntryCount={buyerStats?.periodEntryCount}
+            monthLabel={buyerStats?.monthLabel}
+            isCurrentMonth={buyerStats?.isCurrentMonth}
+          />
+        </div>
       )}
 
       <Card>
@@ -218,10 +238,15 @@ export default function OwnerBuyerDashboard({
 
       <MonthlyConsumptionChart />
 
-      <BuyerMilkEntriesTable selectedDairyId={dairyId} />
+      <BuyerMilkEntriesTable selectedDairyId={dairyId} month={selectedMonth} showMonthPicker={false} />
 
       <div className="space-y-4">
-        <BuyerPaymentsTable dairyId={dairyId} refreshToken={paymentRefreshToken} />
+        <BuyerPaymentsTable
+          dairyId={dairyId}
+          refreshToken={paymentRefreshToken}
+          month={selectedMonth}
+          showMonthPicker={false}
+        />
         <button
           onClick={() => setIsPaymentDialogOpen(true)}
           className="w-full rounded-lg bg-primary px-4 py-2 font-medium text-primary-foreground transition-colors hover:bg-primary/90"
