@@ -127,6 +127,12 @@ export default function OwnerBuyerDashboard({
       name: `${buyer.firstName} ${buyer.lastName}`,
     })) ?? [];
 
+  const handleEntryChanged = () => {
+    buyerStatsMutate();
+    buyerDataMutate();
+    setPaymentRefreshToken((value) => value + 1);
+  };
+
   return (
     <div className="space-y-6 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
       <Link
@@ -238,7 +244,12 @@ export default function OwnerBuyerDashboard({
 
       <MonthlyConsumptionChart />
 
-      <BuyerMilkEntriesTable selectedDairyId={dairyId} month={selectedMonth} showMonthPicker={false} />
+      <BuyerMilkEntriesTable
+        selectedDairyId={dairyId}
+        month={selectedMonth}
+        showMonthPicker={false}
+        onEntryChanged={handleEntryChanged}
+      />
 
       <div className="space-y-4">
         <BuyerPaymentsTable

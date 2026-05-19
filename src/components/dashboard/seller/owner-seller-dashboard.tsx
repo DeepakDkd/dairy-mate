@@ -126,6 +126,12 @@ export default function OwnerSellerDashboard({
       name: `${seller.firstName} ${seller.lastName}`,
     })) ?? [];
 
+  const handleEntryChanged = () => {
+    sellerStatsMutate();
+    sellersMutate();
+    setPaymentRefreshToken((value) => value + 1);
+  };
+
   return (
     <div className="space-y-6 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
       <Link
@@ -224,7 +230,12 @@ export default function OwnerSellerDashboard({
 
       <div className="space-y-4">
         <h2 className="text-xl font-bold">Milk Entries</h2>
-        <SellerMilkTable selectedDairyId={dairyId} month={selectedMonth} showMonthPicker={false} />
+        <SellerMilkTable
+          selectedDairyId={dairyId}
+          month={selectedMonth}
+          showMonthPicker={false}
+          onEntryChanged={handleEntryChanged}
+        />
       </div>
 
       <hr />
