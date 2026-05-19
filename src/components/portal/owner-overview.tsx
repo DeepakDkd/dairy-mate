@@ -1,6 +1,7 @@
 "use client"
 
 import React from 'react'
+import { useState } from "react";
 
 import {
   Banknote,
@@ -31,6 +32,9 @@ import { OwnerOverviewCharts } from './owner-overview-charts';
 import useSWR from 'swr';
 import { useSession } from 'next-auth/react';
 import axios from 'axios';
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { getMonthValue } from "@/utils/month";
 
 
 const formatNumber = (value: number) => value?.toLocaleString("en-IN");
@@ -40,9 +44,9 @@ const formatLitres = (value: number) =>
 
 
 
-const fetcher = async ([_, userId]: [string, any]) => {
+const fetcher = async ([_, userId, month]: [string, any, string]) => {
  try {
-    const response = await axios.get(`/api/owner/${userId}/overview`);
+    const response = await axios.get(`/api/owner/${userId}/overview?month=${month}`);
     return response.data.overview;
   } catch (error) {
     throw new Error(`Failed to fetch overview for user ${userId}: ${error instanceof Error ? error.message : String(error)}`);
@@ -55,9 +59,12 @@ function OwnerOverview({overview:initialOverview }:any) {
 
     const session = useSession();
     const user = session.data?.user;
+    const [selectedMonth, setSelectedMonth] = useState(
+      initialOverview?.selectedMonth ?? getMonthValue()
+    );
 
 
-      const { data:overview, isLoading, error } = useSWR(user?.id ? ["owner-portal-overview", user.id] : null, fetcher,
+      const { data:overview, isLoading, error } = useSWR(user?.id ? ["owner-portal-overview", user.id, selectedMonth] : null, fetcher,
     {
       revalidateOnFocus: false,
       revalidateOnMount: false,
@@ -97,14 +104,18 @@ function OwnerOverview({overview:initialOverview }:any) {
     {
       title: "Monthly Collection",
       value: formatLitres(totals?.monthlyMilkCollected),
-      detail: `${formatLitres(totals?.todayCollected)} collected today`,
+      detail: overview?.isCurrentMonth
+        ? `${formatLitres(totals?.todayCollected)} collected today`
+        : `${overview?.monthLabel} total`,
       icon: Milk,
       color: "bg-emerald-50 text-emerald-600",
     },
     {
       title: "Monthly Supply",
       value: formatLitres(totals?.monthlyMilkSupplied),
-      detail: `${formatLitres(totals?.todaySupplied)} supplied today`,
+      detail: overview?.isCurrentMonth
+        ? `${formatLitres(totals?.todaySupplied)} supplied today`
+        : `${overview?.monthLabel} total`,
       icon: TrendingUp,
       color: "bg-cyan-50 text-cyan-700",
     },
@@ -121,7 +132,7 @@ function OwnerOverview({overview:initialOverview }:any) {
     {
       title: "Seller Purchases",
       value: formatMoney(totals?.monthlySellerAmount),
-      detail: "Milk amount payable this month",
+      detail: `Milk amount payable in ${overview?.monthLabel ?? "this month"}`,
       icon: Banknote,
     },
     {
@@ -133,7 +144,7 @@ function OwnerOverview({overview:initialOverview }:any) {
     {
       title: "Buyer Sales",
       value: formatMoney(totals?.monthlyBuyerAmount),
-      detail: "Milk amount billed this month",
+      detail: `Milk amount billed in ${overview?.monthLabel ?? "this month"}`,
       icon: Wallet,
     },
     {
@@ -152,6 +163,17 @@ function OwnerOverview({overview:initialOverview }:any) {
 
   return (
     <>
+        <div className="flex justify-end">
+          <div className="w-full max-w-xs space-y-2">
+            <Label htmlFor="owner-overview-month">Month</Label>
+            <Input
+              id="owner-overview-month"
+              type="month"
+              value={selectedMonth}
+              onChange={(event) => setSelectedMonth(event.target.value)}
+            />
+          </div>
+        </div>
         
          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {summaryCards.map((card) => {
@@ -203,19 +225,26 @@ function OwnerOverview({overview:initialOverview }:any) {
       </div>
 
 
-      <OwnerOverviewCharts data={overview.last7Days} revenueData={revenueData} />
+      <OwnerOverviewCharts
+        data={overview.last7Days}
+        revenueData={revenueData}
+        monthLabel={overview.monthLabel}
+        isCurrentMonth={overview.isCurrentMonth}
+      />
 
       <Card className="border shadow-sm">
         <CardHeader>
           <CardTitle>Recent Milk Entries</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Latest seller and buyer entries from this month across all dairies.
+            {overview?.isCurrentMonth
+              ? "Latest seller and buyer entries from this month across all dairies."
+              : `Latest seller and buyer entries from ${overview?.monthLabel} across all dairies.`}
           </p>
         </CardHeader>
         <CardContent>
           {overview.recentTransactions?.length === 0 ? (
             <div className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
-              No milk entries found for this month.
+              {`No milk entries found for ${overview?.monthLabel ?? "this month"}.`}
             </div>
           ) : (
             <Table>

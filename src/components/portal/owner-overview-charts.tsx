@@ -29,11 +29,15 @@ interface OwnerOverviewChartsProps {
     label: string;
     amount: number;
   }[];
+  monthLabel?: string;
+  isCurrentMonth?: boolean;
 }
 
 export function OwnerOverviewCharts({
   data,
   revenueData,
+  monthLabel = "this month",
+  isCurrentMonth = true,
 }: OwnerOverviewChartsProps) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
@@ -41,7 +45,9 @@ export function OwnerOverviewCharts({
         <CardHeader>
           <CardTitle>Milk Movement</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Litres collected from sellers and supplied to buyers in the last 7 days.
+            {isCurrentMonth
+              ? "Litres collected from sellers and supplied to buyers in the last 7 days."
+              : `Litres collected from sellers and supplied to buyers in the final 7 days of ${monthLabel}.`}
           </p>
         </CardHeader>
         <CardContent>
@@ -84,7 +90,7 @@ export function OwnerOverviewCharts({
         <CardHeader>
           <CardTitle>Monthly Amounts</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Seller purchase amount compared with buyer sales amount this month.
+            {`Seller purchase amount compared with buyer sales amount in ${monthLabel}.`}
           </p>
         </CardHeader>
         <CardContent>

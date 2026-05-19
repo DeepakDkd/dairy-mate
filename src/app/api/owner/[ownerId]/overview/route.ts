@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function GET( request:Request,context:{params:Promise<{ownerId:string}>}){
     try{
+        const { searchParams } = new URL(request.url);
 
         const {ownerId}= await context.params;
         const ownerIdNum = Number(ownerId);
@@ -10,7 +11,7 @@ export async function GET( request:Request,context:{params:Promise<{ownerId:stri
             return NextResponse.json({ message: "Invalid owner ID" }, { status: 400 });
         }
 
-        const overview = await getOwnerPortalOverview(ownerIdNum);
+        const overview = await getOwnerPortalOverview(ownerIdNum, searchParams.get("month"));
 
         return NextResponse.json({ overview }, { status: 200 });
     }catch(error){

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getMonthValue, parseMonthValue } from "@/utils/month";
 
 const startOfDay = (date: Date) => {
   const value = new Date(date);
@@ -106,10 +107,16 @@ export async function getFirstOwnedDairyId(ownerId: number) {
   return dairy?.id ?? null;
 }
 
-export async function getOwnerPortalOverview(ownerId: number) {
+export async function getOwnerPortalOverview(ownerId: number, month?: string | null) {
   const now = new Date();
+  const selectedMonth = parseMonthValue(month);
+  const isCurrentMonth = selectedMonth.value === getMonthValue(now);
   const todayStart = startOfDay(now);
-  const monthStart = startOfMonth(now);
+  const monthStart = selectedMonth.start;
+  const monthEnd = selectedMonth.end;
+  const chartEndDate = isCurrentMonth
+    ? startOfDay(now)
+    : startOfDay(new Date(monthEnd.getTime() - 1));
 
   const dairies = await prisma.dairy.findMany({
     where: { ownerId },
@@ -125,6 +132,7 @@ export async function getOwnerPortalOverview(ownerId: number) {
         where: {
           date: {
             gte: monthStart,
+            lt: monthEnd,
           },
         },
         select: {
@@ -144,6 +152,7 @@ export async function getOwnerPortalOverview(ownerId: number) {
         where: {
           date: {
             gte: monthStart,
+            lt: monthEnd,
           },
         },
         select: {
@@ -202,7 +211,7 @@ export async function getOwnerPortalOverview(ownerId: number) {
   );
 
   const last7Days = Array.from({ length: 7 }, (_, index) => {
-    const date = startOfDay(now);
+    const date = startOfDay(chartEndDate);
     date.setDate(date.getDate() - (6 - index));
 
     return {
@@ -261,16 +270,19 @@ export async function getOwnerPortalOverview(ownerId: number) {
       monthlyMilkSupplied: buyerEntries.reduce((total, entry) => total + entry.litres, 0),
       monthlySellerAmount: sellerEntries.reduce((total, entry) => total + entry.totalAmount, 0),
       monthlyBuyerAmount: buyerEntries.reduce((total, entry) => total + entry.totalAmount, 0),
-      todayCollected: sellerEntries
+      todayCollected: isCurrentMonth ? sellerEntries
         .filter((entry) => entry.date >= todayStart)
-        .reduce((total, entry) => total + entry.litres, 0),
-      todaySupplied: buyerEntries
+        .reduce((total, entry) => total + entry.litres, 0) : 0,
+      todaySupplied: isCurrentMonth ? buyerEntries
         .filter((entry) => entry.date >= todayStart)
-        .reduce((total, entry) => total + entry.litres, 0),
+        .reduce((total, entry) => total + entry.litres, 0) : 0,
       sellerBalance: sellerBalances.reduce((total, balance) => total + balance.currentBalance, 0),
       buyerBalance: buyerBalances.reduce((total, balance) => total + balance.currentBalance, 0),
     },
     last7Days,
     recentTransactions,
+    selectedMonth: selectedMonth.value,
+    monthLabel: selectedMonth.label,
+    isCurrentMonth,
   };
 }
