@@ -1,6 +1,9 @@
 import prisma from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+import { getMonthFromSearchParams } from "@/utils/month";
+import { getPagination } from "@/utils/pagination";
+
 export async function GET(req: Request, context: { params: Promise<{ dairyId: string }> }) {
     try {
         const { dairyId } = await context.params;
@@ -13,55 +16,50 @@ export async function GET(req: Request, context: { params: Promise<{ dairyId: st
         }
 
         const { searchParams } = new URL(req.url);
-
-        const page = Number(searchParams.get("page") || 1);
-        const limit = Number(searchParams.get("pageSize") || 10);
-        const search = searchParams.get("search") || "";
-        const sort = searchParams.get("sort") || "createdAt_desc";
-
-        const skip = (page - 1) * limit;
-
-        // Handle sort options safely
-        const sortMap: Record<string, any> = {
-            name_asc: { firstName: "asc" },
-            name_desc: { firstName: "desc" },
-            createdAt_asc: { createdAt: "asc" },
-            createdAt_desc: { createdAt: "desc" },
-        };
-
-        const orderBy = sortMap[sort] || { createdAt: "desc" };
+        const { page, pageSize, skip, take } = getPagination(searchParams);
+        const selectedMonth = getMonthFromSearchParams(searchParams);
 
 
         const entries = await prisma.sellerEntry.findMany({
             where: {
                 dairyId: dairyIdNum,
-                // seller: {
-                //     OR: [
-                //         { firstName: { contains: search, mode: "insensitive" } },
-                //         { lastName: { contains: search, mode: "insensitive" } },
-                //         { email: { contains: search, mode: "insensitive" } },
-                //     ],
-                // }
+                date: {
+                    gte: selectedMonth.start,
+                    lt: selectedMonth.end,
+                },
             },
             include: {
                 seller: true,
                 dairy: true
             },
-            // orderBy,
-            // skip,
-            // take: limit,
+            orderBy: {
+                date: "desc",
+            },
+            skip,
+            take,
         })
-        if (!entries) {
-            return NextResponse.json({ message: "No entries found", status: 404 })
-        }
         const totalEntries = await prisma.sellerEntry.count({
             where: {
-                dairyId: dairyIdNum
+                dairyId: dairyIdNum,
+                date: {
+                    gte: selectedMonth.start,
+                    lt: selectedMonth.end,
+                },
             }
         }) || 0;
 
-        // console.log("Entries :: ", entries)
-        return NextResponse.json({ entries, totalEntries }, { status: 200 })
+        return NextResponse.json(
+            {
+                entries,
+                totalEntries,
+                page,
+                pageSize,
+                totalPages: Math.ceil(totalEntries / pageSize),
+                selectedMonth: selectedMonth.value,
+                monthLabel: selectedMonth.label,
+            },
+            { status: 200 }
+        )
 
     } catch (error) {
         console.log("Failed to get milk entries : ", error)

@@ -1,4 +1,3 @@
-import { getServerActionUser } from "@/fetchers/user/action";
 import { prisma } from "@/lib/db";
 import { NextResponse } from "next/server";
 
@@ -56,22 +55,10 @@ export async function GET(req: Request, context: { params: Promise<{ dairyId: st
             },
             include: {
                 accountBalance: true,
-                buyerEntries: true
             },
             orderBy: orderBy,
             skip: skip,
             take: parseInt(limit),
-        });
-        const buyersOverview = await prisma.user.findMany({
-            where: {
-                role: "BUYER",
-                dairyId: parseInt(dairyId),
-
-            },
-            include: {
-                accountBalance: true,
-                buyerEntries: true
-            },
         });
 
         const totalBuyers = await prisma.user.count({
@@ -86,64 +73,7 @@ export async function GET(req: Request, context: { params: Promise<{ dairyId: st
             })
         }
 
-        const totalMonthlyLitres = buyersOverview?.reduce((total: number, buyer: any) => {
-            const buyerTotalLitres = buyer?.buyerEntries?.reduce((subTotal: number, entry: any) => {
-                const entryDate = new Date(entry.date);
-                const now = new Date();
-
-                const isSameMonth =
-                    entryDate.getMonth() === now.getMonth() &&
-                    entryDate.getFullYear() === now.getFullYear();
-
-                if (isSameMonth) {
-                    subTotal += entry.litres;
-                }
-                return subTotal;
-            }, 0) || 0;
-            total += buyerTotalLitres;
-            return total;
-        }, 0) || 0;
-
-
-        const todaysMilkLitres = buyersOverview?.reduce((total: number, buyer: any) => {
-            const buyerTotalLitres = buyer?.buyerEntries?.reduce((subTotal: number, entry: any) => {
-                const entryDate = new Date(entry.date);
-                const now = new Date();
-
-
-                const isSameDay =
-                    entryDate.getDate() === now.getDate() &&
-                    entryDate.getMonth() === now.getMonth() &&
-                    entryDate.getFullYear() === now.getFullYear();
-                if (isSameDay) {
-                    subTotal += entry.litres;
-                }
-                return subTotal;
-            }, 0) || 0;
-            total += buyerTotalLitres;
-            return total;
-        }, 0) || 0;
-
-
-        const totalMonthlyExpense = buyersOverview?.reduce((total: number, buyer: any) => {
-            const buyerTotalLitresPrice = buyer?.buyerEntries?.reduce((subTotal: number, entry: any) => {
-                const entryDate = new Date(entry.date);
-                const now = new Date();
-
-                const isSameMonth =
-                    entryDate.getMonth() === now.getMonth() &&
-                    entryDate.getFullYear() === now.getFullYear();
-                const ratePerLitre = entry?.rate;
-                if (isSameMonth) {
-                    subTotal += entry.litres * ratePerLitre;
-                }
-                return subTotal;
-            }, 0) || 0;
-            total += buyerTotalLitresPrice;
-            return total;
-        }, 0) || 0;
-
-        return NextResponse.json({ buyers, totalBuyers, totalMonthlyLitres, todaysMilkLitres, totalMonthlyExpense }, {
+        return NextResponse.json({ buyers, totalBuyers }, {
             status: 200
         })
 

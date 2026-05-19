@@ -2,28 +2,12 @@ import { redirect } from "next/navigation";
 
 import { getServerActionUser } from "@/fetchers/user/action";
 import { getSellerPortalHistory } from "@/lib/party-history";
+import { PortalAccountHistoryTable } from "@/components/portal/portal-account-history-table";
 import { PortalAccountActions } from "@/components/portal/portal-account-actions";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 
 const formatMoney = (value: number) => `Rs ${Number(value).toLocaleString("en-IN")}`;
 const formatLitres = (value: number) => `${Number(value).toFixed(2)} L`;
-const formatDateTime = (value: string | Date) =>
-  new Date(value).toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
 
 export default async function SellerPortalPage() {
   const user = await getServerActionUser();
@@ -119,48 +103,10 @@ export default async function SellerPortalPage() {
           </div>
         </CardContent>
       </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Account History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table className="min-w-[760px]">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date & Time</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="text-right">Balance After</TableHead>
-                <TableHead>Note</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.history.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
-                    No account history yet.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                data.history.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{formatDateTime(item.date)}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">
-                        {item.type === "PAYMENT" ? "Payment" : "Milk Entry"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">{formatMoney(item.amount)}</TableCell>
-                    <TableCell className="text-right">{formatMoney(Math.abs(item.balanceAfter))}</TableCell>
-                    <TableCell>{item.note}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <PortalAccountHistoryTable
+        title="Account History"
+        emptyLabel="No account history found for this month."
+      />
     </div>
   );
 }

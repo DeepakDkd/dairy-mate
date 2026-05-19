@@ -10,18 +10,21 @@ import { PortalTableSkeleton } from "@/components/portal/portal-skeletons"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { getMonthValue } from "@/utils/month"
 
 const fetcher = (url: string) => fetch(url).then((response) => response.json())
 
 export function SellerMilkTable({ selectedDairyId }: { selectedDairyId: any }) {
   const [page, setPage] = useState(1)
   const [limit] = useState(10)
-  const [sort] = useState("name_asc")
+  const [month, setMonth] = useState(getMonthValue())
 
   const milkEntriesKey =
     selectedDairyId &&
-    `/api/dairies/${selectedDairyId}/sellers/milk-entries?page=${page}&limit=${limit}&sort=${sort}`
+    `/api/dairies/${selectedDairyId}/sellers/milk-entries?page=${page}&pageSize=${limit}&month=${month}`
 
   const {
     data: milkEntries,
@@ -32,9 +35,7 @@ export function SellerMilkTable({ selectedDairyId }: { selectedDairyId: any }) {
     dedupingInterval: 2000,
   })
 
-  const totalPages = milkEntries?.totalEntries
-    ? Math.ceil(milkEntries?.totalEntries / limit)
-    : 0
+  const totalPages = milkEntries?.totalPages ?? 0
 
   useEffect(() => {
     if (milkEntriesError) {
@@ -42,12 +43,32 @@ export function SellerMilkTable({ selectedDairyId }: { selectedDairyId: any }) {
     }
   }, [milkEntriesError])
 
+  useEffect(() => {
+    setPage(1)
+  }, [month, selectedDairyId])
+
   return (
     <Card className="border-0 shadow-sm">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold">
-          Recent Entries (Newest First)
-        </CardTitle>
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <CardTitle className="text-base font-semibold">
+              Recent Entries
+            </CardTitle>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {milkEntries?.monthLabel ? `Showing ${milkEntries.monthLabel}` : "Review entries month by month."}
+            </p>
+          </div>
+          <div className="w-full max-w-xs space-y-2">
+            <Label htmlFor="seller-milk-month">Month</Label>
+            <Input
+              id="seller-milk-month"
+              type="month"
+              value={month}
+              onChange={(event) => setMonth(event.target.value)}
+            />
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         {milkEntriesLoading ? (
@@ -107,14 +128,14 @@ export function SellerMilkTable({ selectedDairyId }: { selectedDairyId: any }) {
 
         <div className="mt-6 flex items-center justify-between border-t pt-4">
           <span className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
+            Page {milkEntries?.page ?? page} of {totalPages}
           </span>
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setPage(Math.max(1, page - 1))}
-              disabled={page === 1 || !totalPages}
+              disabled={(milkEntries?.page ?? page) === 1 || !totalPages}
               className="gap-1"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -124,7 +145,7 @@ export function SellerMilkTable({ selectedDairyId }: { selectedDairyId: any }) {
               variant="outline"
               size="sm"
               onClick={() => setPage(Math.min(totalPages, page + 1))}
-              disabled={page === totalPages || !totalPages}
+              disabled={(milkEntries?.page ?? page) === totalPages || !totalPages}
               className="gap-1"
             >
               Next
