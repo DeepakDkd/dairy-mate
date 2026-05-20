@@ -1,4 +1,4 @@
-import { PaymentMethod, Role, Shift, MilkType } from "@prisma/client";
+import { PaymentMethod, ReminderStatus, ReminderType, Role, Shift, MilkType } from "@prisma/client";
 import type { Session } from "next-auth";
 import { NextResponse } from "next/server";
 
@@ -47,6 +47,14 @@ export function parseDateInput(value: unknown) {
 
 export function isPaymentMethod(value: unknown): value is PaymentMethod {
   return value === "CASH" || value === "UPI" || value === "BANK";
+}
+
+export function isReminderType(value: unknown): value is ReminderType {
+  return value === "BUYER_PAYMENT" || value === "SELLER_PAYMENT" || value === "MONTH_CLOSE" || value === "CUSTOM";
+}
+
+export function isReminderStatus(value: unknown): value is ReminderStatus {
+  return value === "PENDING" || value === "DONE" || value === "DISMISSED";
 }
 
 export function isShift(value: unknown): value is Shift {

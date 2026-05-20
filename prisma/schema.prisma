@@ -25,6 +25,7 @@ model Dairy {
   milkRates       MilkRate[]
   monthlySettlements MonthlySettlement[]
   payments        Payment[]
+  reminders       Reminder[]
   sellerEntries   SellerEntry[]
   staff           StaffProfile[]
   users           User[]              @relation("UserDairyRelation")
@@ -48,10 +49,12 @@ model User {
   profileUrl     String?
   accountBalance AccountBalance? @relation("AccountBalanceUserRelation")
   buyerEntries   BuyerEntry[]    @relation("BuyerEntryUser")
+  createdReminders Reminder[]    @relation("ReminderCreator")
   ownedDairies   Dairy[]         @relation("OwnerDairies")
   payments       Payment[]
   sellerEntries  SellerEntry[]   @relation("SellerEntryUser")
   staffProfile   StaffProfile?   @relation("StaffProfileRelation")
+  targetReminders Reminder[]     @relation("ReminderTargetUser")
   dairy          Dairy?          @relation("UserDairyRelation", fields: [dairyId], references: [id])
 
   @@unique([email, dairyId])
@@ -180,6 +183,28 @@ model MonthlySettlement {
   @@index([dairyId, monthKey])
 }
 
+model Reminder {
+  id              Int            @id @default(autoincrement())
+  dairyId         Int
+  createdByUserId Int
+  targetUserId    Int?
+  targetUserRole  Role?
+  type            ReminderType
+  status          ReminderStatus @default(PENDING)
+  title           String
+  message         String?
+  dueDate         DateTime
+  doneAt          DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  createdBy       User           @relation("ReminderCreator", fields: [createdByUserId], references: [id])
+  dairy           Dairy          @relation(fields: [dairyId], references: [id])
+  targetUser      User?          @relation("ReminderTargetUser", fields: [targetUserId], references: [id])
+
+  @@index([dairyId, status, dueDate])
+  @@index([targetUserId, status])
+}
+
 model SubscriptionPlan {
   id            Int                 @id @default(autoincrement())
   name          String
@@ -238,6 +263,19 @@ enum PaymentMethod {
   CASH
   UPI
   BANK
+}
+
+enum ReminderType {
+  BUYER_PAYMENT
+  SELLER_PAYMENT
+  MONTH_CLOSE
+  CUSTOM
+}
+
+enum ReminderStatus {
+  PENDING
+  DONE
+  DISMISSED
 }
 
 enum Shift {

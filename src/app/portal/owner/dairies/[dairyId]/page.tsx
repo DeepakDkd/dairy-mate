@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { OwnerRemindersPanel } from "@/components/portal/owner-reminders-panel";
 import { getServerActionUser } from "@/fetchers/user/action";
 import { getOwnedDairy } from "@/lib/owner-dairies";
 
@@ -114,6 +115,8 @@ export default async function DairyOverviewPage({
           </div>
         </CardHeader>
       </Card>
+
+      <OwnerRemindersPanel dairyId={dairy.id} dairyName={dairy.name} />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {sections.map((section) => {
