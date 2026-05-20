@@ -8,10 +8,11 @@ import {
   parseNonNegativeNumber,
   parsePositiveInt,
   parsePositiveNumber,
-  requirePartyAccess,
+  requireOwnedDairy,
   requirePartyByIdAccess,
 } from "@/lib/api-access";
 import { getServerSession } from "next-auth";
+import type { Session } from "next-auth";
 import { NextResponse } from "next/server";
 
 async function syncLatestSellerEntry(tx: Pick<typeof prisma, "sellerEntry" | "accountBalance">, dairyId: number, sellerId: number) {
@@ -38,6 +39,34 @@ async function syncLatestSellerEntry(tx: Pick<typeof prisma, "sellerEntry" | "ac
       lastSellerEntryId: latestEntry?.id ?? null,
     },
   });
+}
+
+async function requireSellerInOwnedDairy(
+  session: Session,
+  dairyId: number,
+  sellerId: number
+) {
+  const dairyAccess = await requireOwnedDairy(session, dairyId);
+  if (!dairyAccess.ok) {
+    return dairyAccess;
+  }
+
+  const seller = await prisma.user.findFirst({
+    where: {
+      id: sellerId,
+      dairyId,
+      role: "SELLER",
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!seller) {
+    return { ok: false as const, response: jsonError("Seller not found", 404) };
+  }
+
+  return { ok: true as const };
 }
 
 export async function GET(
@@ -166,11 +195,7 @@ export async function POST(
       return jsonError("Invalid LR value", 400);
     }
 
-    const access = await requirePartyAccess(session, {
-      dairyId: dairyIdNum,
-      partyId: sellerIdNum,
-      role: "SELLER",
-    });
+    const access = await requireSellerInOwnedDairy(session, dairyIdNum, sellerIdNum);
     if (!access.ok) {
       return access.response;
     }
@@ -284,11 +309,7 @@ export async function PUT(
       return jsonError("Invalid LR value", 400);
     }
 
-    const access = await requirePartyAccess(session, {
-      dairyId: dairyIdNum,
-      partyId: sellerIdNum,
-      role: "SELLER",
-    });
+    const access = await requireSellerInOwnedDairy(session, dairyIdNum, sellerIdNum);
     if (!access.ok) {
       return access.response;
     }
@@ -377,11 +398,7 @@ export async function DELETE(
       return jsonError("Route sellerId does not match request body", 400);
     }
 
-    const access = await requirePartyAccess(session, {
-      dairyId: dairyIdNum,
-      partyId: sellerIdNum,
-      role: "SELLER",
-    });
+    const access = await requireSellerInOwnedDairy(session, dairyIdNum, sellerIdNum);
     if (!access.ok) {
       return access.response;
     }

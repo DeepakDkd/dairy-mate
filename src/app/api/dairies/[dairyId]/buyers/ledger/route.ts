@@ -15,6 +15,9 @@ type BuyerLedgerItem = {
   amount: number;
   balanceAfter: number;
   note: string;
+  buyerId: number;
+  paymentId: number | null;
+  method: "CASH" | "UPI" | "BANK" | null;
 };
 
 export async function GET(
@@ -112,6 +115,9 @@ export async function GET(
         date: entry.date,
         type: "MILK_ENTRY" as const,
         buyerName: `${entry.buyer.firstName} ${entry.buyer.lastName}`,
+        buyerId: entry.buyerId,
+        paymentId: null,
+        method: null,
         amount: entry.totalAmount,
         delta: entry.totalAmount,
         note: `${entry.shift} milk supply${entry.litres ? ` - ${entry.litres}L` : ""}`,
@@ -121,6 +127,9 @@ export async function GET(
         date: payment.date,
         type: "PAYMENT" as const,
         buyerName: `${payment.user.firstName} ${payment.user.lastName}`,
+        buyerId: payment.userId,
+        paymentId: payment.id,
+        method: payment.method,
         amount: payment.amount,
         delta: -payment.amount,
         note: payment.notes || "Buyer payment",
@@ -138,6 +147,9 @@ export async function GET(
         date: item.date,
         type: item.type,
         buyerName: item.buyerName,
+        buyerId: item.buyerId,
+        paymentId: item.paymentId,
+        method: item.method,
         amount: item.amount,
         balanceAfter: runningBalance,
         note: item.note,

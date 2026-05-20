@@ -6,10 +6,11 @@ import {
   parseDateInput,
   parsePositiveInt,
   parsePositiveNumber,
-  requirePartyAccess,
+  requireOwnedDairy,
   requirePartyByIdAccess,
 } from "@/lib/api-access";
 import { getServerSession } from "next-auth";
+import type { Session } from "next-auth";
 import { NextResponse } from "next/server";
 
 async function syncLatestBuyerEntry(tx: Pick<typeof prisma, "buyerEntry" | "accountBalance">, dairyId: number, buyerId: number) {
@@ -36,6 +37,34 @@ async function syncLatestBuyerEntry(tx: Pick<typeof prisma, "buyerEntry" | "acco
       lastBuyerEntryId: latestEntry?.id ?? null,
     },
   });
+}
+
+async function requireBuyerInOwnedDairy(
+  session: Session,
+  dairyId: number,
+  buyerId: number
+) {
+  const dairyAccess = await requireOwnedDairy(session, dairyId);
+  if (!dairyAccess.ok) {
+    return dairyAccess;
+  }
+
+  const buyer = await prisma.user.findFirst({
+    where: {
+      id: buyerId,
+      dairyId,
+      role: "BUYER",
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!buyer) {
+    return { ok: false as const, response: jsonError("Buyer not found", 404) };
+  }
+
+  return { ok: true as const };
 }
 
 export async function GET(
@@ -151,11 +180,7 @@ export async function POST(
       return jsonError("Invalid shift", 400);
     }
 
-    const access = await requirePartyAccess(session, {
-      dairyId: dairyIdNum,
-      partyId: buyerIdNum,
-      role: "BUYER",
-    });
+    const access = await requireBuyerInOwnedDairy(session, dairyIdNum, buyerIdNum);
     if (!access.ok) {
       return access.response;
     }
@@ -252,11 +277,7 @@ export async function PUT(
       return jsonError("Invalid shift", 400);
     }
 
-    const access = await requirePartyAccess(session, {
-      dairyId: dairyIdNum,
-      partyId: buyerIdNum,
-      role: "BUYER",
-    });
+    const access = await requireBuyerInOwnedDairy(session, dairyIdNum, buyerIdNum);
     if (!access.ok) {
       return access.response;
     }
@@ -342,11 +363,7 @@ export async function DELETE(
       return jsonError("Route buyerId does not match request body", 400);
     }
 
-    const access = await requirePartyAccess(session, {
-      dairyId: dairyIdNum,
-      partyId: buyerIdNum,
-      role: "BUYER",
-    });
+    const access = await requireBuyerInOwnedDairy(session, dairyIdNum, buyerIdNum);
     if (!access.ok) {
       return access.response;
     }

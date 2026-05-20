@@ -257,6 +257,11 @@ export default function OwnerBuyerDashboard({
           refreshToken={paymentRefreshToken}
           month={selectedMonth}
           showMonthPicker={false}
+          onPaymentChanged={() => {
+            buyerStatsMutate();
+            buyerDataMutate();
+            setPaymentRefreshToken((value) => value + 1);
+          }}
         />
         <button
           onClick={() => setIsPaymentDialogOpen(true)}
