@@ -1,9 +1,21 @@
 import nodemailer from 'nodemailer';
 
-export const sendEmail = async ({to, subject, text, html}: {to: string, subject: string, text: string, html: string}): Promise<void> => {
+export const sendEmail = async ({
+    to,
+    subject,
+    text,
+    html,
+    fromName,
+    replyTo,
+}: {
+    to: string,
+    subject: string,
+    text: string,
+    html: string,
+    fromName?: string,
+    replyTo?: string,
+}): Promise<void> => {
     try {
-
-        console.log(process.env.EMAIL_HOST, process.env.EMAIL_PORT, process.env.EMAIL_USER, process.env.EMAIL_PASS, to);
         const transporter = nodemailer.createTransport({
             host: process.env.EMAIL_HOST,
             port: Number(process.env.EMAIL_PORT),
@@ -15,8 +27,9 @@ export const sendEmail = async ({to, subject, text, html}: {to: string, subject:
         });
 
         await transporter.sendMail({
-            from: `Dairy Mate <${process.env.EMAIL_FROM}>`,
+            from: `${fromName || "Dairy Mate"} <${process.env.EMAIL_FROM}>`,
             to,
+            ...(replyTo ? { replyTo } : {}),
             subject,
             text,
             html,

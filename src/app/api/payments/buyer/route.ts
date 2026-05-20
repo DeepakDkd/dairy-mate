@@ -13,6 +13,7 @@ import {
 import { authOptions } from "@/lib/auth";
 import { findClosedSettlementForDates, getMonthLockedMessage } from "@/lib/month-settlements";
 import { createUserNotification } from "@/lib/notifications";
+import { sendPaymentConfirmationEmail } from "@/lib/payment-emails";
 import prisma from "@/lib/prisma";
 
 async function syncLatestPayment(tx: Pick<typeof prisma, "payment" | "accountBalance">, dairyId: number, buyerId: number) {
@@ -59,6 +60,20 @@ async function requireBuyerInOwnedDairy(
     },
     select: {
       id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      dairy: {
+        select: {
+          name: true,
+          email: true,
+          owner: {
+            select: {
+              email: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -66,7 +81,7 @@ async function requireBuyerInOwnedDairy(
     return { ok: false as const, response: jsonError("Buyer not found", 404) };
   }
 
-  return { ok: true as const };
+  return { ok: true as const, data: buyer };
 }
 
 export async function POST(request: Request) {
@@ -100,6 +115,7 @@ export async function POST(request: Request) {
     if (!access.ok) {
       return access.response;
     }
+    const buyer = access.data;
 
     const closedSettlement = await findClosedSettlementForDates(prisma, dairyIdNum, [paymentDate]);
     if (closedSettlement) {
@@ -153,6 +169,23 @@ export async function POST(request: Request) {
       });
     } catch (notificationError) {
       console.error("Failed to create buyer payment notification:", notificationError);
+    }
+
+    try {
+      await sendPaymentConfirmationEmail({
+        recipientEmail: buyer.email,
+        recipientName: buyer.firstName,
+        dairyName: buyer.dairy?.name ?? "Your dairy",
+        replyToEmail: buyer.dairy?.email ?? buyer.dairy?.owner?.email ?? undefined,
+        amount: amountNum,
+        paymentDate,
+        paymentMethod: method,
+        currentBalance: result.accountBalance.currentBalance,
+        portalPath: "/portal/buyer",
+        audience: "BUYER",
+      });
+    } catch (emailError) {
+      console.error("Failed to send buyer payment confirmation email:", emailError);
     }
 
     return NextResponse.json(result, { status: 201 });
