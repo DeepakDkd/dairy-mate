@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { Bell, Loader2, Plus, Send, Trash2 } from "lucide-react";
+import { Bell, ChevronDown, ChevronUp, Loader2, Plus, Send, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
@@ -35,6 +35,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 const fetcher = (url: string) => fetch(url).then((response) => response.json());
+const DEFAULT_VISIBLE_NOTIFICATIONS = 3;
 
 type NotificationType = "PAYMENT_RECEIVED" | "PAYMENT_SENT" | "MONTH_CLOSE" | "CUSTOM";
 type PersonOption = {
@@ -77,6 +78,7 @@ export function OwnerNotificationsPanel({
 }: OwnerNotificationsPanelProps) {
   const { data: session } = useSession();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isNotificationsExpanded, setIsNotificationsExpanded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [form, setForm] = useState({
@@ -136,6 +138,15 @@ export function OwnerNotificationsPanel({
   const buyers = people.filter((person) => person.role === "BUYER");
   const sellers = people.filter((person) => person.role === "SELLER");
   const selectedCount = form.userIds.length;
+  const unreadCount = notifications.filter((notification: any) => !notification.isRead).length;
+  const readCount = notifications.length - unreadCount;
+  const visibleNotifications = isNotificationsExpanded
+    ? notifications.slice(0, 8)
+    : notifications.slice(0, DEFAULT_VISIBLE_NOTIFICATIONS);
+  const hiddenNotificationsCount = Math.max(
+    0,
+    Math.min(notifications.length, 8) - DEFAULT_VISIBLE_NOTIFICATIONS
+  );
 
   const resetForm = () => {
     setForm({
@@ -239,55 +250,125 @@ export function OwnerNotificationsPanel({
             No notifications sent yet.
           </div>
         ) : (
-          <div className="space-y-3">
-            {notifications.slice(0, 8).map((notification: any) => (
-              <div key={notification.id} className="rounded-xl border bg-card px-4 py-3 shadow-sm">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h4 className="font-medium text-foreground">{notification.title}</h4>
-                      <Badge variant="outline">{getTypeLabel(notification.type)}</Badge>
-                      {!dairyId ? (
-                        <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
-                          {notification.dairy.name}
-                        </Badge>
-                      ) : null}
-                      <Badge
-                        variant="outline"
-                        className={
-                          notification.isRead
-                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                            : "border-amber-200 bg-amber-50 text-amber-700"
-                        }
-                      >
-                        {notification.isRead ? "Read" : "Unread"}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {notification.user.firstName} {notification.user.lastName} | {formatDateTime(notification.createdAt)}
-                    </p>
-                    {notification.message ? (
-                      <p className="text-sm text-foreground/90">{notification.message}</p>
-                    ) : null}
-                  </div>
+          <div className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border bg-muted/30 px-4 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Total Sent
+                </p>
+                <p className="mt-1 text-xl font-semibold text-foreground">{notifications.length}</p>
+              </div>
+              <div className="rounded-xl border bg-amber-50 px-4 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-amber-700">
+                  Unread
+                </p>
+                <p className="mt-1 text-xl font-semibold text-amber-800">{unreadCount}</p>
+              </div>
+              <div className="rounded-xl border bg-emerald-50 px-4 py-3">
+                <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">
+                  Read
+                </p>
+                <p className="mt-1 text-xl font-semibold text-emerald-800">{readCount}</p>
+              </div>
+            </div>
+
+            <div className="rounded-xl border bg-muted/20">
+              <div className="flex flex-col gap-3 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-medium text-foreground">Recent Activity</p>
+                  <p className="text-sm text-muted-foreground">
+                    Newest first. Showing the latest updates without stretching the page.
+                  </p>
+                </div>
+                {notifications.length > DEFAULT_VISIBLE_NOTIFICATIONS ? (
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     className="gap-2"
-                    disabled={deletingId === notification.id}
-                    onClick={() => handleDelete(notification.id)}
+                    onClick={() => setIsNotificationsExpanded((current) => !current)}
                   >
-                    {deletingId === notification.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
+                    {isNotificationsExpanded ? (
+                      <>
+                        <ChevronUp className="h-4 w-4" />
+                        Collapse
+                      </>
                     ) : (
-                      <Trash2 className="h-4 w-4" />
+                      <>
+                        <ChevronDown className="h-4 w-4" />
+                        View {hiddenNotificationsCount} More
+                      </>
                     )}
-                    Delete
                   </Button>
-                </div>
+                ) : null}
               </div>
-            ))}
+
+              <div
+                className={
+                  isNotificationsExpanded
+                    ? "max-h-[28rem] space-y-3 overflow-y-auto p-4"
+                    : "space-y-3 p-4"
+                }
+              >
+                {visibleNotifications.map((notification: any) => {
+                  const compactMessage =
+                    notification.message && notification.message.length > 120
+                      ? `${notification.message.slice(0, 120)}...`
+                      : notification.message;
+
+                  return (
+                    <div key={notification.id} className="rounded-xl border bg-card px-4 py-3 shadow-sm">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="min-w-0 space-y-2">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h4 className="font-medium text-foreground">{notification.title}</h4>
+                            <Badge variant="outline">{getTypeLabel(notification.type)}</Badge>
+                            {!dairyId ? (
+                              <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
+                                {notification.dairy.name}
+                              </Badge>
+                            ) : null}
+                            <Badge
+                              variant="outline"
+                              className={
+                                notification.isRead
+                                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                  : "border-amber-200 bg-amber-50 text-amber-700"
+                              }
+                            >
+                              {notification.isRead ? "Read" : "Unread"}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {notification.user.firstName} {notification.user.lastName} | {formatDateTime(notification.createdAt)}
+                          </p>
+                          {notification.message ? (
+                            <p className="text-sm text-foreground/90">
+                              {isNotificationsExpanded ? notification.message : compactMessage}
+                            </p>
+                          ) : null}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="gap-2"
+                          disabled={deletingId === notification.id}
+                          onClick={() => handleDelete(notification.id)}
+                        >
+                          {deletingId === notification.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
       </CardContent>
