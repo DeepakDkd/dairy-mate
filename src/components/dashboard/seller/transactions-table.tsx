@@ -4,7 +4,7 @@ import axios from "axios";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
-import { ChevronLeft, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 
 import { AddPaymentDialog } from "./add-payment-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { downloadFile } from "@/utils/download";
 import { getMonthValue } from "@/utils/month";
 
 const fetcher = (url: string) => fetch(url).then((response) => response.json());
@@ -99,6 +100,7 @@ export function SellerTransactionsTable({
   const [page, setPage] = useState(1);
   const [editingPayment, setEditingPayment] = useState<SellerLedgerRow | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [editForm, setEditForm] = useState({
     amount: "",
     method: "CASH" as PaymentMethod,
@@ -118,6 +120,16 @@ export function SellerTransactionsTable({
 
     return `/api/dairies/${dairyId}/sellers/ledger?${params.toString()}`;
   }, [dairyId, month, page]);
+  const exportUrl = useMemo(() => {
+    if (!dairyId) return null;
+
+    const params = new URLSearchParams({
+      report: "seller-ledger",
+      month,
+    });
+
+    return `/api/dairies/${dairyId}/exports?${params.toString()}`;
+  }, [dairyId, month]);
 
   const { data, error, mutate } = useSWR(requestUrl, fetcher, {
     revalidateOnFocus: false,
@@ -228,14 +240,38 @@ export function SellerTransactionsTable({
     }
   };
 
+  const handleExport = async () => {
+    if (!exportUrl || isExporting) {
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      await downloadFile(exportUrl);
+    } catch (error) {
+      console.error("Failed to export seller ledger:", error);
+      toast.error("Failed to export CSV.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold font-montserrat text-foreground">Transaction History</h2>
-        <Button onClick={() => setShowPaymentDialog(true)} variant="outline" className="gap-2" disabled={!dairyId || sellers.length === 0}>
-          <Plus className="w-4 h-4" />
-          Add Payment
-        </Button>
+        <div className="flex flex-wrap justify-end gap-2">
+          {exportUrl ? (
+            <Button type="button" variant="outline" className="gap-2" onClick={handleExport} disabled={isExporting}>
+              {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {isExporting ? "Exporting..." : "Export CSV"}
+            </Button>
+          ) : null}
+          <Button onClick={() => setShowPaymentDialog(true)} variant="outline" className="gap-2" disabled={!dairyId || sellers.length === 0}>
+            <Plus className="w-4 h-4" />
+            Add Payment
+          </Button>
+        </div>
       </div>
       <Card className="shadow-sm border-0">
         <CardHeader className="pb-3">

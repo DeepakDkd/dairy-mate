@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Loader2, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { downloadFile } from "@/utils/download";
 import { getMonthValue } from "@/utils/month";
 
 const fetcher = (url: string) => fetch(url).then((response) => response.json());
@@ -89,6 +90,7 @@ export function BuyerPaymentsTable({
   const [page, setPage] = useState(1);
   const [editingPayment, setEditingPayment] = useState<BuyerLedgerRow | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [editForm, setEditForm] = useState({
     amount: "",
     method: "CASH" as PaymentMethod,
@@ -108,6 +110,16 @@ export function BuyerPaymentsTable({
 
     return `/api/dairies/${dairyId}/buyers/ledger?${params.toString()}`;
   }, [dairyId, month, page]);
+  const exportUrl = useMemo(() => {
+    if (!dairyId) return null;
+
+    const params = new URLSearchParams({
+      report: "buyer-ledger",
+      month,
+    });
+
+    return `/api/dairies/${dairyId}/exports?${params.toString()}`;
+  }, [dairyId, month]);
 
   const { data, error, mutate } = useSWR(requestUrl, fetcher, {
     revalidateOnFocus: false,
@@ -218,6 +230,22 @@ export function BuyerPaymentsTable({
     }
   };
 
+  const handleExport = async () => {
+    if (!exportUrl || isExporting) {
+      return;
+    }
+
+    try {
+      setIsExporting(true);
+      await downloadFile(exportUrl);
+    } catch (error) {
+      console.error("Failed to export buyer ledger:", error);
+      toast.error("Failed to export CSV.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <>
       <Card className="shadow-md rounded-2xl border">
@@ -229,17 +257,31 @@ export function BuyerPaymentsTable({
                 {data?.monthLabel ? `Showing ${data.monthLabel}` : "Recent milk entries and payments across all buyers"}
               </p>
             </div>
-            {showMonthPicker ? (
-              <div className="w-full max-w-xs space-y-2">
-                <Label htmlFor="buyer-ledger-month">Month</Label>
-                <Input
-                  id="buyer-ledger-month"
-                  type="month"
-                  value={month}
-                  onChange={(event) => setInternalMonth(event.target.value)}
-                />
-              </div>
-            ) : null}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+              {showMonthPicker ? (
+                <div className="w-full max-w-xs space-y-2">
+                  <Label htmlFor="buyer-ledger-month">Month</Label>
+                  <Input
+                    id="buyer-ledger-month"
+                    type="month"
+                    value={month}
+                    onChange={(event) => setInternalMonth(event.target.value)}
+                  />
+                </div>
+              ) : null}
+              {exportUrl ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-2"
+                  onClick={handleExport}
+                  disabled={isExporting}
+                >
+                  {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  {isExporting ? "Exporting..." : "Export CSV"}
+                </Button>
+              ) : null}
+            </div>
           </div>
         </CardHeader>
         <CardContent>

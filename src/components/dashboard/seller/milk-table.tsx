@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import toast from "react-hot-toast"
 import useSWR from "swr"
 import { SellerEntry } from "@prisma/client"
-import { ChevronLeft, ChevronRight, Pencil, Trash2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, Download, Loader2, Pencil, Trash2 } from "lucide-react"
 import axios from "axios"
 
 import { PortalTableSkeleton } from "@/components/portal/portal-skeletons"
@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { getMilkRate } from "@/lib/rateUtils"
+import { downloadFile } from "@/utils/download"
 import { getMonthValue } from "@/utils/month"
 
 const fetcher = (url: string) => fetch(url).then((response) => response.json())
@@ -64,6 +65,7 @@ export function SellerMilkTable({
   const [internalMonth, setInternalMonth] = useState(getMonthValue())
   const [editingEntry, setEditingEntry] = useState<SellerEntryRow | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   const [editForm, setEditForm] = useState({
     litres: "",
     rate: "",
@@ -75,6 +77,9 @@ export function SellerMilkTable({
     shift: "MORNING" as "MORNING" | "EVENING",
   })
   const month = controlledMonth ?? internalMonth
+  const exportUrl =
+    selectedDairyId &&
+    `/api/dairies/${selectedDairyId}/exports?report=seller-entries&month=${month}`
 
   const milkEntriesKey =
     selectedDairyId &&
@@ -193,6 +198,22 @@ export function SellerMilkTable({
     }
   }
 
+  const handleExport = async () => {
+    if (!exportUrl || isExporting) {
+      return
+    }
+
+    try {
+      setIsExporting(true)
+      await downloadFile(exportUrl)
+    } catch (error) {
+      console.error("Failed to export seller entries:", error)
+      toast.error("Failed to export CSV.")
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   useEffect(() => {
     if (milkEntriesError) {
       toast.error("Failed to load seller milk entries.")
@@ -241,17 +262,31 @@ export function SellerMilkTable({
                 {milkEntries?.monthLabel ? `Showing ${milkEntries.monthLabel}` : "Review entries month by month."}
               </p>
             </div>
-            {showMonthPicker ? (
-              <div className="w-full max-w-xs space-y-2">
-                <Label htmlFor="seller-milk-month">Month</Label>
-                <Input
-                  id="seller-milk-month"
-                  type="month"
-                  value={month}
-                  onChange={(event) => setInternalMonth(event.target.value)}
-                />
-              </div>
-            ) : null}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+              {showMonthPicker ? (
+                <div className="w-full max-w-xs space-y-2">
+                  <Label htmlFor="seller-milk-month">Month</Label>
+                  <Input
+                    id="seller-milk-month"
+                    type="month"
+                    value={month}
+                    onChange={(event) => setInternalMonth(event.target.value)}
+                  />
+                </div>
+              ) : null}
+              {exportUrl ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-2"
+                  onClick={handleExport}
+                  disabled={isExporting}
+                >
+                  {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  {isExporting ? "Exporting..." : "Export CSV"}
+                </Button>
+              ) : null}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
