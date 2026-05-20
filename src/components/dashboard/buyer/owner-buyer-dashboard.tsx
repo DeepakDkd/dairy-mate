@@ -15,6 +15,7 @@ import {
   PortalStatsSkeleton,
   PortalTableSkeleton,
 } from "@/components/portal/portal-skeletons";
+import { MonthSettlementCard } from "@/components/portal/month-settlement-card";
 import { AddPaymentDialog } from "@/components/dashboard/buyer/add-payment-dialog";
 import { BuyerMilkEntriesTable } from "@/components/dashboard/buyer/milk-entries-table";
 import { BuyerOverviewCards } from "@/components/dashboard/buyer/overview-cards";
@@ -206,6 +207,17 @@ export default function OwnerBuyerDashboard({
               />
             </div>
           </div>
+          <MonthSettlementCard
+            dairyId={dairyId}
+            month={selectedMonth}
+            monthLabel={buyerStats?.monthLabel}
+            isClosed={buyerStats?.isMonthClosed}
+            closedAt={buyerStats?.monthClosedAt}
+            onChanged={() => {
+              buyerStatsMutate();
+              setPaymentRefreshToken((value) => value + 1);
+            }}
+          />
           <BuyerOverviewCards
             totalMonthlyLitres={buyerStats?.totalMonthlyLitres}
             todaysMilkLitres={buyerStats?.todaysMilkLitres}
@@ -249,6 +261,8 @@ export default function OwnerBuyerDashboard({
         month={selectedMonth}
         showMonthPicker={false}
         onEntryChanged={handleEntryChanged}
+        isMonthClosed={buyerStats?.isMonthClosed}
+        monthLabel={buyerStats?.monthLabel}
       />
 
       <div className="space-y-4">
@@ -257,6 +271,8 @@ export default function OwnerBuyerDashboard({
           refreshToken={paymentRefreshToken}
           month={selectedMonth}
           showMonthPicker={false}
+          isMonthClosed={buyerStats?.isMonthClosed}
+          monthLabel={buyerStats?.monthLabel}
           onPaymentChanged={() => {
             buyerStatsMutate();
             buyerDataMutate();

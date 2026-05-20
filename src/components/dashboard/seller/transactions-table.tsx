@@ -79,6 +79,8 @@ interface SellerTransactionsTableProps {
   refreshToken?: number;
   month?: string;
   showMonthPicker?: boolean;
+  isMonthClosed?: boolean;
+  monthLabel?: string;
 }
 
 export function SellerTransactionsTable({
@@ -88,6 +90,8 @@ export function SellerTransactionsTable({
   refreshToken = 0,
   month: controlledMonth,
   showMonthPicker = true,
+  isMonthClosed = false,
+  monthLabel,
 }: SellerTransactionsTableProps) {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [internalMonth, setInternalMonth] = useState(getMonthValue());
@@ -134,6 +138,11 @@ export function SellerTransactionsTable({
   }, [month, dairyId]);
 
   const openEditDialog = (payment: SellerLedgerRow) => {
+    if (isMonthClosed) {
+      toast.error(`${monthLabel ?? "Selected month"} is closed for edits.`);
+      return;
+    }
+
     if (!payment.paymentId) {
       return;
     }
@@ -151,6 +160,11 @@ export function SellerTransactionsTable({
 
   const handleSave = async () => {
     if (!editingPayment?.paymentId) {
+      return;
+    }
+
+    if (isMonthClosed) {
+      toast.error(`${monthLabel ?? "Selected month"} is closed for edits.`);
       return;
     }
 
@@ -185,6 +199,11 @@ export function SellerTransactionsTable({
 
   const handleDelete = async (payment: SellerLedgerRow) => {
     if (!payment.paymentId) {
+      return;
+    }
+
+    if (isMonthClosed) {
+      toast.error(`${monthLabel ?? "Selected month"} is closed for edits.`);
       return;
     }
 
@@ -283,15 +302,17 @@ export function SellerTransactionsTable({
                       <TableCell className="text-right">
                         {transaction.type === "PAYMENT" && transaction.paymentId ? (
                           <div className="flex justify-end gap-2">
-                            <Button variant="outline" size="sm" onClick={() => openEditDialog(transaction)}>
+                            <Button variant="outline" size="sm" onClick={() => openEditDialog(transaction)} disabled={isMonthClosed}>
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" size="sm" onClick={() => handleDelete(transaction)}>
+                            <Button variant="outline" size="sm" onClick={() => handleDelete(transaction)} disabled={isMonthClosed}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         ) : (
-                          <span className="text-xs text-muted-foreground">-</span>
+                          <span className="text-xs text-muted-foreground">
+                            {isMonthClosed ? "Locked" : "-"}
+                          </span>
                         )}
                       </TableCell>
                     </TableRow>

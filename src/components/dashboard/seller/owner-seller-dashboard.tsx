@@ -17,6 +17,7 @@ import {
   PortalStatsSkeleton,
   PortalTableSkeleton,
 } from "@/components/portal/portal-skeletons";
+import { MonthSettlementCard } from "@/components/portal/month-settlement-card";
 import {
   Card,
   CardContent,
@@ -187,6 +188,17 @@ export default function OwnerSellerDashboard({
               />
             </div>
           </div>
+          <MonthSettlementCard
+            dairyId={dairyId}
+            month={selectedMonth}
+            monthLabel={sellerStats?.monthLabel}
+            isClosed={sellerStats?.isMonthClosed}
+            closedAt={sellerStats?.monthClosedAt}
+            onChanged={() => {
+              sellerStatsMutate();
+              setPaymentRefreshToken((value) => value + 1);
+            }}
+          />
           <SellerOverviewCards
             totalMonthlyLitres={sellerStats?.totalMonthlyLitres}
             todaysMilkLitres={sellerStats?.todaysMilkLitres}
@@ -235,6 +247,8 @@ export default function OwnerSellerDashboard({
           month={selectedMonth}
           showMonthPicker={false}
           onEntryChanged={handleEntryChanged}
+          isMonthClosed={sellerStats?.isMonthClosed}
+          monthLabel={sellerStats?.monthLabel}
         />
       </div>
 
@@ -246,6 +260,8 @@ export default function OwnerSellerDashboard({
         refreshToken={paymentRefreshToken}
         month={selectedMonth}
         showMonthPicker={false}
+        isMonthClosed={sellerStats?.isMonthClosed}
+        monthLabel={sellerStats?.monthLabel}
         onPaymentCreated={() => {
           sellerStatsMutate();
           sellersMutate();

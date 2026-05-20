@@ -48,11 +48,15 @@ export function BuyerMilkEntriesTable({
   month: controlledMonth,
   showMonthPicker = true,
   onEntryChanged,
+  isMonthClosed = false,
+  monthLabel,
 }: {
   selectedDairyId: any;
   month?: string;
   showMonthPicker?: boolean;
   onEntryChanged?: () => void;
+  isMonthClosed?: boolean;
+  monthLabel?: string;
 }) {
   const [page, setPage] = useState(1)
   const [limit] = useState(10)
@@ -93,6 +97,11 @@ export function BuyerMilkEntriesTable({
 
   const totalPages = milkEntries?.totalPages ?? 0
   const openEditDialog = (entry: BuyerEntryRow) => {
+    if (isMonthClosed) {
+      toast.error(`${monthLabel ?? "Selected month"} is closed for edits.`)
+      return
+    }
+
     const dateTime = splitDateTime(entry.date)
     setEditingEntry(entry)
     setEditForm({
@@ -106,6 +115,11 @@ export function BuyerMilkEntriesTable({
 
   const handleSave = async () => {
     if (!editingEntry) return
+
+    if (isMonthClosed) {
+      toast.error(`${monthLabel ?? "Selected month"} is closed for edits.`)
+      return
+    }
 
     const litres = Number(editForm.litres)
     const rate = Number(editForm.rate)
@@ -140,6 +154,11 @@ export function BuyerMilkEntriesTable({
   }
 
   const handleDelete = async (entry: BuyerEntryRow) => {
+    if (isMonthClosed) {
+      toast.error(`${monthLabel ?? "Selected month"} is closed for edits.`)
+      return
+    }
+
     if (!window.confirm("Delete this milk entry? This will update balances.")) {
       return
     }
@@ -249,10 +268,15 @@ export function BuyerMilkEntriesTable({
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button variant="outline" size="sm" onClick={() => openEditDialog(entry)}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openEditDialog(entry)}
+                              disabled={isMonthClosed}
+                            >
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" size="sm" onClick={() => handleDelete(entry)}>
+                            <Button variant="outline" size="sm" onClick={() => handleDelete(entry)} disabled={isMonthClosed}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>

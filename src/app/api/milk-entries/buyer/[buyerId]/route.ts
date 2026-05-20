@@ -9,6 +9,7 @@ import {
   requireOwnedDairy,
   requirePartyByIdAccess,
 } from "@/lib/api-access";
+import { findClosedSettlementForDates, getMonthLockedMessage } from "@/lib/month-settlements";
 import { getServerSession } from "next-auth";
 import type { Session } from "next-auth";
 import { NextResponse } from "next/server";
@@ -185,6 +186,11 @@ export async function POST(
       return access.response;
     }
 
+    const closedSettlement = await findClosedSettlementForDates(prisma, dairyIdNum, [entryDate]);
+    if (closedSettlement) {
+      return jsonError(getMonthLockedMessage(closedSettlement.selectedMonth.label), 409);
+    }
+
     const result = await prisma.$transaction(async (tx) => {
       const milkEntry = await tx.buyerEntry.create({
         data: {
@@ -294,6 +300,14 @@ export async function PUT(
       return jsonError("Milk entry not found", 404);
     }
 
+    const closedSettlement = await findClosedSettlementForDates(prisma, dairyIdNum, [
+      existingEntry.date,
+      entryDate,
+    ]);
+    if (closedSettlement) {
+      return jsonError(getMonthLockedMessage(closedSettlement.selectedMonth.label), 409);
+    }
+
     const amountDelta = totalAmountNum - existingEntry.totalAmount;
 
     const result = await prisma.$transaction(async (tx) => {
@@ -378,6 +392,13 @@ export async function DELETE(
 
     if (!existingEntry) {
       return jsonError("Milk entry not found", 404);
+    }
+
+    const closedSettlement = await findClosedSettlementForDates(prisma, dairyIdNum, [
+      existingEntry.date,
+    ]);
+    if (closedSettlement) {
+      return jsonError(getMonthLockedMessage(closedSettlement.selectedMonth.label), 409);
     }
 
     await prisma.$transaction(async (tx) => {

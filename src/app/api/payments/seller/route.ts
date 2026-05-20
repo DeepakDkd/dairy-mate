@@ -11,6 +11,7 @@ import {
   requireOwnedDairy,
 } from "@/lib/api-access";
 import { authOptions } from "@/lib/auth";
+import { findClosedSettlementForDates, getMonthLockedMessage } from "@/lib/month-settlements";
 import prisma from "@/lib/prisma";
 
 async function syncLatestPayment(tx: Pick<typeof prisma, "payment" | "accountBalance">, dairyId: number, sellerId: number) {
@@ -97,6 +98,11 @@ export async function POST(request: Request) {
     const access = await requireSellerInOwnedDairy(session, dairyIdNum, sellerIdNum);
     if (!access.ok) {
       return access.response;
+    }
+
+    const closedSettlement = await findClosedSettlementForDates(prisma, dairyIdNum, [paymentDate]);
+    if (closedSettlement) {
+      return jsonError(getMonthLockedMessage(closedSettlement.selectedMonth.label), 409);
     }
 
     const result = await prisma.$transaction(async (tx) => {
@@ -190,6 +196,14 @@ export async function PUT(request: Request) {
       return jsonError("Payment not found", 404);
     }
 
+    const closedSettlement = await findClosedSettlementForDates(prisma, dairyIdNum, [
+      existingPayment.date,
+      paymentDate,
+    ]);
+    if (closedSettlement) {
+      return jsonError(getMonthLockedMessage(closedSettlement.selectedMonth.label), 409);
+    }
+
     const amountDelta = amountNum - existingPayment.amount;
 
     const result = await prisma.$transaction(async (tx) => {
@@ -264,6 +278,13 @@ export async function DELETE(request: Request) {
 
     if (!existingPayment) {
       return jsonError("Payment not found", 404);
+    }
+
+    const closedSettlement = await findClosedSettlementForDates(prisma, dairyIdNum, [
+      existingPayment.date,
+    ]);
+    if (closedSettlement) {
+      return jsonError(getMonthLockedMessage(closedSettlement.selectedMonth.label), 409);
     }
 
     await prisma.$transaction(async (tx) => {

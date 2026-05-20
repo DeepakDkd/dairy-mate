@@ -23,6 +23,7 @@ model Dairy {
   owner           User                @relation("OwnerDairies", fields: [ownerId], references: [id])
   subscriptions   DairySubscription[]
   milkRates       MilkRate[]
+  monthlySettlements MonthlySettlement[]
   payments        Payment[]
   sellerEntries   SellerEntry[]
   staff           StaffProfile[]
@@ -155,6 +156,28 @@ model Payment {
   user      User          @relation(fields: [userId], references: [id])
 
   @@index([dairyId, userId, date])
+}
+
+model MonthlySettlement {
+  id                  Int      @id @default(autoincrement())
+  dairyId             Int
+  monthStart          DateTime
+  monthKey            String
+  isClosed            Boolean  @default(true)
+  closedAt            DateTime
+  reopenedAt          DateTime?
+  closedByUserId      Int
+  notes               String?
+  buyerClosingBalance Float    @default(0)
+  sellerClosingBalance Float   @default(0)
+  monthlyBuyerAmount  Float    @default(0)
+  monthlySellerAmount Float    @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  dairy               Dairy    @relation(fields: [dairyId], references: [id])
+
+  @@unique([dairyId, monthStart], name: "dairyId_monthStart")
+  @@index([dairyId, monthKey])
 }
 
 model SubscriptionPlan {

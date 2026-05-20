@@ -71,6 +71,8 @@ interface BuyerPaymentsTableProps {
   month?: string;
   showMonthPicker?: boolean;
   onPaymentChanged?: () => void;
+  isMonthClosed?: boolean;
+  monthLabel?: string;
 }
 
 export function BuyerPaymentsTable({
@@ -79,6 +81,8 @@ export function BuyerPaymentsTable({
   month: controlledMonth,
   showMonthPicker = true,
   onPaymentChanged,
+  isMonthClosed = false,
+  monthLabel,
 }: BuyerPaymentsTableProps) {
   const [internalMonth, setInternalMonth] = useState(getMonthValue());
   const month = controlledMonth ?? internalMonth;
@@ -124,6 +128,11 @@ export function BuyerPaymentsTable({
   }, [month, dairyId]);
 
   const openEditDialog = (payment: BuyerLedgerRow) => {
+    if (isMonthClosed) {
+      toast.error(`${monthLabel ?? "Selected month"} is closed for edits.`);
+      return;
+    }
+
     if (!payment.paymentId) {
       return;
     }
@@ -141,6 +150,11 @@ export function BuyerPaymentsTable({
 
   const handleSave = async () => {
     if (!editingPayment?.paymentId) {
+      return;
+    }
+
+    if (isMonthClosed) {
+      toast.error(`${monthLabel ?? "Selected month"} is closed for edits.`);
       return;
     }
 
@@ -175,6 +189,11 @@ export function BuyerPaymentsTable({
 
   const handleDelete = async (payment: BuyerLedgerRow) => {
     if (!payment.paymentId) {
+      return;
+    }
+
+    if (isMonthClosed) {
+      toast.error(`${monthLabel ?? "Selected month"} is closed for edits.`);
       return;
     }
 
@@ -275,15 +294,22 @@ export function BuyerPaymentsTable({
                       <TableCell className="text-right">
                         {item.type === "PAYMENT" && item.paymentId ? (
                           <div className="flex justify-end gap-2">
-                            <Button variant="outline" size="sm" onClick={() => openEditDialog(item)}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => openEditDialog(item)}
+                              disabled={isMonthClosed}
+                            >
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button variant="outline" size="sm" onClick={() => handleDelete(item)}>
+                            <Button variant="outline" size="sm" onClick={() => handleDelete(item)} disabled={isMonthClosed}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         ) : (
-                          <span className="text-xs text-muted-foreground">-</span>
+                          <span className="text-xs text-muted-foreground">
+                            {isMonthClosed ? "Locked" : "-"}
+                          </span>
                         )}
                       </TableCell>
                     </TableRow>

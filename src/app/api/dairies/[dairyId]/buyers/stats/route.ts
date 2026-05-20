@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { getMonthSettlementStatus } from "@/lib/month-settlements";
 import { getMonthFromSearchParams, getMonthValue } from "@/utils/month";
 import { NextResponse } from "next/server";
 
@@ -27,7 +28,7 @@ export async function GET(
     );
     const isCurrentMonth = selectedMonth.value === getMonthValue(now);
 
-    const [monthlyLitresAgg, monthlyAmountAgg, activeBuyers, balanceAgg, periodEntryCount, todayLitresAgg, entriesTodayCount] = await Promise.all([
+    const [monthlyLitresAgg, monthlyAmountAgg, activeBuyers, balanceAgg, periodEntryCount, todayLitresAgg, entriesTodayCount, monthSettlement] = await Promise.all([
       prisma.buyerEntry.aggregate({
         where: {
           dairyId,
@@ -92,6 +93,7 @@ export async function GET(
           },
         },
       }),
+      getMonthSettlementStatus(prisma as any, dairyId, selectedMonth.value),
     ]);
 
     const totalMonthlyLitres = monthlyLitresAgg._sum.litres ?? 0;
@@ -111,6 +113,9 @@ export async function GET(
         selectedMonth: selectedMonth.value,
         monthLabel: selectedMonth.label,
         isCurrentMonth,
+        isMonthClosed: monthSettlement.isClosed,
+        monthClosedAt: monthSettlement.settlement?.closedAt ?? null,
+        monthSettlementNote: monthSettlement.settlement?.notes ?? null,
       },
       { status: 200 }
     );
