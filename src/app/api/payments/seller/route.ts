@@ -12,6 +12,7 @@ import {
 } from "@/lib/api-access";
 import { authOptions } from "@/lib/auth";
 import { findClosedSettlementForDates, getMonthLockedMessage } from "@/lib/month-settlements";
+import { createUserNotification } from "@/lib/notifications";
 import prisma from "@/lib/prisma";
 
 async function syncLatestPayment(tx: Pick<typeof prisma, "payment" | "accountBalance">, dairyId: number, sellerId: number) {
@@ -139,6 +140,20 @@ export async function POST(request: Request) {
 
       return { payment, accountBalance };
     });
+
+    try {
+      await createUserNotification({
+        dairyId: dairyIdNum,
+        createdByUserId: session.user.id,
+        userId: sellerIdNum,
+        type: "PAYMENT_SENT",
+        title: "Payment recorded",
+        message: `A payment of Rs ${amountNum.toLocaleString("en-IN")} has been recorded in your account.`,
+        actionUrl: "/portal/seller",
+      });
+    } catch (notificationError) {
+      console.error("Failed to create seller payment notification:", notificationError);
+    }
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {

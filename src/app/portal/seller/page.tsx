@@ -4,6 +4,7 @@ import { getServerActionUser } from "@/fetchers/user/action";
 import { getSellerPortalHistory } from "@/lib/party-history";
 import { PortalAccountHistoryTable } from "@/components/portal/portal-account-history-table";
 import { PortalAccountActions } from "@/components/portal/portal-account-actions";
+import { UserNotificationsPanel } from "@/components/portal/user-notifications-panel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const formatMoney = (value: number) => `Rs ${Number(value).toLocaleString("en-IN")}`;
@@ -72,6 +73,7 @@ export default async function SellerPortalPage() {
           </div>
         </CardContent>
       </Card>
+      <UserNotificationsPanel />
       <PortalAccountHistoryTable
         title="Account History"
         emptyLabel="No account history found for this month."

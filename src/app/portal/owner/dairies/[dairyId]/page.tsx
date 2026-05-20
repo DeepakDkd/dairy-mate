@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { OwnerNotificationsPanel } from "@/components/portal/owner-notifications-panel";
 import { OwnerRemindersPanel } from "@/components/portal/owner-reminders-panel";
 import { getServerActionUser } from "@/fetchers/user/action";
 import { getOwnedDairy } from "@/lib/owner-dairies";
@@ -116,6 +117,7 @@ export default async function DairyOverviewPage({
         </CardHeader>
       </Card>
 
+      <OwnerNotificationsPanel dairyId={dairy.id} dairyName={dairy.name} />
       <OwnerRemindersPanel dairyId={dairy.id} dairyName={dairy.name} />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

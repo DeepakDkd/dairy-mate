@@ -1,4 +1,4 @@
-import { PaymentMethod, ReminderStatus, ReminderType, Role, Shift, MilkType } from "@prisma/client";
+import { NotificationType, PaymentMethod, ReminderStatus, ReminderType, Role, Shift, MilkType } from "@prisma/client";
 import type { Session } from "next-auth";
 import { NextResponse } from "next/server";
 
@@ -55,6 +55,10 @@ export function isReminderType(value: unknown): value is ReminderType {
 
 export function isReminderStatus(value: unknown): value is ReminderStatus {
   return value === "PENDING" || value === "DONE" || value === "DISMISSED";
+}
+
+export function isNotificationType(value: unknown): value is NotificationType {
+  return value === "PAYMENT_RECEIVED" || value === "PAYMENT_SENT" || value === "MONTH_CLOSE" || value === "CUSTOM";
 }
 
 export function isShift(value: unknown): value is Shift {

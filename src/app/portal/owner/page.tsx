@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation"; 
 import { getServerActionUser } from "@/fetchers/user/action";
 import { getOwnerPortalOverview } from "@/lib/owner-dairies"; 
+import { OwnerNotificationsPanel } from "@/components/portal/owner-notifications-panel";
 import OwnerOverview from "@/components/portal/owner-overview";
 import { OwnerRemindersPanel } from "@/components/portal/owner-reminders-panel";
 
@@ -52,6 +53,7 @@ export default async function OwnerPortalPage() {
       <OwnerOverview  overview={overview} />
     }
 
+    <OwnerNotificationsPanel />
     <OwnerRemindersPanel />
  
     </div>
