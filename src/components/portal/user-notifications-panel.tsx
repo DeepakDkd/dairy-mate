@@ -28,7 +28,11 @@ function formatDateTime(value: string) {
   });
 }
 
-export function UserNotificationsPanel() {
+export function UserNotificationsPanel({
+  sectionId = "portal-notifications",
+}: {
+  sectionId?: string;
+}) {
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const { data, error, mutate } = useSWR("/api/portal/notifications", fetcher, {
     revalidateOnFocus: false,
@@ -67,7 +71,7 @@ export function UserNotificationsPanel() {
   };
 
   return (
-    <Card>
+    <Card id={sectionId} tabIndex={-1} className="scroll-mt-24">
       <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <CardTitle className="flex items-center gap-2">

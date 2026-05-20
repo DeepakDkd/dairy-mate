@@ -8,7 +8,7 @@ import {
   requireOwnedDairy,
 } from "@/lib/api-access";
 import { authOptions } from "@/lib/auth";
-import { createUserNotification } from "@/lib/notifications";
+import { createUserNotifications } from "@/lib/notifications";
 import prisma from "@/lib/prisma";
 
 export async function GET(request: Request) {
@@ -78,14 +78,24 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const dairyId = parsePositiveInt(body?.dairyId);
-    const userId = parsePositiveInt(body?.userId);
     const type = body?.type;
     const title = typeof body?.title === "string" ? body.title.trim() : "";
     const message = typeof body?.message === "string" ? body.message.trim() || null : null;
     const actionUrl = typeof body?.actionUrl === "string" ? body.actionUrl.trim() || null : null;
+    const userIds: number[] = Array.isArray(body?.userIds)
+      ? Array.from(
+          new Set<number>(
+            (body.userIds as unknown[])
+              .map((value: unknown) => parsePositiveInt(value))
+              .filter((value): value is number => Boolean(value))
+          )
+        )
+      : [];
+    const userId = parsePositiveInt(body?.userId);
+    const recipientIds = userIds.length > 0 ? userIds : userId ? [userId] : [];
 
-    if (!dairyId || !userId || !title) {
-      return jsonError("dairyId, userId, and title are required", 400);
+    if (!dairyId || recipientIds.length === 0 || !title) {
+      return jsonError("dairyId, at least one recipient, and title are required", 400);
     }
 
     if (!isNotificationType(type)) {
@@ -97,9 +107,11 @@ export async function POST(request: Request) {
       return access.response;
     }
 
-    const user = await prisma.user.findFirst({
+    const users = await prisma.user.findMany({
       where: {
-        id: userId,
+        id: {
+          in: recipientIds,
+        },
         dairyId,
         role: {
           in: ["BUYER", "SELLER"],
@@ -110,21 +122,26 @@ export async function POST(request: Request) {
       },
     });
 
-    if (!user) {
-      return jsonError("Notification recipient not found", 404);
+    if (users.length !== recipientIds.length) {
+      return jsonError("One or more notification recipients were not found", 404);
     }
 
-    const notification = await createUserNotification({
+    const result = await createUserNotifications({
       dairyId,
       createdByUserId: session.user.id,
-      userId,
+      userIds: users.map((recipient) => recipient.id),
       type,
       title,
       message,
       actionUrl,
     });
 
-    return NextResponse.json({ notification }, { status: 201 });
+    return NextResponse.json(
+      {
+        sentCount: result.count,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Failed to create notification:", error);
     return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
