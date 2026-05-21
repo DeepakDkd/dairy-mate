@@ -14,9 +14,24 @@ export default withAuth(
       return NextResponse.redirect(new URL("/portal", req.url));
     }
   },
+  
   {
+    callbacks: {
+      
+      authorized: ({ req, token }) => {
+        const pathname = req.nextUrl.pathname;
+        
+         if (pathname.startsWith("/auth/register") || pathname.startsWith("/auth/login")) {
+          return true; 
+        }
+        
+         return !!token;
+      },
+    }
+    ,
     pages: {
       signIn: "/auth/login",
+      
     },
   }
 );
