@@ -45,6 +45,8 @@ import { getMonthValue } from "@/utils/month";
 
 const formatNumber = (value: number) => value?.toLocaleString("en-IN");
 const formatMoney = (value: number) => `Rs ${Math.round(value).toLocaleString("en-IN")}`;
+const formatMoneyAbsolute = (value: number) =>
+  `Rs ${Math.round(Math.abs(value)).toLocaleString("en-IN")}`;
 const formatLitres = (value: number) =>
   `${Number(value?.toFixed(2)).toLocaleString("en-IN")} L`;
 
@@ -141,18 +143,44 @@ function OwnerOverview({overview:initialOverview }:any) {
       detail: `Milk amount payable in ${overview?.monthLabel ?? "this month"}`,
       icon: Banknote,
       helpText: `This is the total milk purchase amount for ${overview?.monthLabel ?? "the selected month"}. It shows what you owe sellers for recorded milk entries before any separate balance context.`,
+      cardClassName: "border shadow-sm",
+      valueClassName: "text-foreground",
+      detailClassName: "text-muted-foreground",
     },
     {
       title: "Seller Balance",
-      value: formatMoney(totals?.sellerBalance),
-      detail: "Current seller account balance",
+      value: formatMoneyAbsolute(totals?.sellerBalance),
+      detail:
+        totals?.sellerBalance < 0
+          ? "You need to pay sellers"
+          : totals?.sellerBalance > 0
+            ? "Sellers already took advance"
+            : "All clear",
       icon: Users,
       helpText:
-        totals?.sellerBalance > 0
-          ? "Sellers still need to receive this amount from you overall."
-          : totals?.sellerBalance < 0
-            ? "You have already paid sellers this much in advance overall."
-            : "Seller accounts are currently settled overall.",
+        totals?.sellerBalance < 0
+          ? "This is the amount you still need to pay to sellers overall."
+          : totals?.sellerBalance > 0
+            ? "Sellers have already received this much extra in advance overall."
+            : "Seller accounts are settled overall.",
+      cardClassName:
+        totals?.sellerBalance < 0
+          ? "border-emerald-200 bg-emerald-50/70 dark:bg-emerald-900/30 shadow-sm"
+          : totals?.sellerBalance > 0
+            ? "border-blue-200 bg-blue-50/70 dark:bg-blue-900/30 shadow-sm"
+            : "border-slate-200 bg-slate-50/70 dark:bg-slate-900/30 shadow-sm",
+      valueClassName:
+        totals?.sellerBalance < 0
+          ? "text-emerald-700"
+          : totals?.sellerBalance > 0
+            ? "text-blue-700"
+            : "text-slate-700",
+      detailClassName:
+        totals?.sellerBalance < 0
+          ? "text-emerald-700"
+          : totals?.sellerBalance > 0
+            ? "text-blue-700"
+            : "text-slate-700",
     },
     {
       title: "Buyer Sales",
@@ -160,18 +188,44 @@ function OwnerOverview({overview:initialOverview }:any) {
       detail: `Milk amount billed in ${overview?.monthLabel ?? "this month"}`,
       icon: Wallet,
       helpText: `This is the total milk amount billed to buyers in ${overview?.monthLabel ?? "the selected month"}.`,
+      cardClassName: "border shadow-sm",
+      valueClassName: "text-foreground",
+      detailClassName: "text-muted-foreground",
     },
     {
       title: "Buyer Balance",
-      value: formatMoney(totals?.buyerBalance),
-      detail: "Current buyer account balance",
+      value: formatMoneyAbsolute(totals?.buyerBalance),
+      detail:
+        totals?.buyerBalance > 0
+          ? "You will receive from buyers"
+          : totals?.buyerBalance < 0
+            ? "Buyers already paid extra"
+            : "All clear",
       icon: CalendarDays,
       helpText:
         totals?.buyerBalance > 0
-          ? "Buyers still need to pay you this amount overall."
+          ? "This is the amount buyers still need to pay you overall."
           : totals?.buyerBalance < 0
-            ? "Buyers have already paid this much in advance overall."
-            : "Buyer accounts are currently settled overall.",
+            ? "Buyers have already paid this much extra in advance overall."
+            : "Buyer accounts are settled overall.",
+      cardClassName:
+        totals?.buyerBalance > 0
+          ? "border-amber-200 bg-amber-50/70 dark:bg-amber-900/30 shadow-sm"
+          : totals?.buyerBalance < 0
+            ? "border-cyan-200 bg-cyan-50/70 dark:bg-cyan-900/30 shadow-sm"
+            : "border-slate-200 bg-slate-50/70 dark:bg-slate-900/30 shadow-sm",
+      valueClassName:
+        totals?.buyerBalance > 0
+          ? "text-amber-700"
+          : totals?.buyerBalance < 0
+            ? "text-cyan-700"
+            : "text-slate-700",
+      detailClassName:
+        totals?.buyerBalance > 0
+          ? "text-amber-700"
+          : totals?.buyerBalance < 0
+            ? "text-cyan-700"
+            : "text-slate-700",
     },
   ];
 
@@ -229,7 +283,7 @@ function OwnerOverview({overview:initialOverview }:any) {
             <TooltipProvider key={card.title}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Card className="border shadow-sm transition-shadow hover:shadow-md">
+                  <Card className={`${card.cardClassName} transition-shadow hover:shadow-md`}>
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between gap-3">
                         <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -239,8 +293,8 @@ function OwnerOverview({overview:initialOverview }:any) {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-2xl font-bold">{card.value}</p>
-                      <p className="mt-1 text-xs text-muted-foreground">{card.detail}</p>
+                      <p className={`text-2xl font-bold ${card.valueClassName}`}>{card.value}</p>
+                      <p className={`mt-1 text-xs font-medium ${card.detailClassName}`}>{card.detail}</p>
                     </CardContent>
                   </Card>
                 </TooltipTrigger>
