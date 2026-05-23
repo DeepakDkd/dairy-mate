@@ -83,6 +83,7 @@ export function OwnerNotificationsPanel({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [recipientSearchQuery, setRecipientSearchQuery] = useState("");
   const [readFilter, setReadFilter] = useState<NotificationReadFilter>("ALL");
   const [typeFilter, setTypeFilter] = useState<"ALL" | NotificationType>("ALL");
   const [form, setForm] = useState({
@@ -141,6 +142,18 @@ export function OwnerNotificationsPanel({
   ] as PersonOption[];
   const buyers = people.filter((person) => person.role === "BUYER");
   const sellers = people.filter((person) => person.role === "SELLER");
+  const filteredBuyers = useMemo(() => {
+    const normalizedQuery = recipientSearchQuery.trim().toLowerCase();
+    if (!normalizedQuery) return buyers;
+
+    return buyers.filter((buyer) => buyer.name.toLowerCase().includes(normalizedQuery));
+  }, [buyers, recipientSearchQuery]);
+  const filteredSellers = useMemo(() => {
+    const normalizedQuery = recipientSearchQuery.trim().toLowerCase();
+    if (!normalizedQuery) return sellers;
+
+    return sellers.filter((seller) => seller.name.toLowerCase().includes(normalizedQuery));
+  }, [recipientSearchQuery, sellers]);
   const selectedCount = form.userIds.length;
   const unreadCount = notifications.filter((notification: any) => !notification.isRead).length;
   const readCount = notifications.length - unreadCount;
@@ -176,6 +189,7 @@ export function OwnerNotificationsPanel({
       title: "",
       message: "",
     });
+    setRecipientSearchQuery("");
   };
 
   const toggleRecipient = (userId: string) => {
@@ -593,6 +607,16 @@ export function OwnerNotificationsPanel({
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <Label htmlFor="recipient-search">Search Users</Label>
+                <Input
+                  id="recipient-search"
+                  value={recipientSearchQuery}
+                  onChange={(event) => setRecipientSearchQuery(event.target.value)}
+                  placeholder="Search buyers or sellers by name"
+                />
+              </div>
+
               {!selectedDairyId ? (
                 <div className="rounded-lg border border-dashed px-4 py-4 text-sm text-muted-foreground">
                   Choose a dairy first to load buyers and sellers.
@@ -605,11 +629,13 @@ export function OwnerNotificationsPanel({
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-foreground">Buyers</p>
-                    <div className="max-h-52 space-y-2 overflow-y-auto rounded-lg border p-2 sm:p-3">
+                    <div className="max-h-64 space-y-2 overflow-y-auto rounded-lg border p-2 sm:p-3">
                       {buyers.length === 0 ? (
                         <p className="text-sm text-muted-foreground">No buyers found.</p>
+                      ) : filteredBuyers.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No buyers match your search.</p>
                       ) : (
-                        buyers.map((buyer) => {
+                        filteredBuyers.map((buyer) => {
                           const value = String(buyer.id);
                           const isSelected = form.userIds.includes(value);
 
@@ -631,11 +657,13 @@ export function OwnerNotificationsPanel({
 
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-foreground">Sellers</p>
-                    <div className="max-h-52 space-y-2 overflow-y-auto rounded-lg border p-2 sm:p-3">
+                    <div className="max-h-64 space-y-2 overflow-y-auto rounded-lg border p-2 sm:p-3">
                       {sellers.length === 0 ? (
                         <p className="text-sm text-muted-foreground">No sellers found.</p>
+                      ) : filteredSellers.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No sellers match your search.</p>
                       ) : (
-                        sellers.map((seller) => {
+                        filteredSellers.map((seller) => {
                           const value = String(seller.id);
                           const isSelected = form.userIds.includes(value);
 
