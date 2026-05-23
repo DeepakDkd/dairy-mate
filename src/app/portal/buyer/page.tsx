@@ -4,6 +4,7 @@ import { getServerActionUser } from "@/fetchers/user/action";
 import { getBuyerPortalHistory } from "@/lib/party-history";
 import { PortalAccountHistoryTable } from "@/components/portal/portal-account-history-table";
 import { PortalAccountActions } from "@/components/portal/portal-account-actions";
+import { BalanceHelpTooltip } from "@/components/portal/balance-help-tooltip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const formatMoney = (value: number) => `Rs ${Number(value).toLocaleString("en-IN")}`;
@@ -27,6 +28,12 @@ export default async function BuyerPortalPage() {
   const currentBalance = data.buyer.accountBalance?.currentBalance ?? 0;
   const balanceLabel =
     currentBalance > 0 ? "Amount to pay" : currentBalance < 0 ? "Advance in account" : "Settled";
+  const balanceHelpText =
+    currentBalance > 0
+      ? "You still need to pay this amount to the dairy."
+      : currentBalance < 0
+        ? "You have already paid extra. This amount is kept as advance in your account."
+        : "Your account is settled. No payment is pending right now.";
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
@@ -45,7 +52,10 @@ export default async function BuyerPortalPage() {
 
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm text-muted-foreground">Current Balance</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-sm text-muted-foreground">
+            Current Balance
+            <BalanceHelpTooltip content={balanceHelpText} />
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-2xl font-bold">{formatMoney(Math.abs(currentBalance))}</p>

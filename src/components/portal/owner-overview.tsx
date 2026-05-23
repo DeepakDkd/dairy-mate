@@ -21,6 +21,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Table,
   TableBody,
   TableCell,
@@ -134,24 +140,38 @@ function OwnerOverview({overview:initialOverview }:any) {
       value: formatMoney(totals?.monthlySellerAmount),
       detail: `Milk amount payable in ${overview?.monthLabel ?? "this month"}`,
       icon: Banknote,
+      helpText: `This is the total milk purchase amount for ${overview?.monthLabel ?? "the selected month"}. It shows what you owe sellers for recorded milk entries before any separate balance context.`,
     },
     {
       title: "Seller Balance",
       value: formatMoney(totals?.sellerBalance),
       detail: "Current seller account balance",
       icon: Users,
+      helpText:
+        totals?.sellerBalance > 0
+          ? "Sellers still need to receive this amount from you overall."
+          : totals?.sellerBalance < 0
+            ? "You have already paid sellers this much in advance overall."
+            : "Seller accounts are currently settled overall.",
     },
     {
       title: "Buyer Sales",
       value: formatMoney(totals?.monthlyBuyerAmount),
       detail: `Milk amount billed in ${overview?.monthLabel ?? "this month"}`,
       icon: Wallet,
+      helpText: `This is the total milk amount billed to buyers in ${overview?.monthLabel ?? "the selected month"}.`,
     },
     {
       title: "Buyer Balance",
       value: formatMoney(totals?.buyerBalance),
       detail: "Current buyer account balance",
       icon: CalendarDays,
+      helpText:
+        totals?.buyerBalance > 0
+          ? "Buyers still need to pay you this amount overall."
+          : totals?.buyerBalance < 0
+            ? "Buyers have already paid this much in advance overall."
+            : "Buyer accounts are currently settled overall.",
     },
   ];
 
@@ -201,25 +221,34 @@ function OwnerOverview({overview:initialOverview }:any) {
       </div>
 
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {financeCards.map((card) => {
           const Icon = card.icon;
 
           return (
-            <Card key={card.title} className="border shadow-sm">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between gap-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {card.title}
-                  </CardTitle>
-                  <Icon className="h-5 w-5 text-primary" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{card.value}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{card.detail}</p>
-              </CardContent>
-            </Card>
+            <TooltipProvider key={card.title}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Card className="border shadow-sm transition-shadow hover:shadow-md">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">
+                          {card.title}
+                        </CardTitle>
+                        <Icon className="h-5 w-5 text-primary" />
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-bold">{card.value}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">{card.detail}</p>
+                    </CardContent>
+                  </Card>
+                </TooltipTrigger>
+                <TooltipContent side="top" sideOffset={8} className="max-w-72 leading-relaxed">
+                  {card.helpText}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           );
         })}
       </div>
