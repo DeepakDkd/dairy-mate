@@ -3,9 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation"; 
 import { getServerActionUser } from "@/fetchers/user/action";
 import { getOwnerPortalOverview } from "@/lib/owner-dairies"; 
-import { OwnerNotificationsPanel } from "@/components/portal/owner-notifications-panel";
 import OwnerOverview from "@/components/portal/owner-overview";
-import { OwnerRemindersPanel } from "@/components/portal/owner-reminders-panel";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
  
 export default async function OwnerPortalPage() {
@@ -53,8 +52,41 @@ export default async function OwnerPortalPage() {
       <OwnerOverview  overview={overview} />
     }
 
-    <OwnerNotificationsPanel />
-    <OwnerRemindersPanel />
+    <div className="grid gap-4 md:grid-cols-2">
+      <Card className="border shadow-sm">
+        <CardHeader>
+          <CardTitle>User Notifications</CardTitle>
+          <CardDescription>
+            Open the full notifications workspace to send portal messages and review recent delivery activity.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link
+            href="/portal/owner/notifications"
+            className="font-medium text-primary hover:underline"
+          >
+            Manage notifications
+          </Link>
+        </CardContent>
+      </Card>
+
+      <Card className="border shadow-sm">
+        <CardHeader>
+          <CardTitle>Owner Reminders</CardTitle>
+          <CardDescription>
+            Keep payment follow-ups, month-close work, and manual reminders in a dedicated view.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Link
+            href="/portal/owner/reminders"
+            className="font-medium text-primary hover:underline"
+          >
+            Manage reminders
+          </Link>
+        </CardContent>
+      </Card>
+    </div>
  
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { Bell, ChevronDown, ChevronUp, Loader2, Plus, Send, Trash2 } from "lucide-react";
+import { Bell, Loader2, Plus, Send, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
@@ -35,7 +35,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 const fetcher = (url: string) => fetch(url).then((response) => response.json());
-const DEFAULT_VISIBLE_NOTIFICATIONS = 3;
 
 type NotificationType = "PAYMENT_RECEIVED" | "PAYMENT_SENT" | "MONTH_CLOSE" | "CUSTOM";
 type PersonOption = {
@@ -43,10 +42,12 @@ type PersonOption = {
   name: string;
   role: "BUYER" | "SELLER";
 };
+type NotificationReadFilter = "ALL" | "UNREAD" | "READ";
 
 interface OwnerNotificationsPanelProps {
   dairyId?: number;
   dairyName?: string;
+  hideHeader?: boolean;
 }
 
 function formatDateTime(value: string) {
@@ -75,12 +76,15 @@ function getTypeLabel(type: NotificationType) {
 export function OwnerNotificationsPanel({
   dairyId,
   dairyName,
+  hideHeader = false,
 }: OwnerNotificationsPanelProps) {
   const { data: session } = useSession();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isNotificationsExpanded, setIsNotificationsExpanded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [readFilter, setReadFilter] = useState<NotificationReadFilter>("ALL");
+  const [typeFilter, setTypeFilter] = useState<"ALL" | NotificationType>("ALL");
   const [form, setForm] = useState({
     dairyId: dairyId ? String(dairyId) : "",
     userIds: [] as string[],
@@ -140,13 +144,29 @@ export function OwnerNotificationsPanel({
   const selectedCount = form.userIds.length;
   const unreadCount = notifications.filter((notification: any) => !notification.isRead).length;
   const readCount = notifications.length - unreadCount;
-  const visibleNotifications = isNotificationsExpanded
-    ? notifications.slice(0, 8)
-    : notifications.slice(0, DEFAULT_VISIBLE_NOTIFICATIONS);
-  const hiddenNotificationsCount = Math.max(
-    0,
-    Math.min(notifications.length, 8) - DEFAULT_VISIBLE_NOTIFICATIONS
-  );
+  const filteredNotifications = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+
+    return notifications.filter((notification: any) => {
+      const fullName = `${notification.user.firstName} ${notification.user.lastName}`.toLowerCase();
+      const matchesQuery =
+        normalizedQuery.length === 0 ||
+        notification.title?.toLowerCase().includes(normalizedQuery) ||
+        notification.message?.toLowerCase().includes(normalizedQuery) ||
+        notification.dairy?.name?.toLowerCase().includes(normalizedQuery) ||
+        fullName.includes(normalizedQuery);
+
+      const matchesReadFilter =
+        readFilter === "ALL" ||
+        (readFilter === "READ" && notification.isRead) ||
+        (readFilter === "UNREAD" && !notification.isRead);
+
+      const matchesTypeFilter =
+        typeFilter === "ALL" || notification.type === typeFilter;
+
+      return matchesQuery && matchesReadFilter && matchesTypeFilter;
+    });
+  }, [notifications, readFilter, searchQuery, typeFilter]);
 
   const resetForm = () => {
     setForm({
@@ -196,8 +216,25 @@ export function OwnerNotificationsPanel({
         message: form.message,
       });
       const sentCount = Number(response.data?.sentCount ?? form.userIds.length);
+      const emailedCount = Number(response.data?.emailedCount ?? 0);
+      const emailSkippedCount = Number(response.data?.emailSkippedCount ?? 0);
+      const emailFailedCount = Number(response.data?.emailFailedCount ?? 0);
+      const notificationLabel =
+        sentCount === 1 ? "Notification sent to 1 user." : `Notifications sent to ${sentCount} users.`;
+      const emailParts = [];
+
+      if (emailedCount > 0) {
+        emailParts.push(`emailed ${emailedCount}`);
+      }
+      if (emailSkippedCount > 0) {
+        emailParts.push(`${emailSkippedCount} without email`);
+      }
+      if (emailFailedCount > 0) {
+        emailParts.push(`${emailFailedCount} email failed`);
+      }
+
       toast.success(
-        sentCount === 1 ? "Notification sent to 1 user." : `Notifications sent to ${sentCount} users.`
+        emailParts.length > 0 ? `${notificationLabel} ${emailParts.join(", ")}.` : notificationLabel
       );
       resetForm();
       setIsDialogOpen(false);
@@ -230,20 +267,39 @@ export function OwnerNotificationsPanel({
 
   return (
     <Card className="border shadow-sm">
-      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <CardTitle>
-            {dairyId ? `${dairyName ?? "Dairy"} Notifications` : "User Notifications"}
-          </CardTitle>
-          <CardDescription>
-            Send portal notifications to buyers and sellers and review recent messages.
-          </CardDescription>
-        </div>
-        <Button type="button" className="gap-2" onClick={() => setIsDialogOpen(true)}>
-          <Plus className="h-4 w-4" />
-          Send Notification
-        </Button>
-      </CardHeader>
+      {!hideHeader ? (
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <CardTitle>
+              {dairyId ? `${dairyName ?? "Dairy"} Notifications` : "User Notifications"}
+            </CardTitle>
+            <CardDescription>
+              Send portal notifications to buyers and sellers and review recent messages.
+            </CardDescription>
+          </div>
+          <Button
+            type="button"
+            className="w-full gap-2 sm:w-auto"
+            onClick={() => setIsDialogOpen(true)}
+          >
+            <Plus className="h-4 w-4" />
+            Send Notification
+          </Button>
+        </CardHeader>
+      ) : (
+        <CardHeader className="pb-0">
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              className="w-full gap-2 sm:w-auto"
+              onClick={() => setIsDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+              Send Notification
+            </Button>
+          </div>
+        </CardHeader>
+      )}
       <CardContent>
         {notifications.length === 0 ? (
           <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
@@ -273,55 +329,99 @@ export function OwnerNotificationsPanel({
             </div>
 
             <div className="rounded-xl border bg-muted/20">
-              <div className="flex flex-col gap-3 border-b px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-4 border-b px-4 py-4">
                 <div>
-                  <p className="font-medium text-foreground">Recent Activity</p>
+                  <p className="font-medium text-foreground">All Notifications</p>
                   <p className="text-sm text-muted-foreground">
-                    Newest first. Showing the latest updates without stretching the page.
+                    Filter the fetched list locally by user name, message, type, or read status.
                   </p>
                 </div>
-                {notifications.length > DEFAULT_VISIBLE_NOTIFICATIONS ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => setIsNotificationsExpanded((current) => !current)}
-                  >
-                    {isNotificationsExpanded ? (
-                      <>
-                        <ChevronUp className="h-4 w-4" />
-                        Collapse
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="h-4 w-4" />
-                        View {hiddenNotificationsCount} More
-                      </>
-                    )}
-                  </Button>
-                ) : null}
+
+                <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_200px]">
+                  <div className="space-y-2">
+                    <Label htmlFor="notification-search">Search</Label>
+                    <Input
+                      id="notification-search"
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      placeholder="Search by user, title, or message"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Type</Label>
+                    <Select
+                      value={typeFilter}
+                      onValueChange={(value) => setTypeFilter(value as "ALL" | NotificationType)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="All types" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">All types</SelectItem>
+                        <SelectItem value="CUSTOM">Custom</SelectItem>
+                        <SelectItem value="PAYMENT_RECEIVED">Payment Received</SelectItem>
+                        <SelectItem value="PAYMENT_SENT">Payment Sent</SelectItem>
+                        <SelectItem value="MONTH_CLOSE">Month Closed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <Select
+                      value={readFilter}
+                      onValueChange={(value) => setReadFilter(value as NotificationReadFilter)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="All statuses" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">All statuses</SelectItem>
+                        <SelectItem value="UNREAD">Unread</SelectItem>
+                        <SelectItem value="READ">Read</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+                  <p>
+                    Showing {filteredNotifications.length} of {notifications.length} notifications
+                  </p>
+                  {(searchQuery || readFilter !== "ALL" || typeFilter !== "ALL") ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setReadFilter("ALL");
+                        setTypeFilter("ALL");
+                      }}
+                    >
+                      Clear filters
+                    </Button>
+                  ) : null}
+                </div>
               </div>
 
-              <div
-                className={
-                  isNotificationsExpanded
-                    ? "max-h-[28rem] space-y-3 overflow-y-auto p-4"
-                    : "space-y-3 p-4"
-                }
-              >
-                {visibleNotifications.map((notification: any) => {
-                  const compactMessage =
-                    notification.message && notification.message.length > 120
-                      ? `${notification.message.slice(0, 120)}...`
-                      : notification.message;
-
+              <div className="space-y-3 p-4">
+                {filteredNotifications.length === 0 ? (
+                  <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
+                    No notifications match the current filters.
+                  </div>
+                ) : (
+                  filteredNotifications.map((notification: any) => {
                   return (
-                    <div key={notification.id} className="rounded-xl border bg-card px-4 py-3 shadow-sm">
+                    <div key={notification.id} className="rounded-xl border bg-card px-3 py-3 shadow-sm sm:px-4">
                       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                         <div className="min-w-0 space-y-2">
                           <div className="flex flex-wrap items-center gap-2">
-                            <h4 className="font-medium text-foreground">{notification.title}</h4>
+                            <h4 className="break-words font-medium text-foreground">
+                              {notification.title}
+                            </h4>
                             <Badge variant="outline">{getTypeLabel(notification.type)}</Badge>
                             {!dairyId ? (
                               <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
@@ -343,16 +443,14 @@ export function OwnerNotificationsPanel({
                             {notification.user.firstName} {notification.user.lastName} | {formatDateTime(notification.createdAt)}
                           </p>
                           {notification.message ? (
-                            <p className="text-sm text-foreground/90">
-                              {isNotificationsExpanded ? notification.message : compactMessage}
-                            </p>
+                            <p className="break-words text-sm text-foreground/90">{notification.message}</p>
                           ) : null}
                         </div>
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
-                          className="gap-2"
+                          className="w-full gap-2 sm:w-auto"
                           disabled={deletingId === notification.id}
                           onClick={() => handleDelete(notification.id)}
                         >
@@ -366,7 +464,8 @@ export function OwnerNotificationsPanel({
                       </div>
                     </div>
                   );
-                })}
+                  })
+                )}
               </div>
             </div>
           </div>
@@ -374,7 +473,7 @@ export function OwnerNotificationsPanel({
       </CardContent>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Send Notification</DialogTitle>
             <DialogDescription>
@@ -444,13 +543,14 @@ export function OwnerNotificationsPanel({
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline">
+                  <Badge variant="outline" className="w-full justify-center sm:w-auto">
                     {selectedCount === 1 ? "1 recipient selected" : `${selectedCount} recipients selected`}
                   </Badge>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
+                    className="flex-1 sm:flex-none"
                     disabled={!buyers.length}
                     onClick={() =>
                       replaceRecipients([
@@ -467,6 +567,7 @@ export function OwnerNotificationsPanel({
                     type="button"
                     variant="outline"
                     size="sm"
+                    className="flex-1 sm:flex-none"
                     disabled={!sellers.length}
                     onClick={() =>
                       replaceRecipients([
@@ -483,6 +584,7 @@ export function OwnerNotificationsPanel({
                     type="button"
                     variant="ghost"
                     size="sm"
+                    className="w-full sm:w-auto"
                     disabled={selectedCount === 0}
                     onClick={() => replaceRecipients([])}
                   >
@@ -503,7 +605,7 @@ export function OwnerNotificationsPanel({
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-foreground">Buyers</p>
-                    <div className="max-h-52 space-y-2 overflow-y-auto rounded-lg border p-3">
+                    <div className="max-h-52 space-y-2 overflow-y-auto rounded-lg border p-2 sm:p-3">
                       {buyers.length === 0 ? (
                         <p className="text-sm text-muted-foreground">No buyers found.</p>
                       ) : (
@@ -516,7 +618,7 @@ export function OwnerNotificationsPanel({
                               key={`buyer-${buyer.id}`}
                               type="button"
                               variant={isSelected ? "default" : "outline"}
-                              className="w-full justify-start"
+                              className="w-full justify-start whitespace-normal text-left"
                               onClick={() => toggleRecipient(value)}
                             >
                               {buyer.name}
@@ -529,7 +631,7 @@ export function OwnerNotificationsPanel({
 
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-foreground">Sellers</p>
-                    <div className="max-h-52 space-y-2 overflow-y-auto rounded-lg border p-3">
+                    <div className="max-h-52 space-y-2 overflow-y-auto rounded-lg border p-2 sm:p-3">
                       {sellers.length === 0 ? (
                         <p className="text-sm text-muted-foreground">No sellers found.</p>
                       ) : (
@@ -542,7 +644,7 @@ export function OwnerNotificationsPanel({
                               key={`seller-${seller.id}`}
                               type="button"
                               variant={isSelected ? "default" : "outline"}
-                              className="w-full justify-start"
+                              className="w-full justify-start whitespace-normal text-left"
                               onClick={() => toggleRecipient(value)}
                             >
                               {seller.name}
@@ -585,11 +687,17 @@ export function OwnerNotificationsPanel({
               />
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSubmitting}>
+            <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full sm:w-auto"
+                onClick={() => setIsDialogOpen(false)}
+                disabled={isSubmitting}
+              >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="gap-2">
+              <Button type="submit" disabled={isSubmitting} className="w-full gap-2 sm:w-auto">
                 {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 {isSubmitting ? "Sending..." : "Send Notification"}
               </Button>

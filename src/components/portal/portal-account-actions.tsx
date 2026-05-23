@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname, useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import toast from "react-hot-toast";
 import useSWR from "swr";
@@ -17,11 +18,12 @@ type PortalNotificationsResponse = {
 };
 
 export function PortalAccountActions({
-  notificationsTargetId = "portal-notifications",
 }: {
   notificationsTargetId?: string;
 }) {
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
   const { data, isLoading } = useSWR<PortalNotificationsResponse>(
     "/api/portal/notifications",
     fetcher,
@@ -34,13 +36,14 @@ export function PortalAccountActions({
   const unreadBadgeLabel = unreadCount > 99 ? "99+" : String(unreadCount);
   const unreadButtonLabel =
     unreadCount > 0 ? `${unreadCount} unread notifications` : "Notifications";
+  const notificationsHref = pathname.startsWith("/portal/seller")
+    ? "/portal/seller/notifications"
+    : "/portal/buyer/notifications";
 
   const handleNotificationsClick = () => {
-    const target = document.getElementById(notificationsTargetId);
-    if (!target) return;
-
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
-    target.focus({ preventScroll: true });
+    if (pathname !== notificationsHref) {
+      router.push(notificationsHref);
+    }
   };
 
   return (

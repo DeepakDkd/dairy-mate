@@ -84,11 +84,11 @@ export function UserNotificationsPanel({
         </div>
         <Badge
           variant="outline"
-          className={
+          className={`w-full justify-center sm:w-auto ${
             unreadCount > 0
               ? "border-amber-200 bg-amber-50 text-amber-700"
               : "border-emerald-200 bg-emerald-50 text-emerald-700"
-          }
+          }`}
         >
           {unreadLabel}
         </Badge>
@@ -101,11 +101,11 @@ export function UserNotificationsPanel({
         ) : (
           <div className="space-y-3">
             {notifications.map((notification: any) => (
-              <div key={notification.id} className="rounded-xl border bg-card px-4 py-3 shadow-sm">
+              <div key={notification.id} className="rounded-xl border bg-card px-3 py-3 shadow-sm sm:px-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="space-y-2">
+                  <div className="min-w-0 space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h4 className="font-medium text-foreground">{notification.title}</h4>
+                      <h4 className="break-words font-medium text-foreground">{notification.title}</h4>
                       <Badge
                         variant="outline"
                         className={
@@ -122,7 +122,7 @@ export function UserNotificationsPanel({
                       {formatDateTime(notification.createdAt)}
                     </p>
                     {notification.message ? (
-                      <p className="text-sm text-foreground/90">{notification.message}</p>
+                      <p className="break-words text-sm text-foreground/90">{notification.message}</p>
                     ) : null}
                   </div>
                   {!notification.isRead ? (
@@ -130,7 +130,7 @@ export function UserNotificationsPanel({
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="gap-2"
+                      className="w-full gap-2 sm:w-auto"
                       disabled={updatingId === notification.id}
                       onClick={() => handleMarkRead(notification.id)}
                     >

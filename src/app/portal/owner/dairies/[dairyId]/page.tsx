@@ -9,8 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { OwnerNotificationsPanel } from "@/components/portal/owner-notifications-panel";
-import { OwnerRemindersPanel } from "@/components/portal/owner-reminders-panel";
 import { getServerActionUser } from "@/fetchers/user/action";
 import { getOwnedDairy } from "@/lib/owner-dairies";
 
@@ -49,6 +47,20 @@ export default async function DairyOverviewPage({
   }
 
   const sections = [
+    {
+      title: "Notifications",
+      description: "Open the dairy-specific notifications workspace for this dairy.",
+      href: `/portal/owner/dairies/${dairy.id}/notifications`,
+      icon: NotebookPen,
+      value: "Messages",
+    },
+    {
+      title: "Reminders",
+      description: "Open the dairy-specific reminders workspace for this dairy.",
+      href: `/portal/owner/dairies/${dairy.id}/reminders`,
+      icon: NotebookPen,
+      value: "Tasks",
+    },
     {
       title: "Sellers",
       description: "Manage seller roster, balances, and recent milk collections.",
@@ -116,9 +128,6 @@ export default async function DairyOverviewPage({
           </div>
         </CardHeader>
       </Card>
-
-      <OwnerNotificationsPanel dairyId={dairy.id} dairyName={dairy.name} />
-      <OwnerRemindersPanel dairyId={dairy.id} dairyName={dairy.name} />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {sections.map((section) => {

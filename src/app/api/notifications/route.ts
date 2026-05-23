@@ -8,6 +8,7 @@ import {
   requireOwnedDairy,
 } from "@/lib/api-access";
 import { authOptions } from "@/lib/auth";
+import { sendNotificationEmails } from "@/lib/notification-emails";
 import { createUserNotifications } from "@/lib/notifications";
 import prisma from "@/lib/prisma";
 
@@ -119,6 +120,20 @@ export async function POST(request: Request) {
       },
       select: {
         id: true,
+        firstName: true,
+        email: true,
+        role: true,
+        dairy: {
+          select: {
+            name: true,
+            email: true,
+            owner: {
+              select: {
+                email: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -135,10 +150,33 @@ export async function POST(request: Request) {
       message,
       actionUrl,
     });
-
+    let emailSummary = {
+      emailedCount: 0,
+      emailSkippedCount: users.length,
+      emailFailedCount: 0,
+    };
+    try {
+      const primaryDairy = users[0]?.dairy;
+      const emailResult = await sendNotificationEmails({
+        dairyName: primaryDairy?.name ?? "Your dairy",
+        replyToEmail: primaryDairy?.email ?? primaryDairy?.owner?.email ?? undefined,
+        title,
+        message,
+        actionUrl,
+        recipients: users,
+      });
+      emailSummary = {
+        emailedCount: emailResult.sentCount,
+        emailSkippedCount: emailResult.skippedCount,
+        emailFailedCount: emailResult.failedCount ?? 0,
+      };
+    } catch (emailError) {
+      console.error("Failed to send email notification:", emailError);
+    }
     return NextResponse.json(
       {
         sentCount: result.count,
+        ...emailSummary,
       },
       { status: 201 }
     );

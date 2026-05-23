@@ -1,3 +1,9 @@
+## Client Guide
+
+For a client-facing usage guide, see [CLIENT_USER_MANUAL.md](./CLIENT_USER_MANUAL.md).
+
+## Project Setup
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

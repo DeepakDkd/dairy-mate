@@ -73,6 +73,7 @@ type DairyOption = {
 interface OwnerRemindersPanelProps {
   dairyId?: number;
   dairyName?: string;
+  hideHeader?: boolean;
 }
 
 function getTodayWindow() {
@@ -117,6 +118,7 @@ function getTypeLabel(type: ReminderType) {
 export function OwnerRemindersPanel({
   dairyId,
   dairyName,
+  hideHeader = false,
 }: OwnerRemindersPanelProps) {
   const { data: session } = useSession();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -431,20 +433,29 @@ export function OwnerRemindersPanel({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-foreground">
-            {dairyId ? `${dairyName ?? "Dairy"} Reminders` : "Owner Reminders"}
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Track upcoming payment follow-ups, month-close work, and manual notes.
-          </p>
+      {!hideHeader ? (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-foreground">
+              {dairyId ? `${dairyName ?? "Dairy"} Reminders` : "Owner Reminders"}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Track upcoming payment follow-ups, month-close work, and manual notes.
+            </p>
+          </div>
+          <Button type="button" className="gap-2" onClick={() => setIsDialogOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Add Reminder
+          </Button>
         </div>
-        <Button type="button" className="gap-2" onClick={() => setIsDialogOpen(true)}>
-          <Plus className="h-4 w-4" />
-          Add Reminder
-        </Button>
-      </div>
+      ) : (
+        <div className="flex justify-end">
+          <Button type="button" className="gap-2" onClick={() => setIsDialogOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Add Reminder
+          </Button>
+        </div>
+      )}
 
       <div className="grid gap-4 xl:grid-cols-2">
         {renderGroup(
