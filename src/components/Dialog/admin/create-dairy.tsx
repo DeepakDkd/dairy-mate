@@ -7,61 +7,45 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useForm } from "react-hook-form"
 import toast from "react-hot-toast"
-import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import axios from "axios"
 import { Loader2 } from "lucide-react"
+import { CreateDairyInput, CreateDairySchema } from "@/lib/validators/dairy"
 
-interface AddSellerDialogProps {
+interface CreateDairyDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  userId?: number | undefined
 }
 
-
-const DairySchema = z.object({
-  dairyName: z.string().optional(),
-  dairyAddress: z.string().optional(),
-  dairyEmail: z.string().optional(),
-  dairyPhone: z.string().optional(),
-  dairyMode: z.enum(["FAT_LR", "MAWA"]).optional(),
-})
-
-type DairyFormData = z.infer<typeof DairySchema>
-
-export default function CreateDairyDialog({ open, onOpenChange, userId }: AddSellerDialogProps) {
+export default function CreateDairyDialog({ open, onOpenChange }: CreateDairyDialogProps) {
   const {
     register,
     handleSubmit,
     reset,
     setValue,
     formState: { errors, isSubmitting }
-  } = useForm<DairyFormData>({
-    resolver: zodResolver(DairySchema),
-
+  } = useForm<CreateDairyInput>({
+    resolver: zodResolver(CreateDairySchema),
+    defaultValues: {
+      dairyName: "",
+      dairyAddress: "",
+      dairyEmail: "",
+      dairyPhone: "",
+    },
   })
-  const onSubmit = async (data: DairyFormData) => {
+  const onSubmit = async (data: CreateDairyInput) => {
     if (isSubmitting) {
       return;
     }
 
     try {
-      console.log("userId in CreateDairyDialog:", userId);
-
-      const res = await axios.post("/api/dairies/create", {
-        ...data,
-        createdById: userId
-      });
-      console.log("Submitting:", data)
-      // TODO: call your API
-      // await fetch("/api/sellers", { method: "POST", body: JSON.stringify(finalData) })
-
+      await axios.post("/api/dairies/create", data);
       toast.success("Dairy created successfully")
       reset()
       onOpenChange(false)
-    } catch (error) {
+    } catch (error: any) {
       console.error(error)
-      toast.error("Failed to create dairy")
+      toast.error(error?.response?.data?.message || "Failed to create dairy")
     }
   }
 
@@ -110,7 +94,12 @@ export default function CreateDairyDialog({ open, onOpenChange, userId }: AddSel
             <Label>Pricing Mode*</Label>
             <Select
               disabled={isSubmitting}
-              onValueChange={(v) => setValue("dairyMode", v as any)}
+              onValueChange={(v) =>
+                setValue("dairyMode", v as CreateDairyInput["dairyMode"], {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select pricing mode" />

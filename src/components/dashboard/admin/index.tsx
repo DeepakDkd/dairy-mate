@@ -6,10 +6,6 @@ import { OverviewCards } from "./overview-cards";
 import { ChartsSection } from "./charts-section";
 import { RecentTransactionsTable } from "./transactions-table";
 import { AdminDashboardProps } from "@/types/admin-dashboard";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import CreateDairyDialog from "@/components/Dialog/admin/create-dairy";
-import toast from "react-hot-toast";
 import useSWR from "swr";
 
 
@@ -25,12 +21,11 @@ const fecher = async (url: string) => {
 
 function AdminDashboard({ user }: AdminDashboardProps) {
   const [timeFilter, setTimeFilter] = useState("This Month")
-  const [showCreateDairy, setShowCreateDairy] = useState(false);
   const greeting = useGreeting(user)
   console.log("user in AdminDashboard:", user);
 
 
-  const { data, isLoading } = useSWR(`/api/owner/${user?.id}/milk-collection`, fecher, { revalidateOnFocus: false });
+  const { data } = useSWR(`/api/owner/${user?.id}/milk-collection`, fecher, { revalidateOnFocus: false });
   console.log("Admin dashboard milk collection data:", data);
   
 
@@ -43,10 +38,6 @@ function AdminDashboard({ user }: AdminDashboardProps) {
           <h1 className="text-3xl font-bold text-foreground">{greeting}</h1>
           <p className="text-muted-foreground mt-1 ">Here&apos;s your dairy summary.</p>
         </div>
-        <Button onClick={() => setShowCreateDairy(true)} className="bg-primary hover:bg-primary/90 cursor-pointer text-white  gap-2">
-          <Plus className="w-4 h-4" />
-          Create Dairy
-        </Button>
       </div>
 
       {/* Filter Section */}
@@ -60,7 +51,6 @@ function AdminDashboard({ user }: AdminDashboardProps) {
 
       {/* Recent Transactions */}
       <RecentTransactionsTable timeFilter={timeFilter} />
-      <CreateDairyDialog open={showCreateDairy} onOpenChange={setShowCreateDairy} userId={user?.id} />
     </div>
   );
 }

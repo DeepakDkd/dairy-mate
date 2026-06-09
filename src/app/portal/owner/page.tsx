@@ -5,6 +5,7 @@ import { getServerActionUser } from "@/fetchers/user/action";
 import { getOwnerPortalOverview } from "@/lib/owner-dairies"; 
 import OwnerOverview from "@/components/portal/owner-overview";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CreateDairyButton } from "@/components/portal/create-dairy-button";
 
  
 export default async function OwnerPortalPage() {
@@ -39,12 +40,15 @@ export default async function OwnerPortalPage() {
             Overall information for every dairy connected to your owner account.
           </p>
         </div>
-        <Link
-          href="/portal/owner/dairies"
-          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          View Dairies
-        </Link>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <CreateDairyButton />
+          <Link
+            href="/portal/owner/dairies"
+            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          >
+            View Dairies
+          </Link>
+        </div>
       </div>
 
     {

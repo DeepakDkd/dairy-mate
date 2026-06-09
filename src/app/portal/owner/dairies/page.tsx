@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { CreateDairyButton } from "@/components/portal/create-dairy-button";
 
 export default async function OwnerDairiesPage() {
   const user = await getServerActionUser();
@@ -32,10 +33,15 @@ export default async function OwnerDairiesPage() {
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
       <div>
-        <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Owner Portal</h1>
-        <p className="mt-1 text-muted-foreground">
-          This route tree mirrors the new structure without touching your current dashboard pages.
-        </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Owner Portal</h1>
+            <p className="mt-1 text-muted-foreground">
+              Manage your dairies from the portal.
+            </p>
+          </div>
+          <CreateDairyButton />
+        </div>
       </div>
 
       {dairies.length === 0 ? (
@@ -43,7 +49,7 @@ export default async function OwnerDairiesPage() {
           <CardHeader>
             <CardTitle>No dairies yet</CardTitle>
             <CardDescription>
-              Create your first dairy from the existing dashboard flow, then it will appear here automatically.
+              Create your first dairy here to start using the owner portal.
             </CardDescription>
           </CardHeader>
         </Card>
