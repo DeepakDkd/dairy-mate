@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { BellRing, CheckCircle2, Clock3, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { BellRing, CheckCircle2, Clock3, Plus, RotateCcw, Trash2, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
@@ -33,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { getMonthValue } from "@/utils/month";
 
 const fetcher = (url: string) => fetch(url).then((response) => response.json());
 
@@ -85,15 +86,6 @@ function getTodayWindow() {
   return { start, end };
 }
 
-function getDueDateValue(value: string) {
-  const date = new Date(value);
-  return [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, "0"),
-    String(date.getDate()).padStart(2, "0"),
-  ].join("-");
-}
-
 function formatDueDate(value: string) {
   return new Date(value).toLocaleDateString("en-IN", {
     day: "2-digit",
@@ -102,18 +94,53 @@ function formatDueDate(value: string) {
   });
 }
 
-function getTypeLabel(type: ReminderType) {
+function getTypeBadge(type: ReminderType) {
   switch (type) {
     case "BUYER_PAYMENT":
-      return "Buyer Payment";
+      return (
+        <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 font-semibold dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/50">
+          Buyer Payment
+        </Badge>
+      );
     case "SELLER_PAYMENT":
-      return "Seller Payment";
+      return (
+        <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 font-semibold dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-900/50">
+          Seller Payment
+        </Badge>
+      );
     case "MONTH_CLOSE":
-      return "Month Close";
+      return (
+        <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700 font-semibold dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900/50">
+          Month Close
+        </Badge>
+      );
     default:
-      return "Custom";
+      return (
+        <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-700 font-semibold dark:bg-slate-900/30 dark:text-slate-400 dark:border-slate-800/50">
+          Custom
+        </Badge>
+      );
   }
 }
+
+// Helpers for Month navigation
+const getPreviousMonthString = (monthString: string): string => {
+  if (!monthString || !monthString.includes("-")) return getMonthValue();
+  const [year, month] = monthString.split("-").map(Number);
+  const date = new Date(year, month - 2, 1);
+  const prevYear = date.getFullYear();
+  const prevMonth = String(date.getMonth() + 1).padStart(2, "0");
+  return `${prevYear}-${prevMonth}`;
+};
+
+const getNextMonthString = (monthString: string): string => {
+  if (!monthString || !monthString.includes("-")) return getMonthValue();
+  const [year, month] = monthString.split("-").map(Number);
+  const date = new Date(year, month, 1);
+  const nextYear = date.getFullYear();
+  const nextMonth = String(date.getMonth() + 1).padStart(2, "0");
+  return `${nextYear}-${nextMonth}`;
+};
 
 export function OwnerRemindersPanel({
   dairyId,
@@ -124,6 +151,16 @@ export function OwnerRemindersPanel({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionReminderId, setActionReminderId] = useState<number | null>(null);
+
+  // Filters & Pagination States
+  const defaultMonth = getMonthValue();
+  const [selectedMonth, setSelectedMonth] = useState(defaultMonth);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState<"ALL" | ReminderType>("ALL");
+  const [activeTab, setActiveTab] = useState<"TODAY" | "OVERDUE" | "UPCOMING" | "DONE">("TODAY");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   const [form, setForm] = useState({
     dairyId: dairyId ? String(dairyId) : "",
     type: "CUSTOM" as ReminderType,
@@ -138,12 +175,15 @@ export function OwnerRemindersPanel({
     if (dairyId) {
       params.set("dairyId", String(dairyId));
     }
-
+    if (selectedMonth) {
+      params.set("month", selectedMonth);
+    }
     return `/api/reminders${params.toString() ? `?${params.toString()}` : ""}`;
-  }, [dairyId]);
+  }, [dairyId, selectedMonth]);
 
-  const { data, error, mutate } = useSWR(reminderUrl, fetcher, {
+  const { data, error, mutate, isLoading } = useSWR(reminderUrl, fetcher, {
     revalidateOnFocus: false,
+    keepPreviousData: true,
   });
 
   const dairiesUrl = session?.user?.id && !dairyId
@@ -173,6 +213,11 @@ export function OwnerRemindersPanel({
     }
   }, [dairyId]);
 
+  // Reset pagination index when filters adapt
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, typeFilter, activeTab, selectedMonth]);
+
   const reminders: ReminderRow[] = data?.reminders ?? [];
   const dairies: DairyOption[] =
     dairiesData?.dairies?.map((item: any) => ({
@@ -184,17 +229,16 @@ export function OwnerRemindersPanel({
     if (form.type === "BUYER_PAYMENT") {
       return reminderOptions?.buyers ?? [];
     }
-
     if (form.type === "SELLER_PAYMENT") {
       return reminderOptions?.sellers ?? [];
     }
-
     return [
       ...(reminderOptions?.buyers ?? []),
       ...(reminderOptions?.sellers ?? []),
     ];
   }, [form.type, reminderOptions]);
 
+  // Group fetched list locally based on dates and status
   const groupedReminders = useMemo(() => {
     const { start, end } = getTodayWindow();
 
@@ -202,13 +246,30 @@ export function OwnerRemindersPanel({
       (groups, reminder) => {
         const dueDate = new Date(reminder.dueDate);
 
+        // Apply Search & Type filters
+        const normalizedQuery = searchQuery.trim().toLowerCase();
+        const matchesQuery =
+          normalizedQuery.length === 0 ||
+          reminder.title?.toLowerCase().includes(normalizedQuery) ||
+          reminder.message?.toLowerCase().includes(normalizedQuery) ||
+          reminder.dairy?.name?.toLowerCase().includes(normalizedQuery) ||
+          (reminder.targetUser &&
+            `${reminder.targetUser.firstName} ${reminder.targetUser.lastName}`
+              .toLowerCase()
+              .includes(normalizedQuery));
+
+        const matchesType = typeFilter === "ALL" || reminder.type === typeFilter;
+
+        if (!matchesQuery || !matchesType) {
+          return groups;
+        }
+
         if (reminder.status === "DONE") {
           groups.done.push(reminder);
           return groups;
         }
 
         if (reminder.status === "DISMISSED") {
-          groups.dismissed.push(reminder);
           return groups;
         }
 
@@ -227,10 +288,42 @@ export function OwnerRemindersPanel({
         today: [] as ReminderRow[],
         upcoming: [] as ReminderRow[],
         done: [] as ReminderRow[],
-        dismissed: [] as ReminderRow[],
       }
     );
+  }, [reminders, searchQuery, typeFilter]);
+
+  // Set default tab based on items availability
+  useEffect(() => {
+    if (groupedReminders.today.length > 0) {
+      setActiveTab("TODAY");
+    } else if (groupedReminders.overdue.length > 0) {
+      setActiveTab("OVERDUE");
+    } else if (groupedReminders.upcoming.length > 0) {
+      setActiveTab("UPCOMING");
+    }
   }, [reminders]);
+
+  const activeRemindersList = useMemo(() => {
+    switch (activeTab) {
+      case "OVERDUE":
+        return groupedReminders.overdue;
+      case "UPCOMING":
+        return groupedReminders.upcoming;
+      case "DONE":
+        return groupedReminders.done;
+      default:
+        return groupedReminders.today;
+    }
+  }, [activeTab, groupedReminders]);
+
+  // Pagination Slice
+  const totalPages = Math.ceil(activeRemindersList.length / itemsPerPage);
+  const paginatedReminders = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return activeRemindersList.slice(startIndex, startIndex + itemsPerPage);
+  }, [activeRemindersList, currentPage]);
+
+  const isFiltered = searchQuery || typeFilter !== "ALL" || selectedMonth !== defaultMonth;
 
   const resetForm = () => {
     setForm({
@@ -246,9 +339,7 @@ export function OwnerRemindersPanel({
   const handleCreateReminder = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (isSubmitting) {
-      return;
-    }
+    if (isSubmitting) return;
 
     if (!form.dairyId || !form.dueDate || !form.title.trim()) {
       toast.error("Dairy, title, and due date are required.");
@@ -281,9 +372,7 @@ export function OwnerRemindersPanel({
     reminderId: number,
     action: "done" | "reopen" | "snooze" | "delete"
   ) => {
-    if (actionReminderId) {
-      return;
-    }
+    if (actionReminderId) return;
 
     try {
       setActionReminderId(reminderId);
@@ -322,181 +411,337 @@ export function OwnerRemindersPanel({
     }
   };
 
-  const renderGroup = (
-    title: string,
-    description: string,
-    items: ReminderRow[],
-    emptyText: string
-  ) => (
-    <Card className="border shadow-sm">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {items.length === 0 ? (
-          <div className="rounded-lg border border-dashed px-4 py-6 text-sm text-muted-foreground">
-            {emptyText}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {items.map((reminder) => {
-              const isBusy = actionReminderId === reminder.id;
-              const targetName = reminder.targetUser
-                ? `${reminder.targetUser.firstName} ${reminder.targetUser.lastName}`
-                : null;
-
-              return (
-                <div
-                  key={reminder.id}
-                  className="rounded-xl border bg-card px-4 py-3 shadow-sm"
-                >
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h4 className="font-medium text-foreground">{reminder.title}</h4>
-                        <Badge variant="outline">{getTypeLabel(reminder.type)}</Badge>
-                        {!dairyId ? (
-                          <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
-                            {reminder.dairy.name}
-                          </Badge>
-                        ) : null}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Due {formatDueDate(reminder.dueDate)}
-                        {targetName ? ` | ${targetName}` : ""}
-                      </p>
-                      {reminder.message ? (
-                        <p className="text-sm text-foreground/90">{reminder.message}</p>
-                      ) : null}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {reminder.status === "DONE" ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="gap-2"
-                          disabled={isBusy}
-                          onClick={() => handleReminderAction(reminder.id, "reopen")}
-                        >
-                          <RotateCcw className="h-4 w-4" />
-                          Reopen
-                        </Button>
-                      ) : (
-                        <>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="gap-2"
-                            disabled={isBusy}
-                            onClick={() => handleReminderAction(reminder.id, "done")}
-                          >
-                            <CheckCircle2 className="h-4 w-4" />
-                            Done
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="gap-2"
-                            disabled={isBusy}
-                            onClick={() => handleReminderAction(reminder.id, "snooze")}
-                          >
-                            <Clock3 className="h-4 w-4" />
-                            Snooze
-                          </Button>
-                        </>
-                      )}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="gap-2"
-                        disabled={isBusy}
-                        onClick={() => handleReminderAction(reminder.id, "delete")}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Header Panel */}
       {!hideHeader ? (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border/40 pb-4">
           <div>
             <h2 className="text-xl font-bold text-foreground">
               {dairyId ? `${dairyName ?? "Dairy"} Reminders` : "Owner Reminders"}
             </h2>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs text-muted-foreground mt-0.5">
               Track upcoming payment follow-ups, month-close work, and manual notes.
             </p>
           </div>
-          <Button type="button" className="gap-2" onClick={() => setIsDialogOpen(true)}>
+          <Button type="button" className="gap-2 cursor-pointer" onClick={() => setIsDialogOpen(true)}>
             <Plus className="h-4 w-4" />
             Add Reminder
           </Button>
         </div>
       ) : (
         <div className="flex justify-end">
-          <Button type="button" className="gap-2" onClick={() => setIsDialogOpen(true)}>
+          <Button type="button" className="gap-2 cursor-pointer" onClick={() => setIsDialogOpen(true)}>
             <Plus className="h-4 w-4" />
             Add Reminder
           </Button>
         </div>
       )}
 
-      <div className="grid gap-4 xl:grid-cols-2">
-        {renderGroup(
-          "Due Today",
-          "Reminders that need attention today.",
-          groupedReminders.today,
-          "No reminders due today."
-        )}
-        {renderGroup(
-          "Overdue",
-          "Pending reminders whose due date has already passed.",
-          groupedReminders.overdue,
-          "No overdue reminders."
-        )}
-        {renderGroup(
-          "Upcoming",
-          "Scheduled reminders for the coming days.",
-          groupedReminders.upcoming,
-          "No upcoming reminders."
-        )}
-        {renderGroup(
-          "Done",
-          "Completed reminders kept for quick reference.",
-          groupedReminders.done,
-          "No completed reminders yet."
-        )}
-      </div>
+      {/* Main Content Workspace Card */}
+      <Card className="border border-border/80 shadow-sm bg-card">
+        <CardContent className="pt-6 space-y-6">
+          
+          {/* SWR Loading Indicator */}
+          {isLoading && !data ? (
+            <div className="flex flex-col items-center justify-center py-16 space-y-3">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <span className="text-sm font-medium text-muted-foreground">Loading reminders...</span>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              
+              {/* Header Filters block */}
+              <div className="rounded-xl border border-border/60 bg-muted/10 p-4 space-y-4">
+                <div>
+                  <p className="font-bold text-foreground text-sm">Filters & Directory</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Isolate reminders by scheduled due month, type categories, or key text searches.
+                  </p>
+                </div>
 
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {/* Month Navigation */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="reminder-month" className="text-xs">Due Month</Label>
+                    <div className="flex items-center gap-1.5 bg-background border border-border rounded-lg p-1.5 h-10 shadow-sm">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedMonth(getPreviousMonthString(selectedMonth))}
+                        className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer"
+                        title="Previous Month"
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5" />
+                      </button>
+                      <Input
+                        id="reminder-month"
+                        type="month"
+                        value={selectedMonth}
+                        onChange={(event) => setSelectedMonth(event.target.value)}
+                        className="border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 w-full h-full p-0 text-center font-semibold text-xs cursor-pointer"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setSelectedMonth(getNextMonthString(selectedMonth))}
+                        className="p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground cursor-pointer"
+                        title="Next Month"
+                      >
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Text Search */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="reminder-search" className="text-xs">Search Text</Label>
+                    <Input
+                      id="reminder-search"
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      placeholder="Search title, name, message..."
+                      className="bg-background h-10"
+                    />
+                  </div>
+
+                  {/* Category Type */}
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Category</Label>
+                    <Select
+                      value={typeFilter}
+                      onValueChange={(value) => setTypeFilter(value as "ALL" | ReminderType)}
+                    >
+                      <SelectTrigger className="bg-background h-10">
+                        <SelectValue placeholder="All types" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ALL">All categories</SelectItem>
+                        <SelectItem value="BUYER_PAYMENT">Buyer Payments</SelectItem>
+                        <SelectItem value="SELLER_PAYMENT">Seller Payments</SelectItem>
+                        <SelectItem value="MONTH_CLOSE">Month Close Work</SelectItem>
+                        <SelectItem value="CUSTOM">Custom Notes</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between pt-1">
+                  <p>
+                    Showing {activeRemindersList.length} reminders under current status
+                  </p>
+                  {isFiltered ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="w-full sm:w-auto h-7 text-xs font-semibold cursor-pointer hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setTypeFilter("ALL");
+                        setSelectedMonth(defaultMonth);
+                      }}
+                    >
+                      Clear filters
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+
+              {/* Status Tab list Selector */}
+              <div className="flex flex-wrap gap-2 border-b border-border/40 pb-1">
+                {(["TODAY", "OVERDUE", "UPCOMING", "DONE"] as const).map((tab) => {
+                  const itemsCount =
+                    tab === "OVERDUE"
+                      ? groupedReminders.overdue.length
+                      : tab === "UPCOMING"
+                        ? groupedReminders.upcoming.length
+                        : tab === "DONE"
+                          ? groupedReminders.done.length
+                          : groupedReminders.today.length;
+
+                  const isSelected = activeTab === tab;
+
+                  return (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                        isSelected
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      }`}
+                    >
+                      {tab === "TODAY"
+                        ? `Today (${itemsCount})`
+                        : tab === "OVERDUE"
+                          ? `Overdue (${itemsCount})`
+                          : tab === "UPCOMING"
+                            ? `Upcoming (${itemsCount})`
+                            : `Completed (${itemsCount})`}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Reminders List rendering Paginated Slice */}
+              <div className="space-y-3">
+                {paginatedReminders.length === 0 ? (
+                  <div className="rounded-xl border border-dashed p-8 text-center text-xs text-muted-foreground bg-muted/5">
+                    {activeTab === "OVERDUE"
+                      ? "No overdue reminders found."
+                      : activeTab === "UPCOMING"
+                        ? "No upcoming reminders found."
+                        : activeTab === "DONE"
+                          ? "No completed reminders found."
+                          : "No reminders due today."}
+                  </div>
+                ) : (
+                  paginatedReminders.map((reminder) => {
+                    const isBusy = actionReminderId === reminder.id;
+                    const targetName = reminder.targetUser
+                      ? `${reminder.targetUser.firstName} ${reminder.targetUser.lastName}`
+                      : null;
+
+                    return (
+                      <div
+                        key={reminder.id}
+                        className={`rounded-xl border p-4 shadow-sm transition-all hover:shadow-md bg-card ${
+                          activeTab === "OVERDUE"
+                            ? "border-destructive/20 bg-destructive/5 dark:bg-destructive/10"
+                            : "border-border/50"
+                        }`}
+                      >
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="space-y-1.5 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h4 className="font-bold text-foreground text-sm">{reminder.title}</h4>
+                              {getTypeBadge(reminder.type)}
+                              {!dairyId ? (
+                                <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700 font-semibold dark:bg-blue-950/40 dark:text-blue-400">
+                                  {reminder.dairy.name}
+                                </Badge>
+                              ) : null}
+                            </div>
+                            <p className="text-xs text-muted-foreground font-medium">
+                              Due <strong className="text-foreground">{formatDueDate(reminder.dueDate)}</strong>
+                              {targetName ? ` | Context: ${targetName} (${reminder.targetUser?.role})` : ""}
+                            </p>
+                            {reminder.message ? (
+                              <p className="break-words text-sm text-foreground/80 pt-1 leading-relaxed">{reminder.message}</p>
+                            ) : null}
+                          </div>
+                          
+                          {/* Item Operations Panel */}
+                          <div className="flex flex-wrap items-center gap-1.5 shrink-0">
+                            {reminder.status === "DONE" ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="gap-1.5 text-xs h-8 cursor-pointer"
+                                disabled={isBusy}
+                                onClick={() => handleReminderAction(reminder.id, "reopen")}
+                              >
+                                <RotateCcw className="h-3.5 w-3.5" />
+                                Reopen
+                              </Button>
+                            ) : (
+                              <>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="gap-1.5 text-xs h-8 text-emerald-700 border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 cursor-pointer"
+                                  disabled={isBusy}
+                                  onClick={() => handleReminderAction(reminder.id, "done")}
+                                >
+                                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                                  Done
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="gap-1.5 text-xs h-8 text-amber-700 border-amber-200 hover:bg-amber-50 dark:hover:bg-amber-950/20 cursor-pointer"
+                                  disabled={isBusy}
+                                  onClick={() => handleReminderAction(reminder.id, "snooze")}
+                                >
+                                  <Clock3 className="h-3.5 w-3.5 text-amber-600" />
+                                  Snooze
+                                </Button>
+                              </>
+                            )}
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5 text-xs h-8 border-destructive/20 text-destructive hover:bg-destructive/10 hover:border-destructive/30 cursor-pointer"
+                              disabled={isBusy}
+                              onClick={() => handleReminderAction(reminder.id, "delete")}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Delete
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+
+                {/* Pagination Triggers */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between border-t border-border/20 pt-4 px-1 mt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-1 cursor-pointer h-9 px-3 text-xs"
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </Button>
+                    
+                    <span className="text-xs text-muted-foreground font-semibold">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-1 cursor-pointer h-9 px-3 text-xs"
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+            </div>
+          )}
+
+        </CardContent>
+      </Card>
+
+      {/* Creation Modal Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="sm:max-w-xl rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Create Reminder</DialogTitle>
-            <DialogDescription>
-              Add a manual in-app reminder for this dairy workflow.
+            <DialogTitle className="text-lg font-bold">Create Reminder</DialogTitle>
+            <DialogDescription className="text-xs">
+              Add a manual in-app reminder task for your dairy operations.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleCreateReminder} className="space-y-4">
             {!dairyId ? (
               <div className="space-y-2">
-                <Label>Dairy</Label>
+                <Label>Dairy Business</Label>
                 <Select
                   value={form.dairyId}
                   onValueChange={(value) =>
@@ -507,13 +752,13 @@ export function OwnerRemindersPanel({
                     }))
                   }
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose dairy" />
+                  <SelectTrigger className="h-10 rounded-lg">
+                    <SelectValue placeholder="Choose dairy business" />
                   </SelectTrigger>
                   <SelectContent>
-                    {dairies.map((dairy) => (
-                      <SelectItem key={dairy.id} value={String(dairy.id)}>
-                        {dairy.name}
+                    {dairies.map((d) => (
+                      <SelectItem key={d.id} value={String(d.id)}>
+                        {d.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -521,9 +766,9 @@ export function OwnerRemindersPanel({
               </div>
             ) : null}
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Reminder Type</Label>
+                <Label>Category</Label>
                 <Select
                   value={form.type}
                   onValueChange={(value) =>
@@ -534,21 +779,22 @@ export function OwnerRemindersPanel({
                     }))
                   }
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose reminder type" />
+                  <SelectTrigger className="h-10 rounded-lg">
+                    <SelectValue placeholder="Choose type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="BUYER_PAYMENT">Buyer Payment</SelectItem>
-                    <SelectItem value="SELLER_PAYMENT">Seller Payment</SelectItem>
-                    <SelectItem value="MONTH_CLOSE">Month Close</SelectItem>
-                    <SelectItem value="CUSTOM">Custom</SelectItem>
+                    <SelectItem value="CUSTOM">Custom Note</SelectItem>
+                    <SelectItem value="BUYER_PAYMENT">Buyer Payment Alert</SelectItem>
+                    <SelectItem value="SELLER_PAYMENT">Seller Payment Alert</SelectItem>
+                    <SelectItem value="MONTH_CLOSE">Month Close Task</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label>Due Date</Label>
+                <Label htmlFor="reminder-dueDate">Due Date</Label>
                 <Input
+                  id="reminder-dueDate"
                   type="date"
                   value={form.dueDate}
                   onChange={(event) =>
@@ -557,28 +803,28 @@ export function OwnerRemindersPanel({
                       dueDate: event.target.value,
                     }))
                   }
+                  className="h-10"
                 />
               </div>
             </div>
 
-            {form.type !== "MONTH_CLOSE" ? (
+            {selectedDairyId ? (
               <div className="space-y-2">
-                <Label>Related Person (Optional)</Label>
+                <Label>Linked Party (Optional)</Label>
                 <Select
-                  value={form.targetUserId || "__none__"}
+                  value={form.targetUserId}
                   onValueChange={(value) =>
                     setForm((current) => ({
                       ...current,
-                      targetUserId: value === "__none__" ? "" : value,
+                      targetUserId: value,
                     }))
                   }
-                  disabled={!selectedDairyId}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose buyer or seller" />
+                  <SelectTrigger className="h-10 rounded-lg">
+                    <SelectValue placeholder="No linked buyer or seller" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__none__">No linked person</SelectItem>
+                    <SelectItem value="">No linked buyer or seller</SelectItem>
                     {availablePeople.map((person) => (
                       <SelectItem key={person.id} value={String(person.id)}>
                         {person.name}
@@ -590,8 +836,9 @@ export function OwnerRemindersPanel({
             ) : null}
 
             <div className="space-y-2">
-              <Label>Title</Label>
+              <Label htmlFor="reminder-title">Reminder Title</Label>
               <Input
+                id="reminder-title"
                 value={form.title}
                 onChange={(event) =>
                   setForm((current) => ({
@@ -599,14 +846,16 @@ export function OwnerRemindersPanel({
                     title: event.target.value,
                   }))
                 }
-                placeholder="e.g. Collect May payment from Rakesh"
+                placeholder="e.g. Settle outstanding bill for August"
+                className="h-10"
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Message</Label>
+              <Label htmlFor="reminder-message">Details / Notes (Optional)</Label>
               <Textarea
-                rows={4}
+                id="reminder-message"
+                rows={3}
                 value={form.message}
                 onChange={(event) =>
                   setForm((current) => ({
@@ -614,16 +863,23 @@ export function OwnerRemindersPanel({
                     message: event.target.value,
                   }))
                 }
-                placeholder="Add any follow-up details or notes"
+                placeholder="Describe what needs to be checked or completed..."
+                className="resize-none"
               />
             </div>
 
-            <div className="flex justify-end gap-3 pt-2">
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSubmitting}>
+            <div className="flex flex-col-reverse gap-3 pt-4 border-t border-border/30 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-10 sm:w-auto cursor-pointer"
+                onClick={() => setIsDialogOpen(false)}
+                disabled={isSubmitting}
+              >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="gap-2">
-                <BellRing className="h-4 w-4" />
+              <Button type="submit" disabled={isSubmitting} className="w-full h-10 gap-2 sm:w-auto cursor-pointer">
+                {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                 {isSubmitting ? "Creating..." : "Create Reminder"}
               </Button>
             </div>

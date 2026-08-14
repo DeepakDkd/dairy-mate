@@ -24,6 +24,7 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const dairyId = parsePositiveInt(searchParams.get("dairyId"));
+    const month = searchParams.get("month");
 
     if (dairyId) {
       const access = await requireOwnedDairy(session, dairyId);
@@ -32,12 +33,26 @@ export async function GET(request: Request) {
       }
     }
 
+    let dateFilter = {};
+    if (month && month.includes("-")) {
+      const [year, monthNum] = month.split("-").map(Number);
+      const start = new Date(year, monthNum - 1, 1);
+      const end = new Date(year, monthNum, 1);
+      dateFilter = {
+        dueDate: {
+          gte: start,
+          lt: end,
+        }
+      };
+    }
+
     const reminders = await prisma.reminder.findMany({
       where: {
         dairy: {
           ownerId: session.user.id,
         },
         ...(dairyId ? { dairyId } : {}),
+        ...dateFilter,
       },
       include: {
         dairy: {

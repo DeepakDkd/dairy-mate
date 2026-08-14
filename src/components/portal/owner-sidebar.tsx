@@ -18,6 +18,8 @@ import {
   UserStar,
   Users,
   X,
+  Bell,
+  CalendarDays,
 } from "lucide-react";
 import { ModeToggle } from "@/components/theme/modeToggle";
 
@@ -50,11 +52,16 @@ export function OwnerPortalSidebar() {
       icon: Store,
       href: "/portal/owner/dairies",
     },
-    // {
-    //   label: "Legacy Dashboard",
-    //   icon: Building2,
-    //   href: "/dashboard",
-    // },
+    {
+      label: "Notifications",
+      icon: Bell,
+      href: "/portal/owner/notifications",
+    },
+    {
+      label: "Reminders",
+      icon: CalendarDays,
+      href: "/portal/owner/reminders",
+    },
   ];
 
   const dairyItems = currentDairyBasePath
@@ -194,8 +201,8 @@ export function OwnerPortalSidebar() {
               <Store className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-semibold">Owner Portal</p>
-              <p className="text-xs text-muted-foreground">New route tree</p>
+              <p className="font-semibold text-sm">Owner Portal</p>
+              <p className="text-[10px] text-muted-foreground">Dairy Mate Workspace</p>
             </div>
           </div>
 
@@ -227,8 +234,8 @@ export function OwnerPortalSidebar() {
                   <Store className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="font-semibold">Owner Portal</p>
-                  <p className="text-xs text-muted-foreground">New route tree</p>
+                  <p className="font-semibold text-sm">Owner Portal</p>
+                  <p className="text-[10px] text-muted-foreground">Dairy Mate Workspace</p>
                 </div>
               </div>
 
@@ -258,8 +265,8 @@ export function OwnerPortalSidebar() {
                 <Store className="h-5 w-5" />
               </div>
               <div>
-                <p className="font-semibold">Owner Portal</p>
-                <p className="text-xs text-muted-foreground">New route tree</p>
+                <p className="font-semibold text-sm">Owner Portal</p>
+                <p className="text-[10px] text-muted-foreground">Dairy Mate Workspace</p>
               </div>
             </div>
           )}
