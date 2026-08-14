@@ -6,7 +6,6 @@ import {
   CardTitle,
   CardContent,
 } from "@/components/ui/card";
-
 import {
   Select,
   SelectTrigger,
@@ -14,12 +13,11 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { z } from "zod";
 import { Dairy } from "@prisma/client";
@@ -75,28 +73,17 @@ export function BuyerEntryForm({
     shift: "MORNING" as "MORNING" | "EVENING",
   });
 
-  const calculate = () => {
-    try {
-      const entryDate = combineDateAndTime(data.date, data.time);
-      const parsed = buyerEntrySchema.parse({
-        litres: data.litres,
-        rate: data.rate,
-        date: entryDate,
-        shift: data.shift,
-      });
-
-      setTotal(parsed.litres * parsed.rate);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        toast.error(err.issues[0].message);
-      }
+  // Auto calculate total when litres or rate changes
+  useEffect(() => {
+    if (data.litres != null && data.rate != null && data.litres > 0 && data.rate > 0) {
+      setTotal(Number((data.litres * data.rate).toFixed(2)));
+    } else {
+      setTotal(null);
     }
-  };
+  }, [data.litres, data.rate]);
 
   const submit = async () => {
-    if (isSubmitting) {
-      return;
-    }
+    if (isSubmitting) return;
 
     try {
       const entryDate = combineDateAndTime(data.date, data.time);
@@ -108,7 +95,7 @@ export function BuyerEntryForm({
       });
 
       if (total === null) {
-        toast.error("Please calculate the total before submitting.");
+        toast.error("Please enter valid litres and rate details.");
         return;
       }
 
@@ -127,9 +114,13 @@ export function BuyerEntryForm({
         }
       );
 
-      toast.success("Milk entry submitted successfully!");
+      if (!response.status.toString().startsWith("2")) {
+        throw new Error("Failed to submit entry");
+      }
 
+      toast.success("Milk entry submitted successfully!");
       setSelectedSeller(undefined);
+      
       const nextDefaultDateTime = getCurrentDateTimeParts();
       setData({
         litres: undefined,
@@ -144,165 +135,165 @@ export function BuyerEntryForm({
         toast.error(error.issues[0].message);
         return;
       }
-      toast.error("Failed to submit milk entry.");
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to submit milk entry.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">
-          Buyer :
-          <div className="flex flex-col mt-2 space-y-1 text-sm font-normal">
-            <span>
-              Name: {buyers?.firstName} {buyers?.lastName}
-            </span>
-            <span>Mobile: {buyers?.phone}</span>
-            <span>Address: {buyers?.address}</span>
+    <Card className="border border-border/80 shadow-sm bg-card overflow-hidden">
+      <CardHeader className="bg-muted/15 border-b border-border/40 pb-4">
+        <CardTitle className="text-base font-bold">
+          Buyer Details
+          <div className="flex flex-col mt-2 space-y-1 text-xs font-medium text-muted-foreground">
+            <span>Name: <strong className="text-foreground">{buyers?.firstName} {buyers?.lastName}</strong></span>
+            <span>Mobile: <strong className="text-foreground">{buyers?.phone}</strong></span>
+            <span>Address: <strong className="text-foreground">{buyers?.address || "N/A"}</strong></span>
           </div>
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        <div className="grid gap-2 md:grid-cols-2 md:gap-5">
-          <div>
-            <Label>Total Liters</Label>
+      <CardContent className="space-y-4 pt-4">
+        <div className="grid gap-4 sm:grid-cols-2">
+          {/* Litres */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Total Liters *</Label>
             <Input
               type="number"
-              placeholder="Enter total liters"
+              step="any"
+              placeholder="e.g. 50"
               value={data.litres ?? ""}
               onChange={(e) =>
-                setData({ ...data, litres: Number(e.target.value) })
+                setData({ ...data, litres: e.target.value === "" ? undefined : Number(e.target.value) })
               }
+              className="h-10"
+              disabled={isSubmitting}
             />
           </div>
 
-          <div>
-            <Label>Rate</Label>
+          {/* Rate */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Rate (per Litre) *</Label>
             <Input
               type="number"
-              placeholder="Enter rate"
+              step="any"
+              placeholder="e.g. 60"
               value={data.rate ?? ""}
               onChange={(e) =>
-                setData({ ...data, rate: Number(e.target.value) })
+                setData({ ...data, rate: e.target.value === "" ? undefined : Number(e.target.value) })
               }
+              className="h-10"
+              disabled={isSubmitting}
             />
           </div>
+        </div>
 
-          <div>
-            <Label>Date</Label>
+        {/* Date, Time and Shift inputs */}
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Shift *</Label>
+            <Select
+              value={data.shift}
+              onValueChange={(v: "MORNING" | "EVENING") =>
+                setData({ ...data, shift: v })
+              }
+              disabled={isSubmitting}
+            >
+              <SelectTrigger className="h-10 rounded-lg">
+                <SelectValue placeholder="Select shift" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="MORNING">Morning Shift</SelectItem>
+                <SelectItem value="EVENING">Evening Shift</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Date *</Label>
             <Input
               type="date"
               value={data.date}
               onChange={(e) =>
                 setData({ ...data, date: e.target.value })
               }
+              className="h-10"
+              disabled={isSubmitting}
             />
           </div>
 
-          <div>
-            <Label>Time</Label>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Time *</Label>
             <Input
               type="time"
               value={data.time}
               onChange={(e) =>
                 setData({ ...data, time: e.target.value })
               }
+              className="h-10"
+              disabled={isSubmitting}
             />
-          </div>
-
-          <div>
-            <Label>Shift</Label>
-            <Select
-              value={data.shift}
-              onValueChange={(v: "MORNING" | "EVENING") =>
-                setData({ ...data, shift: v })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select shift" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="MORNING">Morning</SelectItem>
-                <SelectItem value="EVENING">Evening</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </div>
 
-        <Button onClick={calculate} disabled={isSubmitting}>Calculate</Button>
-
+        {/* Dynamic Calculation receipt container */}
         {total !== null && (
-          <Card className="p-4 border rounded-lg  shadow-sm">
-            <h3 className="text-md font-semibold text-center mb-3 border-b pb-2">
-              Milk Collection Receipt
+          <div className="rounded-xl border border-border/85 bg-muted/20 p-4 space-y-3.5 shadow-sm">
+            <h3 className="text-xs font-bold text-center border-b border-border/40 pb-2 text-foreground">
+              Milk Supply Receipt Preview
             </h3>
 
-            <div className="text-sm space-y-1 mb-3">
-              <div className="flex justify-between border-b pb-2">
-                <span className="font-medium">Dairy Name:</span>
-                <span>{dairy.name}</span>
-              </div>
-
+            <div className="text-xs space-y-1.5">
               <div className="flex justify-between">
-                <span className="font-medium">Buyer:</span>
-                <span>
-                  {buyers?.firstName} {buyers?.lastName}
-                </span>
+                <span className="text-muted-foreground font-medium">Dairy Name:</span>
+                <span className="font-semibold text-foreground">{dairy.name}</span>
               </div>
-
               <div className="flex justify-between">
-                <span className="font-medium">Shift:</span>
-                <span className="">{data.shift}</span>
+                <span className="text-muted-foreground font-medium">Shift:</span>
+                <span className="font-semibold text-foreground">{data.shift}</span>
               </div>
-
               <div className="flex justify-between">
-                <span className="font-medium">Date & Time:</span>
-                <span>
+                <span className="text-muted-foreground font-medium">Date & Time:</span>
+                <span className="font-semibold text-foreground">
                   {combineDateAndTime(data.date, data.time).toLocaleString("en-IN", {
                     year: "numeric",
-                    month: "long",
-                    day: "numeric",
+                    month: "short",
+                    day: "2-digit",
                     hour: "2-digit",
                     minute: "2-digit",
                   })}
                 </span>
               </div>
-            </div>
-
-            <div className="space-y-1 text-sm">
               <div className="flex justify-between">
-                <span className="font-medium">Rate:</span>
-                <span>{data.rate}</span>
+                <span className="text-muted-foreground font-medium">Rate:</span>
+                <span className="font-semibold text-foreground">Rs {data.rate} / Litre</span>
               </div>
-
               <div className="flex justify-between">
-                <span className="font-medium">Total Liters:</span>
-                <span>{data.litres}</span>
+                <span className="text-muted-foreground font-medium">Liters:</span>
+                <span className="font-semibold text-foreground">{data.litres} L</span>
               </div>
-
-              <div className="flex justify-between pt-2 border-t mt-2 text-base font-bold">
-                <span>Total Amount:</span>
-                <span>₹ {total.toFixed(2)}</span>
+              <div className="flex justify-between pt-2 border-t border-border/40 text-sm font-bold">
+                <span className="text-foreground">Total Amount:</span>
+                <span className="text-primary font-black text-base">Rs {total.toFixed(2)}</span>
               </div>
             </div>
-          </Card>
+          </div>
         )}
 
         <Button
           onClick={submit}
           disabled={total === null || isSubmitting}
-          className="w-full"
+          className="w-full h-11 text-sm font-semibold gap-2 cursor-pointer"
         >
           {isSubmitting ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
               Saving Entry...
             </>
           ) : (
-            "Submit Entry"
+            "Submit Buyer Entry"
           )}
         </Button>
       </CardContent>

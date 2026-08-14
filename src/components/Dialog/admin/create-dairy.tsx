@@ -33,10 +33,9 @@ export default function CreateDairyDialog({ open, onOpenChange }: CreateDairyDia
       dairyPhone: "",
     },
   })
+  
   const onSubmit = async (data: CreateDairyInput) => {
-    if (isSubmitting) {
-      return;
-    }
+    if (isSubmitting) return;
 
     try {
       await axios.post("/api/dairies/create", data);
@@ -51,47 +50,62 @@ export default function CreateDairyDialog({ open, onOpenChange }: CreateDairyDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="font-montserrat">
-        <DialogHeader>
-          <DialogTitle>Add New Dairy</DialogTitle>
-          <DialogDescription>Enter dairy details below</DialogDescription>
+      <DialogContent className="max-h-[90vh] overflow-y-auto w-[95%] sm:max-w-lg rounded-2xl p-6">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-xl font-bold">Add New Dairy</DialogTitle>
+          <DialogDescription className="text-xs">
+            Enter the details for your new dairy profile to begin managing sellers and buyers.
+          </DialogDescription>
         </DialogHeader>
+        
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-  
-
-          <div className="grid md:grid-cols-2 gap-5">
-            <div className="space-y-2">
-              <Label>Dairy Name *</Label>
-              <Input {...register("dairyName")} />
-              {errors.dairyName && <p className="text-red-500 text-xs">{errors.dairyName.message}</p>}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Dairy Name *</Label>
+              <Input 
+                {...register("dairyName")} 
+                placeholder="e.g. Krishna Dairy"
+                className="h-10"
+              />
+              {errors.dairyName && <p className="text-red-500 text-[10px] font-semibold">{errors.dairyName.message}</p>}
             </div>
 
-            <div className="space-y-2">
-              <Label>Dairy Address *</Label>
-              <Input {...register("dairyAddress")} />
-              {errors.dairyAddress && <p className="text-red-500 text-xs">{errors.dairyAddress.message}</p>}
-            </div>
-          </div>
-
-        
-          <div className="grid md:grid-cols-2 gap-5">
-            <div className="space-y-2">
-              <Label>Phone *</Label>
-              <Input {...register("dairyPhone")} />
-              {errors.dairyPhone && <p className="text-red-500 text-xs">{errors.dairyPhone.message}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input {...register("dairyEmail")} />
-              {errors.dairyEmail && <p className="text-red-500 text-xs">{errors.dairyEmail.message}</p>}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Dairy Address *</Label>
+              <Input 
+                {...register("dairyAddress")} 
+                placeholder="e.g. Near Main Market, Jaipur"
+                className="h-10"
+              />
+              {errors.dairyAddress && <p className="text-red-500 text-[10px] font-semibold">{errors.dairyAddress.message}</p>}
             </div>
           </div>
 
-        
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Phone Number *</Label>
+              <Input 
+                {...register("dairyPhone")} 
+                placeholder="e.g. 9876543210"
+                className="h-10"
+              />
+              {errors.dairyPhone && <p className="text-red-500 text-[10px] font-semibold">{errors.dairyPhone.message}</p>}
+            </div>
 
-          <div>
-            <Label>Pricing Mode*</Label>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Email Address (Optional)</Label>
+              <Input 
+                {...register("dairyEmail")} 
+                type="email"
+                placeholder="e.g. contact@krishnadairy.com"
+                className="h-10"
+              />
+              {errors.dairyEmail && <p className="text-red-500 text-[10px] font-semibold">{errors.dairyEmail.message}</p>}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Pricing mode *</Label>
             <Select
               disabled={isSubmitting}
               onValueChange={(v) =>
@@ -101,25 +115,32 @@ export default function CreateDairyDialog({ open, onOpenChange }: CreateDairyDia
                 })
               }
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Select pricing mode" />
+              <SelectTrigger className="h-10 rounded-lg">
+                <SelectValue placeholder="Select calculation method" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="FAT_LR">FAT + LR</SelectItem>
-                <SelectItem value="MAWA">MAWA</SelectItem>
+                <SelectItem value="FAT_LR">FAT + LR Calculation Mode</SelectItem>
+                <SelectItem value="MAWA">MAWA Flat Rate Mode</SelectItem>
               </SelectContent>
             </Select>
-            {errors.dairyMode && <p className="text-red-500 text-xs">{errors.dairyMode.message}</p>}
+            {errors.dairyMode && <p className="text-red-500 text-[10px] font-semibold">{errors.dairyMode.message}</p>}
           </div>
-          <div className="w-full grid md:grid-cols-2 gap-5">
-            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+
+          <div className="grid sm:grid-cols-2 gap-3 pt-3 border-t border-border/30">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)} 
+              disabled={isSubmitting}
+              className="w-full h-10 cursor-pointer"
+            >
               Cancel
             </Button>
 
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="w-full h-10 gap-2 cursor-pointer">
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Saving...
                 </>
               ) : (

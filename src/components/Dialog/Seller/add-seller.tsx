@@ -11,9 +11,7 @@ import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
 import axios from "axios"
 import useSWR from "swr";
-import { useSWRConfig } from "swr"
-import { Loader, Loader2 } from "lucide-react"
-
+import { Loader2 } from "lucide-react"
 
 interface AddSellerDialogProps {
   open: boolean
@@ -25,6 +23,7 @@ const fetcher = async (url: string) => {
   const response = await axios.get(url);
   return response.data;
 }
+
 const SellerSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
@@ -39,10 +38,6 @@ const SellerSchema = z.object({
 type SellerFormData = z.infer<typeof SellerSchema>
 
 export default function AddSellerDialog({ open, onOpenChange, userId }: AddSellerDialogProps) {
-
-
-  // const { mutate } = useSWRConfig()
-
   const {
     register,
     handleSubmit,
@@ -53,151 +48,183 @@ export default function AddSellerDialog({ open, onOpenChange, userId }: AddSelle
     resolver: zodResolver(SellerSchema),
     defaultValues: {
       status: "active",
+      firstName: "",
+      lastName: "",
+      phone: "",
+      email: "",
+      address: "",
+      password: "",
     }
   })
 
-
-  const { data, error, isLoading } = useSWR(
+  const { data, isLoading } = useSWR(
     userId ? `/api/owner/${userId}/dairies` : null,
     fetcher,
     { revalidateOnFocus: false }
   );
-  // if (isLoading) {
-  //   console.log("Loading owned dairies...");
-  //   return <div>Loading dairies...</div>;
-  // }
-  // console.log("ownedDairies:", data?.dairies);
 
-  const onSubmit = async (data: SellerFormData) => {
-    if (isSubmitting) {
-      return;
-    }
+  const onSubmit = async (formData: SellerFormData) => {
+    if (isSubmitting) return;
 
     try {
       const finalData = {
-        ...data,
-        role: "SELLER", // auto
+        ...formData,
+        role: "SELLER",
       }
 
-
-
-      const res = await axios.post(`/api/dairies/${data.dairyId}/sellers/create`, {
-        ...finalData
-      });
-
-      // mutate(`/api/owner/${userId}/sellers`);
-      toast.success("Seller created successfully")
+      await axios.post(`/api/dairies/${formData.dairyId}/sellers/create`, finalData);
+      toast.success("Seller registered successfully")
       reset()
       onOpenChange(false)
-    } catch (error:any) {
-      console.error(error)
-      toast.error(error.response.data.message ||"Failed to create seller")
+    } catch (err: any) {
+      console.error(err)
+      toast.error(err.response?.data?.message || "Failed to register seller")
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="font-montserrat">
-        <DialogHeader>
-          <DialogTitle>Add New Seller</DialogTitle>
-          <DialogDescription>Enter seller details below</DialogDescription>
+      <DialogContent className="max-h-[90vh] overflow-y-auto w-[95%] sm:max-w-lg rounded-2xl p-6">
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-xl font-bold">Add New Seller</DialogTitle>
+          <DialogDescription className="text-xs">
+            Register a supplier to start recording milk collections and processing payments.
+          </DialogDescription>
         </DialogHeader>
+        
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Name */}
-          <div className="grid md:grid-cols-2 gap-5">
-            <div className="space-y-2">
-              <Label>First Name *</Label>
-              <Input {...register("firstName")} />
-              {errors.firstName && <p className="text-red-500 text-xs">{errors.firstName.message}</p>}
+          {/* Name fields */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">First Name *</Label>
+              <Input 
+                {...register("firstName")} 
+                placeholder="e.g. Ramesh"
+                className="h-10"
+              />
+              {errors.firstName && <p className="text-red-500 text-[10px] font-semibold">{errors.firstName.message}</p>}
             </div>
 
-            <div className="space-y-2">
-              <Label>Last Name *</Label>
-              <Input {...register("lastName")} />
-              {errors.lastName && <p className="text-red-500 text-xs">{errors.lastName.message}</p>}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Last Name *</Label>
+              <Input 
+                {...register("lastName")} 
+                placeholder="e.g. Kumar"
+                className="h-10"
+              />
+              {errors.lastName && <p className="text-red-500 text-[10px] font-semibold">{errors.lastName.message}</p>}
             </div>
           </div>
-          <div className="grid md:grid-cols-2 gap-5">
-            <div className="space-y-2">
-              <Label>Phone *</Label>
-              <Input {...register("phone")} />
-              {errors.phone && <p className="text-red-500 text-xs">{errors.phone.message}</p>}
+
+          {/* Contact Fields */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Phone Number *</Label>
+              <Input 
+                {...register("phone")} 
+                placeholder="e.g. 9876543210"
+                className="h-10"
+              />
+              {errors.phone && <p className="text-red-500 text-[10px] font-semibold">{errors.phone.message}</p>}
             </div>
 
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input {...register("email")} />
-              {errors.email && <p className="text-red-500 text-xs">{errors.email.message}</p>}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Email Address</Label>
+              <Input 
+                {...register("email")} 
+                type="email"
+                placeholder="e.g. ramesh@gmail.com"
+                className="h-10"
+              />
+              {errors.email && <p className="text-red-500 text-[10px] font-semibold">{errors.email.message}</p>}
             </div>
           </div>
-          <div className="space-y-2 w-full">
-            <Label>Select Dairy</Label>
 
+          {/* Select Dairy */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Select Dairy Business *</Label>
             {isLoading ? (
-              <Loader />
+              <div className="flex items-center gap-2 h-10 border rounded-lg px-3 bg-muted/20">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">Loading dairies...</span>
+              </div>
             ) : (
               <Select
                 disabled={isSubmitting}
-                onValueChange={(value) => setValue("dairyId", Number(value))}
+                onValueChange={(value) => setValue("dairyId", Number(value), { shouldValidate: true })}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select dairy" />
+                <SelectTrigger className="h-10 rounded-lg">
+                  <SelectValue placeholder="Choose a dairy profile" />
                 </SelectTrigger>
                 <SelectContent>
-                  {
-                    data?.dairies?.map((dairy: { id: number, name: string }) => (
-                      <SelectItem key={dairy.id} value={(String(dairy.id))}>{dairy.name}</SelectItem>
-                    ))
-                  }
+                  {data?.dairies?.map((dairy: { id: number, name: string }) => (
+                    <SelectItem key={dairy.id} value={String(dairy.id)}>
+                      {dairy.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )}
+            {errors.dairyId && <p className="text-red-500 text-[10px] font-semibold">{errors.dairyId.message}</p>}
           </div>
 
           {/* Address */}
-          <div className="space-y-2">
-            <Label>Address</Label>
-            <Input {...register("address")} />
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Home / Business Address</Label>
+            <Input 
+              {...register("address")} 
+              placeholder="e.g. Ward No. 4, Village Chomu"
+              className="h-10"
+            />
           </div>
 
-          {/* Status / Password */}
-          <div className="grid md:grid-cols-2 gap-5">
-            {/* STATUS */}
-            <div className="space-y-2">
-              <Label>Status</Label>
+          {/* Status & Password */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Status *</Label>
               <Select
                 disabled={isSubmitting}
                 defaultValue="active"
-                onValueChange={(value: "active" | "inactive") => setValue("status", value)}
+                onValueChange={(value: "active" | "inactive") => setValue("status", value, { shouldValidate: true })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-10 rounded-lg">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="active">Active (Permitted entries)</SelectItem>
+                  <SelectItem value="inactive">Inactive (Suspended)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {/* PASSWORD */}
-            <div className="space-y-2">
-              <Label>Password *</Label>
-              <Input type="password" {...register("password")} />
-              {errors.password && <p className="text-red-500 text-xs">{errors.password.message}</p>}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Password *</Label>
+              <Input 
+                type="password" 
+                {...register("password")} 
+                placeholder="Min 6 characters"
+                className="h-10"
+              />
+              {errors.password && <p className="text-red-500 text-[10px] font-semibold">{errors.password.message}</p>}
             </div>
           </div>
 
-          {/* Buttons */}
-          <div className="w-full grid md:grid-cols-2 gap-5">
-            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+          {/* Dialog Action Buttons */}
+          <div className="grid sm:grid-cols-2 gap-3 pt-3 border-t border-border/30">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => onOpenChange(false)} 
+              disabled={isSubmitting}
+              className="w-full h-10 cursor-pointer"
+            >
               Cancel
             </Button>
 
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="w-full h-10 gap-2 cursor-pointer">
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Saving...
                 </>
               ) : (
