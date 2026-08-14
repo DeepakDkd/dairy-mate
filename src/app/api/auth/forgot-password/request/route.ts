@@ -48,7 +48,7 @@ export async function POST(req: Request) {
       }
     });
 
-    const { html, text } = generateOtpEmail(otp, 5, "Dairy Mate");
+    const { html, text } = generateOtpEmail(otp, 5, "Dairy Mate", "reset");
 
     await sendEmail({
       to: user.email,

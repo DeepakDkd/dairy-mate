@@ -42,11 +42,11 @@ export async function POST(req: Request) {
             }
         })
 
-        const { html, text } = generateOtpEmail(otp, 5, "Dairy Mate");
+        const { html, text } = generateOtpEmail(otp, 5, "Dairy Mate", "login");
 
         await sendEmail({
             to: user.email,
-            subject: "Your OTP Code for Dairy Mate",
+            subject: "Verification Code - Dairy Mate",
             html,
             text,
         })
