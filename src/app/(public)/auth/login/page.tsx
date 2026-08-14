@@ -67,8 +67,14 @@ export default function LoginForm() {
   const [otp, setOtp] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
+  // New states for Forgot Password
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+
   const [role, setRole] = useState<"OWNER" | "BUYER">("OWNER");
-  const [stage, setStage] = useState<"password" | "otp" | "dairies">("password");
+  const [stage, setStage] = useState<"password" | "otp" | "dairies" | "forgot_request" | "forgot_reset">("password");
 
   const [requestId, setRequestId] = useState("");
   const [dairies, setDairies] = useState<any[]>([]);
@@ -181,6 +187,63 @@ export default function LoginForm() {
     }
   }
 
+  async function handleForgotRequestSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (loading) return;
+
+    if (!phone) return toast.error("Enter phone number");
+    if (phone.length < 10) return toast.error("Phone number must be at least 10 digits");
+
+    setLoading(true);
+    try {
+      const res = await axios.post("/api/auth/forgot-password/request", { phone });
+      if (res.data.success) {
+        const masked = maskEmail(res.data.email || "");
+        toast.success(`Verification code sent to ${masked}`);
+        setRequestId(res.data.requestId);
+        setStage("forgot_reset");
+        setOtp("");
+        setNewPassword("");
+        setConfirmNewPassword("");
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "User account not found");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleForgotResetSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (loading) return;
+
+    if (!otp) return toast.error("Enter OTP");
+    if (!newPassword) return toast.error("Enter new password");
+    if (newPassword.length < 6) return toast.error("Password must be at least 6 characters");
+    if (newPassword !== confirmNewPassword) return toast.error("Passwords do not match");
+
+    setLoading(true);
+    try {
+      const res = await axios.post("/api/auth/forgot-password/reset", {
+        phone,
+        otp,
+        requestId,
+        newPassword
+      });
+
+      if (res.data.success) {
+        toast.success("Password reset successfully. Please login.");
+        setStage("password");
+        setPassword("");
+        setOtp("");
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to reset password");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   function goBack() {
     if (stage === "otp") setStage("password");
     else if (stage === "dairies") setStage("otp");
@@ -219,14 +282,14 @@ export default function LoginForm() {
           <TabsList className="grid grid-cols-2 w-full max-w-sm mx-auto mb-4 bg-muted/65 p-1 rounded-xl border border-border/40">
             <TabsTrigger 
               value="owner" 
-              disabled={loading}
+              disabled={loading || stage === "forgot_request" || stage === "forgot_reset"}
               className="rounded-lg py-2 text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
             >
               Owner / Staff
             </TabsTrigger>
             <TabsTrigger 
               value="buyer" 
-              disabled={loading}
+              disabled={loading || stage === "forgot_request" || stage === "forgot_reset"}
               className="rounded-lg py-2 text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
             >
               Buyer / Seller
@@ -239,42 +302,64 @@ export default function LoginForm() {
                 {stage === "password" && "Welcome Back"}
                 {stage === "otp" && "Verification"}
                 {stage === "dairies" && "Select Dairy"}
+                {stage === "forgot_request" && "Reset Password"}
+                {stage === "forgot_reset" && "Verify & Reset"}
               </CardTitle>
               <CardDescription className="text-sm mt-1">
                 {stage === "password" && `Login as ${role === "OWNER" ? "Owner or Staff" : "Buyer or Seller"}`}
                 {stage === "otp" && "Enter the verification code sent to your email"}
                 {stage === "dairies" && "Choose which dairy portal you want to access"}
+                {stage === "forgot_request" && "Enter your registered mobile number to receive an OTP code"}
+                {stage === "forgot_reset" && "Enter the OTP code and configure your new password"}
               </CardDescription>
             </CardHeader>
 
             <CardContent className="pt-4">
               {/* Steps Progress Indicator */}
-              <div className="flex items-center justify-center gap-2 mb-6 px-2">
-                <div className="flex items-center gap-1.5">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${stage === 'password' ? 'bg-primary text-white scale-110 shadow-md shadow-primary/20' : 'bg-primary/20 text-primary'}`}>
-                    1
-                  </div>
-                  <span className={`text-[11px] font-medium ${stage === 'password' ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>Credentials</span>
-                </div>
-                <div className="w-8 h-px bg-border" />
-                <div className="flex items-center gap-1.5">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${stage === 'otp' ? 'bg-primary text-white scale-110 shadow-md shadow-primary/20' : stage === 'dairies' ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground'}`}>
-                    {stage === 'dairies' ? <CheckCircle2 className="w-4 h-4" /> : '2'}
-                  </div>
-                  <span className={`text-[11px] font-medium ${stage === 'otp' ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>OTP</span>
-                </div>
-                {role === "BUYER" && (
-                  <>
-                    <div className="w-8 h-px bg-border" />
-                    <div className="flex items-center gap-1.5">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${stage === 'dairies' ? 'bg-primary text-white scale-110 shadow-md shadow-primary/20' : 'bg-muted text-muted-foreground'}`}>
-                        3
-                      </div>
-                      <span className={`text-[11px] font-medium ${stage === 'dairies' ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>Dairy</span>
+              {stage !== "forgot_request" && stage !== "forgot_reset" ? (
+                <div className="flex items-center justify-center gap-2 mb-6 px-2">
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${stage === 'password' ? 'bg-primary text-white scale-110 shadow-md shadow-primary/20' : 'bg-primary/20 text-primary'}`}>
+                      1
                     </div>
-                  </>
-                )}
-              </div>
+                    <span className={`text-[11px] font-medium ${stage === 'password' ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>Credentials</span>
+                  </div>
+                  <div className="w-8 h-px bg-border" />
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${stage === 'otp' ? 'bg-primary text-white scale-110 shadow-md shadow-primary/20' : stage === 'dairies' ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground'}`}>
+                      {stage === 'dairies' ? <CheckCircle2 className="w-4 h-4" /> : '2'}
+                    </div>
+                    <span className={`text-[11px] font-medium ${stage === 'otp' ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>OTP</span>
+                  </div>
+                  {role === "BUYER" && (
+                    <>
+                      <div className="w-8 h-px bg-border" />
+                      <div className="flex items-center gap-1.5">
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${stage === 'dairies' ? 'bg-primary text-white scale-110 shadow-md shadow-primary/20' : 'bg-muted text-muted-foreground'}`}>
+                          3
+                        </div>
+                        <span className={`text-[11px] font-medium ${stage === 'dairies' ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>Dairy</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center gap-2 mb-6 px-2">
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${stage === 'forgot_request' ? 'bg-primary text-white scale-110 shadow-md shadow-primary/20' : 'bg-primary/20 text-primary'}`}>
+                      1
+                    </div>
+                    <span className={`text-[11px] font-medium ${stage === 'forgot_request' ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>Request Reset</span>
+                  </div>
+                  <div className="w-8 h-px bg-border" />
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs transition-all duration-300 ${stage === 'forgot_reset' ? 'bg-primary text-white scale-110 shadow-md shadow-primary/20' : 'bg-muted text-muted-foreground'}`}>
+                      2
+                    </div>
+                    <span className={`text-[11px] font-medium ${stage === 'forgot_reset' ? 'text-foreground font-semibold' : 'text-muted-foreground'}`}>Configure Password</span>
+                  </div>
+                </div>
+              )}
 
               {/* Stage 1: Credentials Input */}
               {stage === "password" && (
@@ -300,6 +385,16 @@ export default function LoginForm() {
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <Label htmlFor="password">Password</Label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStage("forgot_request");
+                            setOtp("");
+                          }}
+                          className="text-xs font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer"
+                        >
+                          Forgot Password?
+                        </button>
                       </div>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -416,6 +511,135 @@ export default function LoginForm() {
                   <button
                     type="button"
                     onClick={goBack}
+                    disabled={loading}
+                    className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors flex items-center justify-center gap-1.5 mx-auto block py-1 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back
+                  </button>
+                </form>
+              )}
+
+              {/* Stage: Forgot Password Request OTP */}
+              {stage === "forgot_request" && (
+                <form onSubmit={handleForgotRequestSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="forgot-phone">Mobile Number</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="forgot-phone"
+                        disabled={loading}
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="Enter phone number"
+                        type="tel"
+                        maxLength={10}
+                        className="pl-9 h-11 rounded-lg bg-background/50 border-border/80 focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                      />
+                    </div>
+                  </div>
+
+                  <Button
+                    disabled={loading}
+                    type="submit"
+                    className="w-full h-11 mt-2 bg-primary hover:bg-primary/95 text-white font-semibold rounded-lg shadow-lg shadow-primary/20 transition-all hover:shadow-primary/10 flex items-center justify-center cursor-pointer"
+                  >
+                    {loading ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : null}
+                    {loading ? "Sending..." : "Send Verification OTP"}
+                  </Button>
+
+                  <button
+                    type="button"
+                    onClick={() => setStage("password")}
+                    disabled={loading}
+                    className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors flex items-center justify-center gap-1.5 mx-auto block py-1 cursor-pointer"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> Back to Login
+                  </button>
+                </form>
+              )}
+
+              {/* Stage: Forgot Password Verify & Reset */}
+              {stage === "forgot_reset" && (
+                <form onSubmit={handleForgotResetSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="forgot-otp">Verification Code</Label>
+                    <div className="relative">
+                      <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="forgot-otp"
+                        disabled={loading}
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        placeholder="6-digit OTP"
+                        maxLength={6}
+                        className="pl-9 h-11 rounded-lg bg-background/50 border-border/80 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 text-center tracking-widest font-mono text-lg"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">New Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="new-password"
+                        type={showNewPassword ? "text" : "password"}
+                        disabled={loading}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        placeholder="At least 6 characters"
+                        className="pl-9 pr-10 h-11 rounded-lg bg-background/50 border-border/80 focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-new-password">Confirm New Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="confirm-new-password"
+                        type={showConfirmNewPassword ? "text" : "password"}
+                        disabled={loading}
+                        value={confirmNewPassword}
+                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                        placeholder="Confirm new password"
+                        className="pl-9 pr-10 h-11 rounded-lg bg-background/50 border-border/80 focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showConfirmNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <Button
+                    disabled={loading}
+                    type="submit"
+                    className="w-full h-11 mt-2 bg-primary hover:bg-primary/95 text-white font-semibold rounded-lg shadow-lg shadow-primary/20 transition-all hover:shadow-primary/10 flex items-center justify-center cursor-pointer"
+                  >
+                    {loading ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : null}
+                    {loading ? "Resetting..." : "Reset Password"}
+                  </Button>
+
+                  <button
+                    type="button"
+                    onClick={() => setStage("forgot_request")}
                     disabled={loading}
                     className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors flex items-center justify-center gap-1.5 mx-auto block py-1 cursor-pointer"
                   >
