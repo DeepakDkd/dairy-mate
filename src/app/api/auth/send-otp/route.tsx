@@ -52,7 +52,7 @@ export async function POST(req: Request) {
         })
 
         return NextResponse.json(
-            { success: true, message: "OTP sent successfully", requestId: res.id },
+            { success: true, message: "OTP sent successfully", requestId: res.id, email: user.email },
             { status: 200 }
         );
 

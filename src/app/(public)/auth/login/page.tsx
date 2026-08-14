@@ -45,6 +45,19 @@ import {
   Sparkles
 } from "lucide-react";
 
+function maskEmail(email: string): string {
+  const parts = email.split("@");
+  if (parts.length !== 2) return email;
+  const [local, domain] = parts;
+  if (local.length <= 2) {
+    return local[0] + "*".repeat(local.length - 1) + "@" + domain;
+  }
+  const start = local[0];
+  const end = local[local.length - 1];
+  const middle = "*".repeat(local.length - 2);
+  return `${start}${middle}${end}@${domain}`;
+}
+
 export default function LoginForm() {
   const router = useRouter();
   const { status } = useSession();
@@ -86,7 +99,9 @@ export default function LoginForm() {
 
       if (res.data.success) {
         const otpRes = await axios.post("/api/auth/send-otp", { phone });
-        toast.success("OTP sent to your email");
+        const email = otpRes.data.email || "";
+        const masked = maskEmail(email);
+        toast.success(`OTP sent to ${masked}`);
         setRequestId(otpRes.data.requestId);
         setStage("otp");
       }
