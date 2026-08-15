@@ -6,6 +6,7 @@ import { getOwnerPortalOverview } from "@/lib/owner-dairies";
 import OwnerOverview from "@/components/portal/owner-overview";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreateDairyButton } from "@/components/portal/create-dairy-button";
+import { prisma } from "@/lib/db";
 
  
 export default async function OwnerPortalPage() {
@@ -21,6 +22,16 @@ export default async function OwnerPortalPage() {
 
   if (user.role === "BUYER") {
     redirect("/portal/buyer");
+  }
+
+  if (user.role === "STAFF") {
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { dairyId: true },
+    });
+    if (dbUser?.dairyId) {
+      redirect(`/portal/owner/dairies/${dbUser.dairyId}`);
+    }
   }
 
   const overview = await getOwnerPortalOverview(user.id);
@@ -41,7 +52,7 @@ export default async function OwnerPortalPage() {
           </p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
-          <CreateDairyButton />
+          {user.role === "OWNER" && <CreateDairyButton />}
           <Link
             href="/portal/owner/dairies"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"

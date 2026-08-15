@@ -68,6 +68,7 @@ model StaffProfile {
   id               Int        @id @default(autoincrement())
   userId           Int        @unique
   dairyId          Int
+  role             StaffRole  @default(HELPER)
   position         String?
   salary           Float?
   joinDate         DateTime?

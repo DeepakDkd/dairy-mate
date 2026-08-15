@@ -14,9 +14,18 @@ const startOfMonth = (date: Date) => {
   return value;
 };
 
-export async function getOwnedDairies(ownerId: number) {
+export async function getOwnedDairies(userId: number) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, dairyId: true },
+  });
+
+  if (!user) return [];
+
+  const whereClause = user.role === "STAFF" && user.dairyId ? { id: user.dairyId } : { ownerId: userId };
+
   const dairies = await prisma.dairy.findMany({
-    where: { ownerId },
+    where: whereClause,
     select: {
       id: true,
       name: true,
@@ -55,12 +64,22 @@ export async function getOwnedDairies(ownerId: number) {
   });
 }
 
-export async function getOwnedDairy(ownerId: number, dairyId: number) {
+export async function getOwnedDairy(userId: number, dairyId: number) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, dairyId: true },
+  });
+
+  if (!user) return null;
+
+  if (user.role === "STAFF" && user.dairyId !== dairyId) {
+    return null;
+  }
+
+  const whereClause = user.role === "STAFF" ? { id: dairyId } : { id: dairyId, ownerId: userId };
+
   const dairy = await prisma.dairy.findFirst({
-    where: {
-      id: dairyId,
-      ownerId,
-    },
+    where: whereClause,
     select: {
       id: true,
       name: true,
@@ -95,9 +114,20 @@ export async function getOwnedDairy(ownerId: number, dairyId: number) {
   };
 }
 
-export async function getFirstOwnedDairyId(ownerId: number) {
+export async function getFirstOwnedDairyId(userId: number) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, dairyId: true },
+  });
+
+  if (!user) return null;
+
+  if (user.role === "STAFF") {
+    return user.dairyId ?? null;
+  }
+
   const dairy = await prisma.dairy.findFirst({
-    where: { ownerId },
+    where: { ownerId: userId },
     select: { id: true },
     orderBy: {
       createdAt: "desc",
@@ -107,7 +137,7 @@ export async function getFirstOwnedDairyId(ownerId: number) {
   return dairy?.id ?? null;
 }
 
-export async function getOwnerPortalOverview(ownerId: number, month?: string | null) {
+export async function getOwnerPortalOverview(userId: number, month?: string | null) {
   const now = new Date();
   const selectedMonth = parseMonthValue(month);
   const isCurrentMonth = selectedMonth.value === getMonthValue(now);
@@ -118,8 +148,17 @@ export async function getOwnerPortalOverview(ownerId: number, month?: string | n
     ? startOfDay(now)
     : startOfDay(new Date(monthEnd.getTime() - 1));
 
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, dairyId: true },
+  });
+
+  if (!user) return null;
+
+  const whereClause = user.role === "STAFF" && user.dairyId ? { id: user.dairyId } : { ownerId: userId };
+
   const dairies = await prisma.dairy.findMany({
-    where: { ownerId },
+    where: whereClause,
     select: {
       id: true,
       name: true,

@@ -41,7 +41,7 @@ export default async function OwnerDairiesPage() {
               Manage and access all your registered dairy businesses.
             </p>
           </div>
-          <CreateDairyButton />
+          {user.role === "OWNER" && <CreateDairyButton />}
         </div>
       </div>
 

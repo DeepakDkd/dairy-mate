@@ -50,7 +50,10 @@ export const authOptions: NextAuthOptions = {
                 dairyId: dairyId,
               },
               role: { in: ["BUYER", "SELLER", "STAFF"] },
-            }
+            },
+            include: {
+              staffProfile: true,
+            },
           })
           console.log("Authorized User is buyer/seller/staff:", user);
           if (!user) {
@@ -80,17 +83,21 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role;
         token.phone = user.phone;
         token.email = user.email;
+        token.dairyId = user.dairyId;
+        token.staffRole = user.staffProfile?.role || user.staffRole || null;
         return token;
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: any) {
       session.user.id = token.id;
       session.user.firstName = token.firstName;
       session.user.lastName = token.lastName;
       session.user.role = token.role;
       session.user.phone = token.phone;
       session.user.email = token.email;
+      session.user.dairyId = token.dairyId;
+      session.user.staffRole = token.staffRole;
       return session;
     },
   },

@@ -73,15 +73,27 @@ export async function requireOwnedDairy(
   session: Session,
   dairyId: number
 ): Promise<GuardResult<{ id: number; ownerId: number }>> {
-  if (session.user.role !== "OWNER") {
+  if (session.user.role !== "OWNER" && session.user.role !== "STAFF") {
     return { ok: false, response: jsonError("Forbidden", 403) };
   }
 
+  const dbUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true, dairyId: true },
+  });
+
+  if (!dbUser) {
+    return { ok: false, response: jsonError("User not found", 404) };
+  }
+
+  if (dbUser.role === "STAFF" && dbUser.dairyId !== dairyId) {
+    return { ok: false, response: jsonError("Forbidden", 403) };
+  }
+
+  const whereClause = dbUser.role === "STAFF" ? { id: dairyId } : { id: dairyId, ownerId: session.user.id };
+
   const dairy = await prisma.dairy.findFirst({
-    where: {
-      id: dairyId,
-      ownerId: session.user.id,
-    },
+    where: whereClause,
     select: {
       id: true,
       ownerId: true,
@@ -117,11 +129,11 @@ export async function requirePartyAccess(
     return { ok: false, response: jsonError("Forbidden", 403) };
   }
 
-  if (session.user.role !== "OWNER" && session.user.role !== role) {
+  if (session.user.role !== "OWNER" && session.user.role !== "STAFF" && session.user.role !== role) {
     return { ok: false, response: jsonError("Forbidden", 403) };
   }
 
-  if (session.user.role === "OWNER") {
+  if (session.user.role === "OWNER" || session.user.role === "STAFF") {
     const dairyAccess = await requireOwnedDairy(session, dairyId);
     if (!dairyAccess.ok) {
       return dairyAccess;
@@ -177,7 +189,7 @@ export async function requirePartyByIdAccess(
     return { ok: false, response: jsonError("Forbidden", 403) };
   }
 
-  if (session.user.role !== "OWNER" && session.user.role !== role) {
+  if (session.user.role !== "OWNER" && session.user.role !== "STAFF" && session.user.role !== role) {
     return { ok: false, response: jsonError("Forbidden", 403) };
   }
 
@@ -205,7 +217,7 @@ export async function requirePartyByIdAccess(
     };
   }
 
-  if (session.user.role === "OWNER") {
+  if (session.user.role === "OWNER" || session.user.role === "STAFF") {
     const dairyAccess = await requireOwnedDairy(session, party.dairyId);
     if (!dairyAccess.ok) {
       return dairyAccess;

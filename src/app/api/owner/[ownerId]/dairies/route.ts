@@ -17,21 +17,22 @@ export async function GET(
     }
 
     
-    const owner = await prisma.user.findUnique({
-      where: { id: ownerId, role: "OWNER" },
-      select: { id: true },
+    const user = await prisma.user.findUnique({
+      where: { id: ownerId },
+      select: { id: true, role: true, dairyId: true },
     });
 
-    if (!owner) {
+    if (!user || (user.role !== "OWNER" && user.role !== "STAFF")) {
       return NextResponse.json(
-        { message: "Owner not found" },
+        { message: "Authorized user not found or invalid role" },
         { status: 404 }
       );
     }
 
+    const whereClause = user.role === "STAFF" && user.dairyId ? { id: user.dairyId } : { ownerId };
     
     const dairies = await prisma.dairy.findMany({
-      where: { ownerId },
+      where: whereClause,
       select: {
         id: true,
         name: true,

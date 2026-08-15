@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,7 +8,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,26 +19,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
-import useSWR from "swr";
-import { useSession } from "next-auth/react";
 
-// ------------------ ZOD SCHEMA ------------------
-
-const StaffSchema = z.object({
+const EditStaffSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   phone: z.string().min(10, "Phone must be at least 10 digits"),
   email: z.string().email("Invalid email").optional().or(z.literal("")),
-  dairyId: z.number(),
   address: z.string().min(1, "Address is required"),
   status: z.enum(["active", "inactive"]),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().optional().or(z.literal("")),
   position: z.string().min(1, "Position is required"),
   staffRole: z.enum(["MILK_COLLECTOR", "SENIOR_MILK_COLLECTOR", "MILK_TESTER", "QUALITY_AUDITOR", "MANAGER", "HELPER"]),
   shift: z.enum(["MORNING", "EVENING", "FULL_DAY"]),
@@ -49,38 +43,25 @@ const StaffSchema = z.object({
   notes: z.string().optional(),
 });
 
-type StaffFormData = z.infer<typeof StaffSchema>;
+type EditStaffFormData = z.infer<typeof EditStaffSchema>;
 
-// ------------------ FETCHER ------------------
-const fetcher = async (url: string) => {
-  const response = await axios.get(url);
-  return response.data;
-};
-
-interface AddStaffDialogProps {
-  userId: number | undefined;
+interface EditStaffDialogProps {
+  staffMember: any;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
 }
 
-export function AddStaffDialog({ userId }: AddStaffDialogProps) {
-  const [open, setOpen] = useState(false);
-  const { data: session } = useSession();
-
-  const { data, isLoading } = useSWR(
-    userId ? `/api/owner/${userId}/dairies` : null,
-    fetcher,
-    { revalidateOnFocus: false }
-  );
-
+export function EditStaffDialog({ staffMember, open, onOpenChange, onSuccess }: EditStaffDialogProps) {
   const {
     register,
     handleSubmit,
     control,
     reset,
-    setValue,
     formState: { errors, isSubmitting },
-  } = useForm<StaffFormData>({
+  } = useForm<EditStaffFormData>({
     // @ts-ignore
-    resolver: zodResolver(StaffSchema),
+    resolver: zodResolver(EditStaffSchema),
     defaultValues: {
       status: "active",
       shift: "FULL_DAY",
@@ -99,52 +80,63 @@ export function AddStaffDialog({ userId }: AddStaffDialogProps) {
     }
   });
 
-  const isOwner = session?.user?.role === "OWNER";
-  const isManager = session?.user?.role === "STAFF" && session?.user?.staffRole === "MANAGER";
+  // Pre-fill values when staffMember changes
+  useEffect(() => {
+    if (staffMember) {
+      const joinDateStr = staffMember.staffProfile?.joinDate 
+        ? new Date(staffMember.staffProfile.joinDate).toISOString().split("T")[0] 
+        : "";
 
-  if (!isOwner && !isManager) {
-    return null;
-  }
+      reset({
+        firstName: staffMember.firstName || "",
+        lastName: staffMember.lastName || "",
+        phone: staffMember.phone || "",
+        email: staffMember.email || "",
+        address: staffMember.address || "",
+        password: "", // Keep password empty unless changing
+        status: (staffMember.status?.toLowerCase() === "active" ? "active" : "inactive") as "active" | "inactive",
+        position: staffMember.staffProfile?.position || "",
+        staffRole: staffMember.staffProfile?.role || "HELPER",
+        shift: staffMember.staffProfile?.shift || "FULL_DAY",
+        salary: staffMember.staffProfile?.salary || 0,
+        joinDate: joinDateStr,
+        emergencyContact: staffMember.staffProfile?.emergencyContact || "",
+        notes: staffMember.staffProfile?.notes || "",
+      });
+    }
+  }, [staffMember, reset]);
 
-  const onSubmit = async (formData: StaffFormData) => {
-    if (isSubmitting) return;
+  const onSubmit = async (formData: EditStaffFormData) => {
+    if (isSubmitting || !staffMember) return;
 
     try {
       const finalData = {
         ...formData,
-        role: "STAFF",
+        // Only send password if it is provided and has length
+        password: formData.password && formData.password.trim().length >= 6 ? formData.password : undefined,
       };
-      
-      await axios.post("/api/staff/create", finalData);
-      toast.success("Staff profile created successfully.");
-      reset();
-      setOpen(false);
+
+      await axios.put(`/api/staff/${staffMember.dairyId}/${staffMember.id}`, finalData);
+      toast.success("Staff profile updated successfully.");
+      onSuccess();
+      onOpenChange(false);
     } catch (err: any) {
       console.error(err);
-      toast.error(err.response?.data?.message || "Failed to create staff profile.");
+      toast.error(err.response?.data?.message || "Failed to update staff profile.");
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="gap-2 cursor-pointer">
-          <Plus size={18} />
-          Add Staff
-        </Button>
-      </DialogTrigger>
-
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[95%] max-w-lg md:max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl p-6">
         <DialogHeader className="pb-2">
-          <DialogTitle className="text-xl font-bold">Add New Staff Member</DialogTitle>
+          <DialogTitle className="text-xl font-bold">Edit Staff Profile</DialogTitle>
           <DialogDescription className="text-xs">
-            Enter payroll, shift schedule, and contact details to onboard a new employee.
+            Modify employee info, system permissions, shift schedules, and salary parameters.
           </DialogDescription>
         </DialogHeader>
 
-        <form 
-          // @ts-ignore
-          onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           {/* Names */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
@@ -169,8 +161,8 @@ export function AddStaffDialog({ userId }: AddStaffDialogProps) {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Password *</Label>
-              <Input type="password" {...register("password")} placeholder="Min 6 characters" className="h-10" />
+              <Label className="text-xs font-semibold">Password (Leave blank to keep current)</Label>
+              <Input type="password" {...register("password")} placeholder="New password" className="h-10" />
               {errors.password && <p className="text-red-500 text-[10px] font-semibold">{errors.password.message}</p>}
             </div>
           </div>
@@ -180,41 +172,6 @@ export function AddStaffDialog({ userId }: AddStaffDialogProps) {
               <Label className="text-xs font-semibold">Email Address</Label>
               <Input {...register("email")} placeholder="e.g. anil@gmail.com" className="h-10" />
               {errors.email && <p className="text-red-500 text-[10px] font-semibold">{errors.email.message}</p>}
-            </div>
-
-            {/* Select Dairy */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold">Select Dairy Business *</Label>
-              {isLoading ? (
-                <div className="flex items-center gap-2 h-10 border rounded-lg px-3 bg-muted/20">
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Loading dairies...</span>
-                </div>
-              ) : (
-                <Controller
-                  control={control}
-                  name="dairyId"
-                  render={({ field }) => (
-                    <Select
-                      disabled={isSubmitting}
-                      onValueChange={(v) => field.onChange(Number(v))}
-                      value={field.value ? String(field.value) : undefined}
-                    >
-                      <SelectTrigger className="h-10 rounded-lg">
-                        <SelectValue placeholder="Choose a dairy profile" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {data?.dairies?.map((d: { id: number; name: string }) => (
-                          <SelectItem key={d.id} value={String(d.id)}>
-                            {d.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              )}
-              {errors.dairyId && <p className="text-red-500 text-[10px] font-semibold">{errors.dairyId.message}</p>}
             </div>
           </div>
 
@@ -337,7 +294,7 @@ export function AddStaffDialog({ userId }: AddStaffDialogProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setOpen(false)}
+              onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
               className="w-full h-10 cursor-pointer"
             >
@@ -348,10 +305,10 @@ export function AddStaffDialog({ userId }: AddStaffDialogProps) {
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Creating...
+                  Saving...
                 </>
               ) : (
-                "Add Staff Member"
+                "Save Changes"
               )}
             </Button>
           </div>
