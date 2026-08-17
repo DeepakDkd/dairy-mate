@@ -32,14 +32,14 @@ import {
   TabsTrigger
 } from "@/components/ui/tabs";
 
-import { 
-  Loader2, 
-  Phone, 
-  Lock, 
-  Eye, 
-  EyeOff, 
-  ArrowLeft, 
-  Building2, 
+import {
+  Loader2,
+  Phone,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowLeft,
+  Building2,
   KeyRound,
   CheckCircle2,
   Sparkles
@@ -279,16 +279,16 @@ export default function LoginForm() {
             setSelectedDairy("");
           }}
         >
-          <TabsList className="grid grid-cols-2 w-full max-w-sm mx-auto mb-4 bg-muted/65 p-1 rounded-xl border border-border/40">
-            <TabsTrigger 
-              value="owner" 
+          <TabsList className="grid grid-cols-2 w-full h-12 max-w-sm mx-auto mb-4  bg-muted/65 p-1  rounded-xl border border-border/40">
+            <TabsTrigger
+              value="owner"
               disabled={loading || stage === "forgot_request" || stage === "forgot_reset"}
               className="rounded-lg py-2 text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
             >
               Owner / Staff
             </TabsTrigger>
-            <TabsTrigger 
-              value="buyer" 
+            <TabsTrigger
+              value="buyer"
               disabled={loading || stage === "forgot_request" || stage === "forgot_reset"}
               className="rounded-lg py-2 text-sm font-semibold transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
             >
@@ -450,8 +450,8 @@ export default function LoginForm() {
                     </div>
                   </div>
 
-                  <Button 
-                    disabled={loading} 
+                  <Button
+                    disabled={loading}
                     type="submit"
                     className="w-full h-11 mt-2 bg-primary hover:bg-primary/95 text-white font-semibold rounded-lg shadow-lg shadow-primary/20 transition-all cursor-pointer"
                   >
@@ -497,8 +497,8 @@ export default function LoginForm() {
                     </Select>
                   </div>
 
-                  <Button 
-                    disabled={loading} 
+                  <Button
+                    disabled={loading}
                     type="submit"
                     className="w-full h-11 mt-2 bg-primary hover:bg-primary/95 text-white font-semibold rounded-lg shadow-lg shadow-primary/20 transition-all cursor-pointer"
                   >
@@ -652,8 +652,8 @@ export default function LoginForm() {
               <div className="mt-6 pt-4 border-t border-border/30 text-center">
                 <p className="text-xs text-muted-foreground">
                   New to Dairy Mate?{" "}
-                  <Link 
-                    href="/auth/register" 
+                  <Link
+                    href="/auth/register"
                     className="text-primary hover:text-primary/80 hover:underline font-semibold transition-colors ml-0.5"
                   >
                     Create an account
