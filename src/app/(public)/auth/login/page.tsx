@@ -81,11 +81,38 @@ export default function LoginForm() {
   const [selectedDairy, setSelectedDairy] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Toggle flag for demo login (can be set to "false" in env variables to disable)
+  const SHOW_DEMO_LOGIN = process.env.NEXT_PUBLIC_ENABLE_DEMO_LOGIN !== "false";
+
   useEffect(() => {
     if (status === "authenticated") {
       router.replace("/portal");
     }
   }, [status, router]);
+
+  async function handleDemoLogin() {
+    if (loading) return;
+    setLoading(true);
+    try {
+      toast.success("Logging in as Demo Admin...");
+      const result = await signIn("credentials", {
+        redirect: false,
+        phone: "9575649891",
+        role: "OWNER"
+      });
+
+      if (result?.error) {
+        toast.error("Demo login failed");
+        return;
+      }
+
+      router.replace("/portal");
+    } catch {
+      toast.error("Demo login failed");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handlePasswordSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -428,6 +455,30 @@ export default function LoginForm() {
                     ) : null}
                     {loading ? "Please wait..." : "Continue"}
                   </Button>
+
+                  {SHOW_DEMO_LOGIN && role === "OWNER" && (
+                    <>
+                      <div className="relative my-4 flex items-center justify-center">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t border-dashed border-border/60" />
+                        </div>
+                        <span className="relative bg-card px-3 text-xs text-muted-foreground uppercase font-semibold tracking-wider">
+                          Or Demo
+                        </span>
+                      </div>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleDemoLogin}
+                        disabled={loading}
+                        className="w-full h-11 border-dashed border-primary/45 hover:border-primary/80 bg-primary/5 hover:bg-primary/10 text-primary font-semibold rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98]"
+                      >
+                        <Sparkles className="w-4 h-4 animate-pulse text-primary" />
+                        <span>One-Click Demo Admin Login</span>
+                      </Button>
+                    </>
+                  )}
                 </form>
               )}
 
