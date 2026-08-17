@@ -6,6 +6,7 @@ import { signIn, useSession } from "next-auth/react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Link from "next/link";
+import Image from "next/image";
 
 import {
   Card,
@@ -285,8 +286,13 @@ export default function LoginForm() {
       <div className="w-full max-w-md z-10 flex flex-col items-center">
         {/* Logo and Brand Header */}
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-primary to-secondary flex items-center justify-center shadow-lg shadow-primary/20 mb-3 border border-white/20">
-            <Sparkles className="w-7 h-7 text-white" />
+          <div className="w-14 h-14 relative rounded-2xl bg-black shadow-lg shadow-primary/10 mb-3 border border-border/40 overflow-hidden">
+            <Image
+              src="/dairy-mate-logo.png"
+              alt="Dairy Mate Logo"
+              fill
+              className="object-contain p-2 scale-300"
+            />
           </div>
           <h2 className="text-2xl font-bold tracking-tight text-foreground">Dairy Mate</h2>
           <p className="text-sm text-muted-foreground">Premium Dairy Management Platform</p>
